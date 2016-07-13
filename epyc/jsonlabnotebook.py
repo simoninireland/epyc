@@ -1,17 +1,17 @@
 # Simulation "lab notebook" for collecting results, JSON version
 #
-# Copyright (C) 2014-2016 Simon Dobson
+# Copyright (C) 2016 Simon Dobson
 # 
-# Licensed under the Creative Commons Attribution-Noncommercial-Share
-# Alike 3.0 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
+# Licensed under the GNU General Public Licence v.2.0
 #
 
-import cncp
+import epyc
+
 import os
 import json
 
 
-class JSONLabNotebook(cncp.LabNotebook):
+class JSONLabNotebook(epyc.LabNotebook):
     '''A lab notebook that persists intself to a JSON file.'''
 
     def __init__( self, name, create = False, description = None ):
@@ -23,7 +23,7 @@ class JSONLabNotebook(cncp.LabNotebook):
         name: JSON file to persist the notebook to
         create: if True, erase existing file (defaults to False)
         description: free text description of the notebook'''
-        cncp.LabNotebook.__init__(self, name, description)
+        epyc.LabNotebook.__init__(self, name, description)
 
         # check for the file already existing
         if os.path.isfile(self.name()):

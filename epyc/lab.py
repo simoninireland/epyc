@@ -1,12 +1,11 @@
 # Simulation "lab" experiment management, sequential version
 #
-# Copyright (C) 2014-2016 Simon Dobson
+# Copyright (C) 2016 Simon Dobson
 # 
-# Licensed under the Creative Commons Attribution-Noncommercial-Share
-# Alike 3.0 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
+# Licensed under the GNU General Public Licence v.2.0
 #
 
-import cncp
+from epyc import *
 
 
 class Lab:
@@ -25,7 +24,7 @@ class Lab:
  
         notebook: the notebook used to store results (defaults to an empty LabNotebook)'''
         if notebook is None:
-            self._notebook = cncp.LabNotebook()
+            self._notebook = LabNotebook()
         else:
             self._notebook = notebook
         self._parameters = dict()

@@ -1,19 +1,20 @@
 # Simulation "lab" experiment management, parallel cluster version
 #
-# Copyright (C) 2014-2016 Simon Dobson
+# Copyright (C) 2016 Simon Dobson
 # 
-# Licensed under the Creative Commons Attribution-Noncommercial-Share
-# Alike 3.0 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
+# Licensed under the GNU General Public Licence v.2.0
 #
 
-import cncp
+from epyc import *
+
 import numpy
 import pickle
 import dill
+
 from ipyparallel import Client
 
 
-class ClusterLab(cncp.Lab):
+class ClusterLab(Lab):
     '''A laboratory running over a cluster. Experiments are submitted to
     engines in the cluster for execution in parallel, with the experiments
     being performed asynchronously to allow for disconnection and subsequent
@@ -47,7 +48,7 @@ class ClusterLab(cncp.Lab):
            paramiko: True to use paramiko for ssh (defaults to False)
            timeout: timeout in seconds for ssh connection (defaults to 10s)
            cluster_id: string added to runtime files to prevent collisions'''
-        cncp.Lab.__init__(self, notebook)
+        Lab.__init__(self, notebook)
         self._robust = robust
         
         # record all the connection arguments for later

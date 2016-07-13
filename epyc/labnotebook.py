@@ -1,12 +1,11 @@
 # Simulation "lab notebook" for collecting results, in-memory version
 #
-# Copyright (C) 2014-2016 Simon Dobson
+# Copyright (C) 2016 Simon Dobson
 # 
-# Licensed under the Creative Commons Attribution-Noncommercial-Share
-# Alike 3.0 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
+# Licensed under the GNU General Public Licence v.2.0
 #
 
-import cncp
+from epyc import *
 
 
 class LabNotebook:
@@ -78,7 +77,7 @@ class LabNotebook:
         substituted for the identifier to "finalise" the result.
 
         result: the result'''
-        k = self._parametersAsIndex(result[cncp.Experiment.PARAMETERS])
+        k = self._parametersAsIndex(result[epyc.Experiment.PARAMETERS])
 
         # check if result is pending
         if k in self._pending.keys():

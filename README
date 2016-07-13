@@ -1,0 +1,18 @@
+EPYC: Python computational experiment management
+================================================
+
+Overview
+--------
+
+Epyc is a Python module for controlling a long-running series of
+computational experiments, as is often found when writing simulations
+of complex networks.
+
+
+Author and license
+------------------
+
+Copyright (c) 2016, Simon Dobson <simon.dobson@computer.org>
+
+Licensed under the GNU General Public Licence v.2.0
+

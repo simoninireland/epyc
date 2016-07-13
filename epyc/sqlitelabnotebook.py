@@ -1,17 +1,17 @@
 # Simulation "lab notebook" for collecting results, persistent version using SQLite
 #
-# Copyright (C) 2014-2016 Simon Dobson
+# Copyright (C) 2016 Simon Dobson
 # 
-# Licensed under the Creative Commons Attribution-Noncommercial-Share
-# Alike 3.0 Unported License (https://creativecommons.org/licenses/by-nc-sa/3.0/).
+# Licensed under the GNU General Public Licence v.2.0
 #
 
-import cncp
+from epyc import *
+
 import sqlite3
 import os
-import os.path
 
-class SqliteLabNotebook(cncp.LabNotebook):
+
+class SqliteLabNotebook(LabNotebook):
     '''A "laboratory notebook" recording the results of a set of
     experiments conducted across a parameter space. The intention is
     to record all the metadata necessary to re-conduct the experiment.'''
@@ -28,7 +28,7 @@ class SqliteLabNotebook(cncp.LabNotebook):
         dbfile: name of the database. By default creates an in-memory database
         create: if True, overwrite any existing database in the named file.
                 By default opens the database'''
-        cncp.LabNotebook.__init__(self, name)
+        LabNotebook.__init__(self, name)
         
         self._dbfile = dbfile
         self._connection = None
