@@ -47,11 +47,6 @@ class ClusterLabTests(unittest.TestCase):
         '''Test running an experiment and grabbing all the results by waiting'''
         n = 100
 
-        # the test case code needs to be available on the engines
-        with self._lab.sync_imports():
-            import epyc
-            import test
-
         r = numpy.arange(0, n)
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment())
@@ -72,11 +67,6 @@ class ClusterLabTests(unittest.TestCase):
     def testRunExprimentAsync( self ):
         '''Test running an experiment and check the results come in piecemeal'''
         n = 500
-
-        # the test case code needs to be available on the engines
-        with self._lab.sync_imports():
-            import epyc
-            import test
 
         r = numpy.arange(0, n)
         self._lab['a'] = r

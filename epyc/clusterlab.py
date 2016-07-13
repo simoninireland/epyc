@@ -5,7 +5,7 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
-from epyc import *
+import epyc
 
 import numpy
 import pickle
@@ -14,7 +14,7 @@ import dill
 from ipyparallel import Client
 
 
-class ClusterLab(Lab):
+class ClusterLab(epyc.Lab):
     '''A laboratory running over a cluster. Experiments are submitted to
     engines in the cluster for execution in parallel, with the experiments
     being performed asynchronously to allow for disconnection and subsequent
@@ -48,7 +48,7 @@ class ClusterLab(Lab):
            paramiko: True to use paramiko for ssh (defaults to False)
            timeout: timeout in seconds for ssh connection (defaults to 10s)
            cluster_id: string added to runtime files to prevent collisions'''
-        Lab.__init__(self, notebook)
+        epyc.Lab.__init__(self, notebook)
         self._robust = robust
         
         # record all the connection arguments for later
