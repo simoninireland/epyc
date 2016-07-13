@@ -4,7 +4,7 @@ epyc: Python computational experiment management
 Overview
 --------
 
-epyc is a Python module for controlling a long-running series of
+`epyc` is a Python module for controlling a long-running series of
 computational experiments, as is often found when writing simulations
 of complex networks and other such domains. There is often a need to
 perform a computation across a multi-dimensional parameter space,
@@ -14,7 +14,7 @@ presentation. Often the experiments being performed are on such a
 scale as to require the use of a computing cluster to perform multiple
 experiments simultaneously.
 
-Managing all these tasks is complicated, so epyc tries to automate
+Managing all these tasks is complicated, so `epyc` tries to automate
 it. It provides a way to define a "laboratory" performing a collection
 of "experiments" whose parameters and results are recorded in a "lab
 notebook" for later retrieval. Laboratories can be sequential (for a
@@ -28,7 +28,7 @@ to improve the reproducibility of computational experiments.
 Source distribution
 -------------------
 
-epyc is distributed from GitHub. To obtain a copy:
+`epyc` is distributed on GitHub. To obtain a copy:
 
     git clone git@github.com:simoninireland/epyc.git
     cd epyc
