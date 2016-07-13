@@ -5,7 +5,7 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
-from epycimport *
+from epyc import *
 
 import unittest
 import numpy

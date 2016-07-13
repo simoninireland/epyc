@@ -47,9 +47,10 @@ PY_NON_REQUIREMENTS = \
 
 # ----- Tools -----
 
-# Common commands
+# Base commands
 PYTHON = python
 IPYTHON = ipython
+IPCLUSTER = ipcluster
 PIP = pip
 VIRTUALENV = virtualenv
 ACTIVATE = . bin/activate
@@ -57,6 +58,10 @@ TR = tr
 RM = rm -fr
 CP = cp
 CHDIR = cd
+
+# Constructed commands
+RUN_TESTS = $(IPYTHON) -m $(TESTSUITE)
+RUN_CLUSTER = $(IPCLUSTER) start --profile=default --n=2
 
 # Virtual environment support
 ENV_COMPUTATIONAL = epyc_virtualenv
@@ -72,7 +77,11 @@ help:
 
 # Run the test suite in a suitable (predictable) virtualenv
 test: env-computational
-	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(IPYTHON) -m $(TESTSUITE))
+	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_TESTS))
+
+# Run a small local compute cluster (in the foreground) for testing
+cluster: env-computational
+	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_CLUSTER))
 
 # Build a source distribution
 dist: MANIFEST 
@@ -114,6 +123,7 @@ $(ENV_COMPUTATIONAL):
 define HELP_MESSAGE
 Available targets:
    make test         run the test suite in a suitable virtualenv
+   make cluster      run a small compute cluster for use by the tests
    make dist         create a source distribution
    make clean        clean-up the build
    make reallyclean  clean up the virtualenv as well

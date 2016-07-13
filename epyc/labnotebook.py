@@ -77,7 +77,7 @@ class LabNotebook:
         substituted for the identifier to "finalise" the result.
 
         result: the result'''
-        k = self._parametersAsIndex(result[epyc.Experiment.PARAMETERS])
+        k = self._parametersAsIndex(result[Experiment.PARAMETERS])
 
         # check if result is pending
         if k in self._pending.keys():

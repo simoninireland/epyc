@@ -5,7 +5,7 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
-from epyc import *
+import epyc
 
 
 class Lab:
@@ -24,7 +24,7 @@ class Lab:
  
         notebook: the notebook used to store results (defaults to an empty LabNotebook)'''
         if notebook is None:
-            self._notebook = LabNotebook()
+            self._notebook = epyc.LabNotebook()
         else:
             self._notebook = notebook
         self._parameters = dict()

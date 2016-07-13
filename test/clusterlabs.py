@@ -49,7 +49,8 @@ class ClusterLabTests(unittest.TestCase):
 
         # the test case code needs to be available on the engines
         with self._lab.sync_imports():
-            import cncp.test.clusterlabs
+            import epyc
+            import test
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
@@ -74,7 +75,8 @@ class ClusterLabTests(unittest.TestCase):
 
         # the test case code needs to be available on the engines
         with self._lab.sync_imports():
-            import cncp.test.clusterlabs
+            import epyc
+            import test
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
