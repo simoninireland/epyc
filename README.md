@@ -30,9 +30,9 @@ Source distribution
 
 epyc is distributed from GitHub. To obtain a copy:
 
-> git clone git@github.com:simoninireland/epyc.git
-> cd epyc
-> python setup.py install
+    git clone git@github.com:simoninireland/epyc.git
+    cd epyc
+    python setup.py install
 
 
 Author and license
