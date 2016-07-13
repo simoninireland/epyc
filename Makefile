@@ -19,14 +19,15 @@ SOURCES_CODE = \
 	epyc/jsonlabnotebook.py \
 	epyc/sqlitelabnotebook.py
 SOURCES_TESTS = \
-	epyc/test/experiments.py \
-	epyc/test/labs.py \
-	epyc/test/clusterlabs.py \
-	epyc/test/notebooks.py \
-	epyc/test/jsonnotebooks.py \
-	epyc/test/sqlitenotebooks.py
-SOURCES_TESTSUITE = epyc/test/__main__.py
-TESTSUITE = epyc.test
+	test/__init__.py \
+	test/__main__.py \
+	test/experiments.py \
+	test/labs.py \
+	test/clusterlabs.py \
+	test/notebooks.py \
+	test/jsonnotebooks.py \
+	test/sqlitenotebooks.py
+TESTSUITE = test
 
 # Python packages needed by the test suite
 PY_COMPUTATIONAL = \
@@ -89,8 +90,8 @@ reallyclean: clean
 # ----- Helper targets -----
 
 # Create the manifest for the package
-MANIFEST: $(SOURCES_SETUP) $(SOURCES_CODE) $(SOURCES_TESTSUITE)
-	echo $(SOURCES_SETUP) $(SOURCES_CODE) $(SOURCES_TESTSUITE) | $(TR) ' ' '\n' >MANIFEST
+MANIFEST: $(SOURCES_SETUP) $(SOURCES_CODE)
+	echo $(SOURCES_SETUP) $(SOURCES_CODE) | $(TR) ' ' '\n' >MANIFEST
 
 # Build a computational environment in which to run the test suite
 env-computational: $(ENV_COMPUTATIONAL)
