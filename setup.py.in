@@ -26,6 +26,6 @@ setup(name = 'epyc',
                       'Programming Language :: Python :: 2.7',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
-      requires = REQ_SETUP,
-)
+      install_requires = [ REQ_SETUP ])
+
 

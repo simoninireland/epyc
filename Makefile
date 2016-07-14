@@ -31,7 +31,7 @@ TESTSUITE = test
 SOURCES_DOC = doc/epyc.ipynb
 SOURCES_EXTRA = \
 	README.md \
-	LICENSE \
+	LICENSE
 SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py
@@ -41,14 +41,12 @@ SOURCES_GENERATED = \
 PY_COMPUTATIONAL = \
 	ipython \
 	pyzmq \
-	openssl \
 	ipyparallel \
-	numpy \
 	dill \
-	paramiko \
 	pandas
 # For the documentation
 PY_INTERACTIVE = \
+	numpy \
 	jupyter \
 	matplotlib \
 	seaborn
@@ -110,7 +108,7 @@ doc:
 cluster: env-computational
 
 # Build a source distribution
-dist: MANIFEST $(SOURCES_SETUP)
+dist: $(SOURCES_GENERATED)
 	$(PYTHON) setup.py sdist
 
 # Clean up the distribution build 
@@ -145,11 +143,11 @@ $(ENV_COMPUTATIONAL):
 
 # Manifest for the package
 MANIFEST:
-	@echo  $(SOURCES_EXTRA) $(SOURCES_GENERATED) $(SOURCES_CODE) | $(TR) ' ' '\n' >$@
+	echo  $(SOURCES_EXTRA) $(SOURCES_GENERATED) $(SOURCES_CODE) | $(TR) ' ' '\n' >$@
 
 # The setup.py script
 setup.py:
-	@$(CAT) $(SOURCES_SETUP_IN) | sed -e 's/requires = REQ_SETUP/requires = [ $(REQ_SETUP) ]/g' >$@
+	$(CAT) $(SOURCES_SETUP_IN) | sed -e 's/REQ_SETUP/$(REQ_SETUP)/g' >$@
 
 
 # ----- Usage -----
