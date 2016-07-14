@@ -26,14 +26,14 @@ class ClusterLab(epyc.Lab):
     for persistent access, with access to the necessary code and libraries,
     and with appropriate security information available.'''
 
-    def __init__( self, notebook = None, robust = False, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
+    def __init__( self, notebook = None, robust = True, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
         '''Create an empty lab attached to the given cluster. most of the arguments
         are as expected by the ipyparallel.Client class, and are used to create the
         underlying connection to the cluster.
 
         Lab arguments:
            notebook: the notebook used to results (defaults to an empty LabNotebook)
-           robust: if True, ignores individual job failures (defaults to False)
+           robust: if False, fails at individual job failures (defaults to True)
 
         Cluster client arguments:
            url_file: file containing connection information for accessing cluster
@@ -71,7 +71,7 @@ class ClusterLab(epyc.Lab):
         self.open()
         
         # make us use Dill as pickler by default
-        #self.use_dill()
+        self.use_dill()
 
     def open( self ):
         '''Connect to the cluster.'''
@@ -100,17 +100,18 @@ class ClusterLab(epyc.Lab):
 
     def use_dill( self ):
         '''Make the cluster use Dill as pickler for transferring results.'''
-        with self.sync_imports():
+        with self.sync_imports(quiet = True):
             import dill
         self._client.direct_view().use_dill()
 
-    def sync_imports( self ):
+    def sync_imports( self, quiet = False ):
         '''Return a context manager to control imports onto all the engines
         in the underlying cluster. This method is used within a with statement.
 
+        quiet: if True, suppresses messages (defaults to False)
         returns: a context manager'''
         self.open()
-        return self._client[:].sync_imports()
+        return self._client[:].sync_imports(quiet = quiet)
     
     def _mixup( self, ps ):
         '''Private method to mix up a list of values in-place using a Fisher-Yates
@@ -135,26 +136,35 @@ class ClusterLab(epyc.Lab):
         answer, so we can plot them and see the answer emerge.        
 
         e: the experiment'''
-        
-        # create the parameter space, randomising so that we evaluate across
-        # the space as we go along to make intermediate (incomplete) result
-        # sets more representative of the overall result set
-        ps = self._mixup(self.parameterSpace())
 
-        # connect to the cluster
-        self.open()
+        # create the parameter space
+        space = self.parameterSpace()
 
-        # submit an experiment at each point in the parameter space to the cluster
-        view = self._client.load_balanced_view()
-        jobs = view.map_async((lambda p: e.runExperiment(p)), ps)
+        # only proceed if there's work to do
+        if len(space) > 0:
+            nb = self.notebook()
+            
+            # randomise the order of the parameter space so that we evaluate across
+            # the space as we go along to make intermediate (incomplete) result
+            # sets more representative of the overall result set
+            ps = self._mixup(space)
 
-        # record the mesage ids of all the jobs as submitted but not yet completed
-        psjs = zip(ps, jobs.msg_ids)
-        for (p, j) in psjs:
-            self._notebook.addPendingResult(p, j)
-
-        # close our connection to the cluster
-        self.close()
+            try:
+                # connect to the cluster
+                self.open()
+            
+                # submit an experiment at each point in the parameter space to the cluster
+                view = self._client.load_balanced_view()
+                jobs = view.map_async((lambda p: e.runExperiment(p)), ps)
+                
+                # record the mesage ids of all the jobs as submitted but not yet completed
+                psjs = zip(ps, jobs.msg_ids)
+                for (p, j) in psjs:
+                    nb.addPendingResult(p, j)
+            finally:
+                # close our connection to the cluster and commit our pending results
+                self.close()
+                nb.commit()
 
     def _updateResults( self ):
         '''Update the jobs record with any newly-completed jobs.
@@ -164,9 +174,9 @@ class ClusterLab(epyc.Lab):
         # sd: this may not be the most efficient way: may be better to
         # work out the ready jobs and then grab them all in one network transaction
         nb = self.notebook()
+        n = 0
         try:
             self.open()
-            n = 0
             for j in nb.pendingResults():
                 try:
                     if self._client.get_result(j).ready():
@@ -189,10 +199,11 @@ class ClusterLab(epyc.Lab):
                         # we're not running robustly, pass on the exception
                         raise x
         finally:
-            # whatever happens, commit changes tgo the notebook
+            # whatever happens, commit changes to the notebook
             # and close the connection to the cluster 
             self.close()
-            nb.commit()
+            if n > 0:
+                nb.commit()
         return n
                 
     def results( self ):

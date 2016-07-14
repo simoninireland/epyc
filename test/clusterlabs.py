@@ -26,7 +26,7 @@ class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):
         '''Create a lab in which to perform tests.'''
-        self._lab = ClusterLab(robust = True)
+        self._lab = ClusterLab()
 
     def tearDown( self ):
         '''Close the conection to the cluster.'''
