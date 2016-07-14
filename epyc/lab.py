@@ -68,7 +68,7 @@ class Lab:
         return self.addParameter(k, r)
 
     def _crossProduct( self, ls ):
-        '''Internal metod to generate the cross product of all parameter
+        '''Internal method to generate the cross product of all parameter
         values, creating the parameter space for the experiment.
 
         ls: an array of parameter names
@@ -115,8 +115,8 @@ class Lab:
 
         # run the experiment at each point
         nb = self.notebook()
-        self._results = []
         for p in ps:
+            # print "Running {p}".format(p = p)
             res = e.runExperiment(p)
             nb.addResult(res)
 
@@ -135,13 +135,13 @@ class Lab:
         result).
 
         returns: a list of experimental results'''
-        return self._notebook.results()
+        return self.notebook().results()
     
     def ready( self ):
         '''Test whether all the results are ready, that is none are
         pending.
 
         returns: True if the results are in'''
-        return (len(selfnotebook().pendingResults()) == 0)
+        return (len(self.notebook().pendingResults()) == 0)
 
 

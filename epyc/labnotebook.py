@@ -6,6 +6,7 @@
 #
 
 from epyc import *
+from pandas import DataFrame
 
 
 class LabNotebook:
@@ -87,7 +88,7 @@ class LabNotebook:
         else:
             # not pending, check if we have a result already
             if k in self._results.keys():
-                raise KeyError("Can't overwrite result in notebook")
+                raise KeyError("Can't overwrite result in notebook ({p})".format(p = result[Experiment.PARAMETERS]))
             else:
                 # new result, add to notebook
                 self._results[k] = result
@@ -102,7 +103,7 @@ class LabNotebook:
         # check if we already have a result for these parameters
         if k in self._results.keys():
             # yes, can't generate another
-            raise KeyError("Already have result")
+            raise KeyError("Already have a result for these parameters ({p})".format(p = ps))
         else:
             # record job id
             self._pending[k] = jobid
@@ -195,4 +196,21 @@ class LabNotebook:
 
         returns: an iteration over the results'''
         return self.results().__iter__()
+    
+    def dataframe( self ):
+        '''Return the results as a pandas DataFrame. Note that there is a danger
+        of duplicate labels here, for example if the results contain a value
+        with the same name as one of the parameters. To resolve this, parameter names
+        take precedence over metadata values, and result names take precedence over
+        parameter names.
+
+        returns: the parameters, results, and metadata in a DataFrame'''
+
+        def extract( r ):
+            rs = r[Experiment.METADATA].copy()
+            rs.update(r[Experiment.PARAMETERS])
+            rs.update(r[Experiment.RESULTS])
+            return rs
+
+        return DataFrame.from_dict(map(extract, self.results()))
     

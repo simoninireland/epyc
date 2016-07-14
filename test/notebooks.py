@@ -143,3 +143,40 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(nb.result(params3), None)
         self.assertEqual(len(nb.results()), 2)
         self.assertEqual(nb.pendingResults(), [ ])
+
+    def testDataFrame( self ):
+        '''Test creating a pandas DataFrame'''
+        nb = LabNotebook()
+
+        e = SampleExperiment()
+        params1 = dict(a  = 1, b = 2)
+        rc1 = e.runExperiment(params1)
+        params2 = dict(a  = 10, b = 12)
+        rc2 = e.runExperiment(params2)
+        params3 = dict(a  = 45, b = 11)
+
+        nb.addResult(rc1)
+        nb.addResult(rc2)
+        nb.addPendingResult(params3)
+
+        df = nb.dataframe()
+
+        self.assertTrue(len(df['a']), 2)
+        self.assertTrue(len(df['b']), 2)
+        self.assertTrue(len(df['total']), 2)
+        self.assertEqual(df[df['a'] == 1]['b'].iloc[0], 2)
+        self.assertEqual(df[df['b'] == 12]['a'].iloc[0], 10)
+        self.assertEqual(df[(df['a'] == 10) & (df['b'] == 12)]['total'].iloc[0], 10 + 12)
+        
+    def testOverwrite( self ):
+        '''Test we can't overwrite a result'''
+        nb = LabNotebook()
+
+        e = SampleExperiment()
+        params1 = dict(a  = 1, b = 2)
+        rc1 = e.runExperiment(params1)
+        nb.addResult(rc1)
+
+        with self.assertRaises(KeyError):
+            rc2 = e.runExperiment(params1)
+            nb.addResult(rc2)
