@@ -114,10 +114,14 @@ class Lab:
         ps = self.parameterSpace()
 
         # run the experiment at each point
+        nb = self.notebook()
         self._results = []
         for p in ps:
             res = e.runExperiment(p)
-            self._notebook.addResult(res)
+            nb.addResult(res)
+
+        # commit the results
+        nb.commit()
 
     def notebook( self ):
         '''Return the notebook being used by this lab.

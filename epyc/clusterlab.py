@@ -163,10 +163,11 @@ class ClusterLab(epyc.Lab):
 
         # sd: this may not be the most efficient way: may be better to
         # work out the ready jobs and then grab them all in one network transaction
+        nb = self.notebook()
         try:
             self.open()
             n = 0
-            for j in self.notebook().pendingResults():
+            for j in nb.pendingResults():
                 try:
                     if self._client.get_result(j).ready():
                         # result is ready, grab it
@@ -176,7 +177,7 @@ class ClusterLab(epyc.Lab):
                         n = n + 1
 
                         # update the result in the notebook
-                        self.notebook().addResult(r)
+                        nb.addResult(r)
                 except Exception as x:
                     if self._robust:
                         # we're running robustly, so elide the exception 
@@ -188,8 +189,10 @@ class ClusterLab(epyc.Lab):
                         # we're not running robustly, pass on the exception
                         raise x
         finally:
-            # whatever happens, close the connection to the cluster 
+            # whatever happens, commit changes tgo the notebook
+            # and close the connection to the cluster 
             self.close()
+            nb.commit()
         return n
                 
     def results( self ):
