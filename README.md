@@ -35,6 +35,14 @@ Source distribution
     python setup.py install
 
 
+Documentation
+-------------
+
+The `doc/` directory contains an IPython notebook that describes the
+use of `epyc` in detail. You can also read it directly
+[online](https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb).
+
+
 Author and license
 ------------------
 
