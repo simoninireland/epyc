@@ -9,7 +9,7 @@
 # ----- Sources -----
 
 # Source code
-SOURCES_SETUP = setup.py
+SOURCES_SETUP_IN = setup.py.in
 SOURCES_CODE = \
 	epyc/__init__.py \
 	epyc/experiment.py \
@@ -29,6 +29,12 @@ SOURCES_TESTS = \
 	test/sqlitenotebooks.py
 TESTSUITE = test
 SOURCES_DOC = doc/epyc.ipynb
+SOURCES_EXTRA = \
+	README.md \
+	LICENSE \
+SOURCES_GENERATED = \
+	MANIFEST \
+	setup.py
 
 # Python packages needed
 # For the system to install and run
@@ -64,6 +70,8 @@ PIP = pip
 VIRTUALENV = virtualenv
 ACTIVATE = . bin/activate
 TR = tr
+CAT = cat
+SED = sed
 RM = rm -fr
 CP = cp
 CHDIR = cd
@@ -77,6 +85,7 @@ RUN_NOTEBOOK = $(JUPYTER) notebook
 ENV_COMPUTATIONAL = venv
 REQ_COMPUTATIONAL = requirements.txt
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
+REQ_SETUP = $(PY_COMPUTATIONAL:%="%",)
 
 
 # ----- Top-level targets -----
@@ -101,12 +110,12 @@ doc:
 cluster: env-computational
 
 # Build a source distribution
-dist: MANIFEST 
+dist: MANIFEST $(SOURCES_SETUP)
 	$(PYTHON) setup.py sdist
 
 # Clean up the distribution build 
 clean:
-	$(RM) MANIFEST dist
+	$(RM) $(SOURCES_GENERATED) dist
 
 # Clean up everything, including the computational environment (which is expensive to rebuild)
 reallyclean: clean
@@ -114,10 +123,6 @@ reallyclean: clean
 
 
 # ----- Helper targets -----
-
-# Create the manifest for the package
-MANIFEST: $(SOURCES_SETUP) $(SOURCES_CODE)
-	echo $(SOURCES_SETUP) $(SOURCES_CODE) | $(TR) ' ' '\n' >MANIFEST
 
 # Build a computational environment in which to run the test suite
 env-computational: $(ENV_COMPUTATIONAL)
@@ -134,6 +139,17 @@ $(ENV_COMPUTATIONAL):
 	$(VIRTUALENV) $(ENV_COMPUTATIONAL)
 	$(CP) $(REQ_COMPUTATIONAL) $(ENV_COMPUTATIONAL)/requirements.txt
 	$(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
+
+
+# ----- Generated files -----
+
+# Manifest for the package
+MANIFEST:
+	@echo  $(SOURCES_EXTRA) $(SOURCES_GENERATED) $(SOURCES_CODE) | $(TR) ' ' '\n' >$@
+
+# The setup.py script
+setup.py:
+	@$(CAT) $(SOURCES_SETUP_IN) | sed -e 's/requires = REQ_SETUP/requires = [ $(REQ_SETUP) ]/g' >$@
 
 
 # ----- Usage -----
