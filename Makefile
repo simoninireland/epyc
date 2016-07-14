@@ -28,8 +28,10 @@ SOURCES_TESTS = \
 	test/jsonnotebooks.py \
 	test/sqlitenotebooks.py
 TESTSUITE = test
+SOURCES_DOC = doc/epyc.ipynb
 
-# Python packages needed by the test suite
+# Python packages needed
+# For the system to install and run
 PY_COMPUTATIONAL = \
 	ipython \
 	pyzmq \
@@ -37,7 +39,13 @@ PY_COMPUTATIONAL = \
 	ipyparallel \
 	numpy \
 	dill \
-	paramiko
+	paramiko \
+	pandas
+# For the documentation
+PY_INTERACTIVE = \
+	jupyter \
+	matplotlib \
+	seaborn
 
 # Packages that shouldn't be saved as requirements (because they're
 # OS-specific, in this case OS X, and screw up Linux compute servers)
@@ -50,6 +58,7 @@ PY_NON_REQUIREMENTS = \
 # Base commands
 PYTHON = python
 IPYTHON = ipython
+JUPYTER = jupyter
 IPCLUSTER = ipcluster
 PIP = pip
 VIRTUALENV = virtualenv
@@ -62,9 +71,10 @@ CHDIR = cd
 # Constructed commands
 RUN_TESTS = $(IPYTHON) -m $(TESTSUITE)
 RUN_CLUSTER = $(IPCLUSTER) start --profile=default --n=2
+RUN_NOTEBOOK = $(JUPYTER) notebook
 
 # Virtual environment support
-ENV_COMPUTATIONAL = epyc_virtualenv
+ENV_COMPUTATIONAL = venv
 REQ_COMPUTATIONAL = requirements.txt
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
 
@@ -82,6 +92,13 @@ test: env-computational
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env-computational
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_CLUSTER))
+
+# Run a server for writing the documentation
+.PHONY: doc
+doc:
+	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) ../doc && PYTHONPATH=.. $(RUN_NOTEBOOK))
+
+cluster: env-computational
 
 # Build a source distribution
 dist: MANIFEST 
@@ -105,9 +122,10 @@ MANIFEST: $(SOURCES_SETUP) $(SOURCES_CODE)
 # Build a computational environment in which to run the test suite
 env-computational: $(ENV_COMPUTATIONAL)
 
-# Build a detailed requirements.txt file ready for commiting to the repo
+# Build a new, updated, requirements.txt file ready for commiting to the repo
+# Only commit if we're sure we pass the test suite!
 newenv-computational:
-	echo $(PY_COMPUTATIONAL) | $(TR) ' ' '\n' >$(REQ_COMPUTATIONAL)
+	echo $(PY_COMPUTATIONAL)  $(PY_INTERACTIVE) | $(TR) ' ' '\n' >$(REQ_COMPUTATIONAL)
 	make env-computational
 	$(NON_REQUIREMENTS) $(ENV_COMPUTATIONAL)/requirements.txt >$(REQ_COMPUTATIONAL)
 
