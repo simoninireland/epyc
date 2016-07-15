@@ -25,10 +25,17 @@ laptop. Notebooks store all the data and metadata in a portable format
 to improve the reproducibility of computational experiments. 
 
 
-Source distribution
--------------------
+Installation
+------------
 
-``epyc`` is distributed on GitHub. To obtain a copy:
+You can install ``epyc`` directly from PyPi using ``pip``:
+
+::
+
+   pip install epyc
+
+The master distribution of ``epyc`` is hosted on GitHub. To obtain a
+copy, just clone the repo:
 
 ::
    
@@ -37,6 +44,7 @@ Source distribution
     python setup.py install
 
 
+   
 Documentation
 -------------
 
