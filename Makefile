@@ -5,6 +5,8 @@
 # Licensed under the GNU General Public Licence v.2.0
 # 
 
+# The version we're building
+VERSION = 0.1.2
 
 # ----- Sources -----
 
@@ -147,12 +149,12 @@ $(ENV_COMPUTATIONAL):
 # ----- Generated files -----
 
 # Manifest for the package
-MANIFEST:
+MANIFEST: Makefile
 	echo  $(SOURCES_EXTRA) $(SOURCES_GENERATED) $(SOURCES_CODE) | $(TR) ' ' '\n' >$@
 
 # The setup.py script
-setup.py: $(SOURCES_SETUP_IN)
-	$(CAT) $(SOURCES_SETUP_IN) | sed -e 's/REQ_SETUP/$(REQ_SETUP)/g' >$@
+setup.py: $(SOURCES_SETUP_IN) Makefile
+	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's/VERSION/$(VERSION)/g' -e 's/REQ_SETUP/$(REQ_SETUP)/g'  >$@
 
 
 # ----- Usage -----
