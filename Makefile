@@ -30,7 +30,7 @@ SOURCES_TESTS = \
 TESTSUITE = test
 SOURCES_DOC = doc/epyc.ipynb
 SOURCES_EXTRA = \
-	README.md \
+	README.rst \
 	LICENSE
 SOURCES_GENERATED = \
 	MANIFEST \
@@ -78,6 +78,7 @@ CHDIR = cd
 RUN_TESTS = $(IPYTHON) -m $(TESTSUITE)
 RUN_CLUSTER = $(IPCLUSTER) start --profile=default --n=2
 RUN_NOTEBOOK = $(JUPYTER) notebook
+RUN_SETUP = $(PYTHON) setup.py
 
 # Virtual environment support
 ENV_COMPUTATIONAL = venv
@@ -109,11 +110,15 @@ cluster: env-computational
 
 # Build a source distribution
 dist: $(SOURCES_GENERATED)
-	$(PYTHON) setup.py sdist
+	$(RUN_SETUP) sdist
+
+# Upload a source distribution to PyPi (has to be done in one command)
+upload: $(SOURCES_GENERATED)
+	$(RUN_SETUP) sdist upload
 
 # Clean up the distribution build 
 clean:
-	$(RM) $(SOURCES_GENERATED) dist
+	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist
 
 # Clean up everything, including the computational environment (which is expensive to rebuild)
 reallyclean: clean
@@ -146,7 +151,7 @@ MANIFEST:
 	echo  $(SOURCES_EXTRA) $(SOURCES_GENERATED) $(SOURCES_CODE) | $(TR) ' ' '\n' >$@
 
 # The setup.py script
-setup.py:
+setup.py: $(SOURCES_SETUP_IN)
 	$(CAT) $(SOURCES_SETUP_IN) | sed -e 's/REQ_SETUP/$(REQ_SETUP)/g' >$@
 
 
@@ -157,6 +162,7 @@ Available targets:
    make test         run the test suite in a suitable virtualenv
    make cluster      run a small compute cluster for use by the tests
    make dist         create a source distribution
+   make upload       upload distribution to PyPi
    make clean        clean-up the build
    make reallyclean  clean up the virtualenv as well
 

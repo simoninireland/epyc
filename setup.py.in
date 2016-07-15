@@ -7,9 +7,9 @@
 # Licensed under GPL 2.0
 #
 
-from distutils.core import setup
+from setuptools import setup
 
-with open('README.md') as f:
+with open('README.rst') as f:
     longDescription = f.read()
 
 setup(name = 'epyc',
@@ -26,6 +26,7 @@ setup(name = 'epyc',
                       'Programming Language :: Python :: 2.7',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
+      zip_safe = True,
       install_requires = [ REQ_SETUP ])
 
 
