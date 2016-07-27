@@ -24,6 +24,12 @@ fired-off and their results retrieved later -- handy if you use a
 laptop. Notebooks store all the data and metadata in a portable format
 to improve the reproducibility of computational experiments. 
 
+``epyc`` also includes a small number of "experiment combinators" that
+separate the logic of a single experiment from the logic of performing
+multiple repetitions and other structuring tasks. This means that
+any experiment can be repeated and statistically summarised, for
+example.
+
 
 Installation
 ------------
