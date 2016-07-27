@@ -10,6 +10,8 @@ from epyc import *
 import unittest
 import numpy
 import time
+import os
+import subprocess
 
 
 class SampleExperiment(Experiment):
@@ -21,7 +23,11 @@ class SampleExperiment(Experiment):
             total = total + param[k]
         return dict(total = total)
             
-        
+
+default_profile_dir = subprocess.check_output('ipython locate profile default'.split()).strip('\n')
+connection_file = default_profile_dir + '/security/ipcontroller-client.json'
+@unittest.skipUnless(os.path.isfile(connection_file),
+                     "No default cluster running (no {fn})".format(fn = connection_file))
 class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):
@@ -63,19 +69,20 @@ class ClusterLabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
 
-            
     def testRunExprimentAsync( self ):
         '''Test running an experiment and check the results come in piecemeal'''
-        n = 500
+        n = 100
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment())
 
+        # watch results coming in
         f = 0.0
         while f < 1:
             f1 = self._lab.readyFraction()
-            self.assertTrue( f1 >= f )
+            print f1
+            self.assertTrue(f1 >= f)
             f = f1
         self.assertTrue(self._lab.ready())
         res = self._lab.results()
