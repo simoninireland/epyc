@@ -15,6 +15,7 @@ SOURCES_SETUP_IN = setup.py.in
 SOURCES_CODE = \
 	epyc/__init__.py \
 	epyc/experiment.py \
+	epyc/repeatedexperiment.py \
 	epyc/lab.py \
 	epyc/clusterlab.py \
 	epyc/labnotebook.py \
@@ -24,6 +25,7 @@ SOURCES_TESTS = \
 	test/__init__.py \
 	test/__main__.py \
 	test/experiments.py \
+	test/repeatedexperiments.py \
 	test/labs.py \
 	test/clusterlabs.py \
 	test/notebooks.py \
