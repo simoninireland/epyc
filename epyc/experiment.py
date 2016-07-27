@@ -16,20 +16,19 @@ class Experiment:
     each of which can be extended beyond the common core.'''
 
     # Top-level structure for results
-    METADATA = 'metadata'
-    PARAMETERS = 'parameters'
-    RESULTS = 'results'
+    METADATA = 'metadata'                 # metadata values, mainly timing
+    PARAMETERS = 'parameters'             # point in the parameter space the experiment ran on
+    RESULTS = 'results'                   # results generated at that point
 
     # Common metadata elements reported
-    START_TIME = 'start_time'
-    END_TIME = 'end_time'
-    ELAPSED_TIME = 'elapsed_time'
-    SETUP_TIME = 'setup_time'
-    EXPERIMENT_TIME = 'experiment_time'
-    TEARDOWN_TIME = 'teardown_time'
-    PARAMETERS = 'parameters'
-    STATUS = 'status'
-    EXCEPTION = 'exception'
+    START_TIME = 'start_time'             # experiment started
+    END_TIME = 'end_time'                 # experiment ended
+    ELAPSED_TIME = 'elapsed_time'         # time experiment took overall
+    SETUP_TIME = 'setup_time'             # time spent on setup
+    EXPERIMENT_TIME = 'experiment_time'   # time spent on experiment itself
+    TEARDOWN_TIME = 'teardown_time'       # time spent on teardown
+    STATUS = 'status'                     # True if experiment completed successfully
+    EXCEPTION = 'exception'               # exception thrown if experiment failed
     
     def __init__( self ):
         '''Create a new experiment.'''

@@ -7,6 +7,7 @@
 
 import unittest
 from .experiments import *
+from .repeatedexperiments import *
 from .labs import *
 from .clusterlabs import *
 from .notebooks import *
@@ -14,12 +15,13 @@ from .jsonnotebooks import *
 from .sqlitenotebooks import *
 
 experimentsSuite = unittest.TestLoader().loadTestsFromTestCase(ExperimentTests)
+repeatedExperimentsSuite = unittest.TestLoader().loadTestsFromTestCase(RepeatedExperimentTests)
 notebooksSuite = unittest.TestLoader().loadTestsFromTestCase(LabNotebookTests)
 jsonnotebooksSuite = unittest.TestLoader().loadTestsFromTestCase(JSONLabNotebookTests)
 labsSuite = unittest.TestLoader().loadTestsFromTestCase(LabTests)
 clusterlabsSuite = unittest.TestLoader().loadTestsFromTestCase(ClusterLabTests)
 
-suite = unittest.TestSuite([ experimentsSuite,
+suite = unittest.TestSuite([ experimentsSuite, repeatedExperimentsSuite,
                              notebooksSuite, jsonnotebooksSuite,
                              labsSuite, clusterlabsSuite ])
 
