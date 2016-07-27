@@ -34,6 +34,7 @@ class Experiment:
         '''Create a new experiment.'''
         self._timings = dict()
         self._parameters = dict()
+        self._results = None
 
     def setUp( self ):
         '''Set up the experiment. Default does nothing.'''
@@ -77,6 +78,7 @@ class Experiment:
         self._parameters = params
 
         # perform the experiment protocol
+        self._results = None
         res = None
         doneSetupTime = doneExperimentTime = doneTeardownTime = 0
         try:
