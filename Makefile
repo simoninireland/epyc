@@ -110,8 +110,6 @@ cluster: env-computational
 doc:
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) ../doc && PYTHONPATH=.. $(RUN_NOTEBOOK))
 
-cluster: env-computational
-
 # Build a source distribution
 dist: $(SOURCES_GENERATED)
 	$(RUN_SETUP) sdist
