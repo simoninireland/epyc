@@ -1,0 +1,7 @@
+Version 0.1.1 2016-07-15
+
+   - Initial experiment, lab, and notebook implementations
+   - Cluster labs
+   - Test suite
+   - Persistent notebooks to JSON; SQLite outlined but not working
+   

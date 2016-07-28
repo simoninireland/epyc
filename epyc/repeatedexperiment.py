@@ -41,6 +41,7 @@ class RepeatedExperiment(epyc.Experiment):
 
     # Prefix and suffix attached to summarised result and metadata values
     MEAN_SUFFIX = '_mean'
+    MEDIAN_SUFFIX = '_median'
     VARIANCE_SUFFIX = '_variance'
     UNDERLYING_PREFIX = 'underlying_'
     
@@ -130,6 +131,7 @@ class RepeatedExperiment(epyc.Experiment):
             for k in ks:
                 vs = [ res[epyc.Experiment.RESULTS][k] for res in results ]
                 summary[k + self.MEAN_SUFFIX]     = numpy.mean(vs)
+                summary[k + self.MEDIAN_SUFFIX]   = numpy.median(vs)
                 summary[k + self.VARIANCE_SUFFIX] = numpy.var(vs)
 
             return summary   
