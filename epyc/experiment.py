@@ -9,11 +9,25 @@ import time
 
 
 class Experiment:
-    '''Base class for experiments conducted in a lab. An experiment
-    consists of four phases: set up, do the experiment, tear down, and
-    report. Each of these can be overridden to create suites of experiments.
-    The results are a dict containing metadata, paranmeters, and results,
-    each of which can be extended beyond the common core.'''
+    '''Base class for experiments conducted in a lab.
+
+    From the developer's perspective, an experiment has five methods
+    that can be overridden: configure(), deconfigure(), setUp(), do(),
+    and tearDown(). configure() sets up the experiment with its parameters.
+    If parameters have been set previously, deconfigure() is called first.
+    do() performs the experiment, and is bracketed by calls to setUp()
+    and tearDown(). The idea is that configure() is called whenever the
+    parameters to the experiment are changed, while the other methods
+    can be called one or more times between resets.
+
+    From an experimenter's (or a lab's) perspective, an experiment
+    has public methods set() and run(). The former sets the parameters
+    for the experiment; the latter runs the experiment. producing a set
+    of results that include direct experimental results and metadata on
+    how the experiment ran.
+
+    Results can be accessed by the results() method. The experiment also
+    exposes an indexing interface to direct experimental results.'''
 
     # Top-level structure for results
     METADATA = 'metadata'                 # metadata values, mainly timing
@@ -29,11 +43,12 @@ class Experiment:
     TEARDOWN_TIME = 'teardown_time'       # time spent on teardown
     STATUS = 'status'                     # True if experiment completed successfully
     EXCEPTION = 'exception'               # exception thrown if experiment failed
+
     
     def __init__( self ):
         '''Create a new experiment.'''
-        self._timings = dict()
-        self._parameters = dict()
+        self._metadata = dict()
+        self._parameters = None
         self._results = None
 
     def setUp( self, params ):
@@ -45,7 +60,28 @@ class Experiment:
     def tearDown( self ):
         '''Tear down the experiment. Default does nothing.'''
         pass
-    
+
+    def configure( self, params ):
+        '''Configure the experiment for the given parameters.
+        Default does nothing.
+
+        params: the parameters'''
+        pass
+
+    def deconfigure( self ):
+        '''De-configure the experiment prior to setting new parameters.
+        Default does nothing.'''
+        pass
+
+    def set( self, params ):
+        '''Set the parameters for the experiment.
+
+        params: the parameters'''
+        if self._parameters is not None:
+            self.deconfigure()
+        self._parameters = params
+        self.configure(params)
+
     def do( self, params ):
         '''Do the body of the experiment. This should be overridden
         by sub-classes.
@@ -61,25 +97,24 @@ class Experiment:
         by self.METADATA. Overriding this method can be used to record extra
         values, but be sure to call the base method as well.
  
-        res: the results of do()
+        res: the direct experimental results from do()
         returns: a dict of extended results'''
         rc = dict()
-        rc[self.METADATA] = self._timings
+        rc[self.METADATA] = self._metadata
         rc[self.PARAMETERS] = self._parameters
         rc[self.RESULTS] = res
         return rc
 
-    def runExperiment( self, params ):
-        '''Run the experiment's set up, do, tear down, and reporting
-        phases. Any exceptions taised will be caught and recorded.
+    def run( self ):
+        '''Run the experiment, using the parameters set using set().
+        A "run" consists of calling setUp(), do(), and tearDown(),
+        followed by collecting and storing (and returning) the
+        experiment's results.
 
-        params: dict of the experiment's parameters
         returns: dict of reported results'''
 
-        # record the parameters for reporting
-        self._parameters = params
-
         # perform the experiment protocol
+        params = self._parameters
         self._results = None
         res = None
         doneSetupTime = doneExperimentTime = doneTeardownTime = 0
@@ -94,15 +129,15 @@ class Experiment:
             doneTeardownTime = time.clock() 
 
             # record the various timings
-            self._timings[self.START_TIME] = startTime
-            self._timings[self.END_TIME] = doneTeardownTime
-            self._timings[self.ELAPSED_TIME] = doneTeardownTime - startTime
-            self._timings[self.SETUP_TIME] = doneSetupTime - startTime
-            self._timings[self.EXPERIMENT_TIME] = doneExperimentTime - doneSetupTime
-            self._timings[self.TEARDOWN_TIME] = doneTeardownTime - doneExperimentTime
+            self._metadata[self.START_TIME] = startTime
+            self._metadata[self.END_TIME] = doneTeardownTime
+            self._metadata[self.ELAPSED_TIME] = doneTeardownTime - startTime
+            self._metadata[self.SETUP_TIME] = doneSetupTime - startTime
+            self._metadata[self.EXPERIMENT_TIME] = doneExperimentTime - doneSetupTime
+            self._metadata[self.TEARDOWN_TIME] = doneTeardownTime - doneExperimentTime
 
             # set the success flag
-            self._timings[self.STATUS] = True
+            self._metadata[self.STATUS] = True
         except Exception as e:
             # decide on the cleanup actions that need doing
             if (doneSetupTime > 0) and (doneExperimentTime == 0):
@@ -115,8 +150,8 @@ class Experiment:
                 
             # set the failure flag and record the exception
             # (there will be no timing information recorded)
-            self._timings[self.STATUS] = False
-            self._timings[self.EXCEPTION] = e
+            self._metadata[self.STATUS] = False
+            self._metadata[self.EXCEPTION] = e
 
         # report the results
         if res is None:
@@ -129,13 +164,25 @@ class Experiment:
 
         returns: a dict of results'''
         return self._results
+
+    def __getitem__( self, k ):
+        '''Return the given element of the experimental results. This only
+        gives access to direct experimental results, not to parameters
+        or metadata.
+
+        k: the result key
+        returns: the value'''
+        if self._results is None:
+            raise Exception("No results set")
+        else:
+            return self._results[self.RESULTS][k]
     
     def success( self ):
         '''Test whether the experiment has been run successfully.
 
         returns: True if the experiment has been run successfully'''
-        if self.STATUS in self._timings:
-            return self._timings[self.STATUS]
+        if self.STATUS in self._metadata:
+            return self._metadata[self.STATUS]
         else:
             return False
     
