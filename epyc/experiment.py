@@ -36,8 +36,10 @@ class Experiment:
         self._parameters = dict()
         self._results = None
 
-    def setUp( self ):
-        '''Set up the experiment. Default does nothing.'''
+    def setUp( self, params ):
+        '''Set up the experiment. Default does nothing.
+
+        params: the parameters of the experiment'''
         pass
 
     def tearDown( self ):
@@ -84,7 +86,7 @@ class Experiment:
         try:
             # do the phases in order, recording the wallclock times at each phase
             startTime = time.clock()
-            self.setUp()
+            self.setUp(params)
             doneSetupTime = time.clock()
             res = self.do(params)
             doneExperimentTime = time.clock() 

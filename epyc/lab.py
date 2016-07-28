@@ -7,6 +7,8 @@
 
 import epyc
 
+import collections
+
 
 class Lab:
     '''A laboratory for computational experiments. The lab conducts an
@@ -35,6 +37,10 @@ class Lab:
 
         k: parameter name
         r: parameter range'''
+
+        # if ramnge is a single value, make it a list
+        if not isinstance(r, collections.Iterable):
+            r = [ r ]
         self._parameters[k] = r
 
     def parameters( self ):

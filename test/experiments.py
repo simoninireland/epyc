@@ -18,7 +18,7 @@ class SampleExperiment0(Experiment):
         Experiment.__init__(self)
         self._ps = []
         
-    def setUp( self ):
+    def setUp( self, params ):
         self._ps.append('setup')
 
     def tearDown( self ):
@@ -55,7 +55,7 @@ class SampleExperiment3(SampleExperiment0):
 class SampleExperiment4(SampleExperiment0):
     '''An experiment that makes sure there are timings to test.'''
     
-    def setUp( self ):
+    def setUp( self, params ):
         time.sleep(1)
 
     def tearDown( self ):
@@ -74,7 +74,7 @@ class SampleExperiment5(SampleExperiment0):
 class SampleExperiment6(SampleExperiment0):
     '''An experiment that fails in its setup, and so should not do a teardown.'''
     
-    def setUp( self ):
+    def setUp( self, params ):
         raise Exception('We failed (on purpose)')
 
 class SampleExperiment7(SampleExperiment0):

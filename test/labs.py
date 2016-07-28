@@ -89,4 +89,23 @@ class LabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'] + p[Experiment.PARAMETERS]['b'], p[Experiment.RESULTS]['total'])
  
+    def testSinglePoint( self ):
+        '''Test that using a single point as a range still works.'''
+        n = 100
+
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab['b'] = 0
+        self._lab.runExperiment(SampleExperiment())
+        res = self._lab.results()
+
+        # check that the whole parameter space has a result
+        self.assertEqual(len(res), n)
+        for p in res:
+            self.assertIn(p[Experiment.PARAMETERS]['a'], r)
+            self.assertEqual(p[Experiment.PARAMETERS]['b'], 0)
+
+        # check that each result corresponds to its parameter
+        for p in res:
+            self.assertEqual(p[Experiment.PARAMETERS]['a'] + p[Experiment.PARAMETERS]['b'], p[Experiment.RESULTS]['total'])
         
