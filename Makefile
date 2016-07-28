@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.1.2
+VERSION = 0.2.1
 
 # ----- Sources -----
 
@@ -19,8 +19,7 @@ SOURCES_CODE = \
 	epyc/lab.py \
 	epyc/clusterlab.py \
 	epyc/labnotebook.py \
-	epyc/jsonlabnotebook.py \
-	epyc/sqlitelabnotebook.py
+	epyc/jsonlabnotebook.py
 SOURCES_TESTS = \
 	test/__init__.py \
 	test/__main__.py \
@@ -29,13 +28,13 @@ SOURCES_TESTS = \
 	test/labs.py \
 	test/clusterlabs.py \
 	test/notebooks.py \
-	test/jsonnotebooks.py \
-	test/sqlitenotebooks.py
+	test/jsonnotebooks.py
 TESTSUITE = test
 SOURCES_DOC = doc/epyc.ipynb
 SOURCES_EXTRA = \
 	README.rst \
-	LICENSE
+	LICENSE \
+	HISTORY
 SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py

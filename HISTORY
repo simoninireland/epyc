@@ -1,3 +1,9 @@
+Version 0.2.1
+
+   - Test suite skips cluster tests if there isn't one running
+   - Added repeated experiment combinator
+   - Removed SQL-backed notebooks for the time being, until finished
+
 Version 0.1.1 2016-07-15
 
    - Initial experiment, lab, and notebook implementations
