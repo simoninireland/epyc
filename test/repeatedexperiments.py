@@ -123,9 +123,11 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         res = (self._lab.results())[0]
         
-        self.assertEqual(len(res[Experiment.RESULTS].keys()), 2)
+        self.assertEqual(len(res[Experiment.RESULTS].keys()), 3)
         self.assertIn('dummy_mean', res[Experiment.RESULTS].keys())
         self.assertEqual(res[Experiment.RESULTS]['dummy_mean'], 1)
+        self.assertIn('dummy_median', res[Experiment.RESULTS].keys())
+        self.assertEqual(res[Experiment.RESULTS]['dummy_median'], 1)
         self.assertIn('dummy_variance', res[Experiment.RESULTS].keys())
         self.assertEqual(res[Experiment.RESULTS]['dummy_variance'], 0)
 
