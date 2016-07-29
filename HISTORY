@@ -1,4 +1,4 @@
-Version 0.3.1
+Version 0.3.1 2016-07-29
 
    - Made parameter spaces of a single point work properly
    - Re-wrote Experiment to clean up the logic and allow better
