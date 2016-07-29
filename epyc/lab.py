@@ -123,7 +123,7 @@ class Lab:
         nb = self.notebook()
         for p in ps:
             # print "Running {p}".format(p = p)
-            res = e.runExperiment(p)
+            res = e.set(p).run()
             nb.addResult(res)
 
         # commit the results

@@ -70,6 +70,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         res = (self._lab.results())[0]
 
+        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
         
     def testRepetitionsMultiplePoint( self ):
@@ -86,6 +87,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self.assertEqual(len(res), len(self._lab['x']))
 
         for i in range(len(self._lab['x'])):
+            self.assertTrue(res[i][Experiment.METADATA][Experiment.STATUS])
             self.assertIn(res[i][Experiment.PARAMETERS]['x'], self._lab['x'])
             self.assertEqual(res[i][Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
             self.assertEqual(res[i][Experiment.RESULTS]['result_mean'],
@@ -104,6 +106,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         res = (self._lab.results())[0]
 
+        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.RESULTS]['result_mean'],
                          numpy.mean(e.values()))
         self.assertEqual(res[Experiment.RESULTS]['result_variance'],
@@ -123,6 +126,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         res = (self._lab.results())[0]
         
+        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(len(res[Experiment.RESULTS].keys()), 3)
         self.assertIn('dummy_mean', res[Experiment.RESULTS].keys())
         self.assertEqual(res[Experiment.RESULTS]['dummy_mean'], 1)
@@ -146,6 +150,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         res = (self._lab.results())[0]
         
+        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REQUESTED_REPETITIONS], N)
         self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], e.ran())
         self.assertEqual(res[Experiment.RESULTS]['result_mean'],

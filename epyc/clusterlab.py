@@ -155,7 +155,7 @@ class ClusterLab(epyc.Lab):
             
                 # submit an experiment at each point in the parameter space to the cluster
                 view = self._client.load_balanced_view()
-                jobs = view.map_async((lambda p: e.runExperiment(p)), ps)
+                jobs = view.map_async((lambda p: e.set(p).run()), ps)
                 
                 # record the mesage ids of all the jobs as submitted but not yet completed
                 psjs = zip(ps, jobs.msg_ids)

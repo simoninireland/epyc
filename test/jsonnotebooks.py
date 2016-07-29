@@ -43,9 +43,9 @@ class JSONLabNotebookTests(unittest.TestCase):
         try:
             e = SampleExperiment()
             params1 = dict( a = 1, b = 2 )
-            rc1 = e.runExperiment(params1)
+            rc1 = e.set(params1).run()
             params2 = dict( a = 1, b = 3 )
-            rc2 = e.runExperiment(params2)
+            rc2 = e.set(params2).run()
 
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)
@@ -68,9 +68,9 @@ class JSONLabNotebookTests(unittest.TestCase):
         try:
             e = SampleExperiment()
             params1 = dict( a = 1, b = 2 )
-            rc1 = e.runExperiment(params1)
+            rc1 = e.set(params1).run()
             params2 = dict( a = 1, b = 3 )
-            rc2 = e.runExperiment(params2)
+            rc2 = e.set(params2).run()
 
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)
@@ -96,7 +96,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         try:
             e = SampleExperiment()
             params1 = dict( a = 1, b = 2 )
-            rc1 = e.runExperiment(params1)
+            rc1 = e.set(params1).run()
             
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)
@@ -118,7 +118,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         try:
             e = SampleExperiment()
             params1 = dict( a = 1, b = 2 )
-            rc1 = e.runExperiment(params1)
+            rc1 = e.set(params1).run()
             
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)
@@ -140,7 +140,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         try:
             e = SampleExperiment()
             params1 = dict( a = 1, b = 2 )
-            rc1 = e.runExperiment(params1)
+            rc1 = e.set(params1).run()
 
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)

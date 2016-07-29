@@ -36,7 +36,7 @@ class LabNotebookTests(unittest.TestCase):
 
         e = SampleExperiment()
         params = dict(a  = 1, b = 2)
-        rc = e.runExperiment(params)
+        rc = e.set(params).run()
 
         nb.addResult(rc)
 
@@ -56,7 +56,7 @@ class LabNotebookTests(unittest.TestCase):
 
         e = SampleExperiment()
         params = dict(a  = 1, b = 2)
-        rc = e.runExperiment(params)
+        rc = e.set(params).run()
 
         nb.addPendingResult(params, 1)
         self.assertEqual(nb.result(params), None)
@@ -90,13 +90,13 @@ class LabNotebookTests(unittest.TestCase):
         e = SampleExperiment()
         
         params1 = dict(a  = 1, b = 2)
-        rc1 = e.runExperiment(params1)
+        rc1 = e.set(params1).run()
 
         params2 = dict(a  = 10, b = 12)
-        rc2 = e.runExperiment(params2)
+        rc2 = e.set(params2).run()
 
         params3 = dict(a  = 45, b = 11)
-        rc3 = e.runExperiment(params3)
+        rc3 = e.set(params3).run()
 
         nb.addResult(rc1)
         self.assertEqual(nb.result(params1), rc1)
@@ -150,9 +150,9 @@ class LabNotebookTests(unittest.TestCase):
 
         e = SampleExperiment()
         params1 = dict(a  = 1, b = 2)
-        rc1 = e.runExperiment(params1)
+        rc1 = e.set(params1).run()
         params2 = dict(a  = 10, b = 12)
-        rc2 = e.runExperiment(params2)
+        rc2 = e.set(params2).run()
         params3 = dict(a  = 45, b = 11)
 
         nb.addResult(rc1)
@@ -174,9 +174,9 @@ class LabNotebookTests(unittest.TestCase):
 
         e = SampleExperiment()
         params1 = dict(a  = 1, b = 2)
-        rc1 = e.runExperiment(params1)
+        rc1 = e.set(params1).run()
         nb.addResult(rc1)
 
         with self.assertRaises(KeyError):
-            rc2 = e.runExperiment(params1)
+            rc2 = e.set(params1).run()
             nb.addResult(rc2)

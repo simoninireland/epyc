@@ -76,11 +76,13 @@ class Experiment:
     def set( self, params ):
         '''Set the parameters for the experiment.
 
-        params: the parameters'''
+        params: the parameters
+        returns: the experiment'''
         if self._parameters is not None:
             self.deconfigure()
         self._parameters = params
         self.configure(params)
+        return self
 
     def do( self, params ):
         '''Do the body of the experiment. This should be overridden
@@ -139,6 +141,8 @@ class Experiment:
             # set the success flag
             self._metadata[self.STATUS] = True
         except Exception as e:
+            print "Caught exception in experiment: {e}".format(e = e)
+            
             # decide on the cleanup actions that need doing
             if (doneSetupTime > 0) and (doneExperimentTime == 0):
                 # we did the setup and then failed in the experiment, so
