@@ -28,7 +28,7 @@ class SqliteLabNotebook(LabNotebook):
         dbfile: name of the database. By default creates an in-memory database
         create: if True, overwrite any existing database in the named file.
                 By default opens the database'''
-        LabNotebook.__init__(self, name)
+        super(SqlliteLabNotebook, self).__init__(name)
         
         self._dbfile = dbfile
         self._connection = None

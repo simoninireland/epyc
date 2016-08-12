@@ -15,7 +15,7 @@ class SampleExperiment0(Experiment):
     '''A base experiment that records the phases of the experiment.'''
     
     def __init__( self ):
-        Experiment.__init__(self)
+        super(SampleExperiment0, self).__init__()
         self._ps = []
         
     def setUp( self, params ):
@@ -28,8 +28,8 @@ class SampleExperiment0(Experiment):
         self._ps.append('do')
         return dict()
 
-    def report( self, res ):
-        ext = Experiment.report(self, res)
+    def report( self, params, meta, res ):
+        ext = Experiment.report(self, params, meta, res)
         ext[self.METADATA]['phases'] = self._ps
         return ext
 
@@ -170,8 +170,7 @@ class ExperimentTests(unittest.TestCase):
         e = SampleExperiment3()
         params = dict(a = 1, b = 2, c = 'hello world')
         e.set(params)
-        e.run()
-        res = e.results()
+        res = e.run()
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][Experiment.STATUS], e.success())
         self.assertIn('result', res[Experiment.RESULTS].keys())

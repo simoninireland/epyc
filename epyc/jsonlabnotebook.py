@@ -9,6 +9,23 @@ import epyc
 
 import os
 import json
+from datetime import datetime
+import dateutil.parser
+
+
+class MetadataEncoder(json.JSONEncoder):
+    '''Add support for encoding Python datetime objects within
+    JSON objects, using the standard ISO string representation.'''
+
+    def default( self, o ):
+        '''If o is a datetime object, convert it to an ISO string.
+
+        o: the field to serialise
+        returns: an ISO string if o is a datetime'''
+        if isinstance(o, datetime):
+            return o.isoformat()
+        else:
+            return super(MetadataEncoder, self).default(o)
 
 
 class JSONLabNotebook(epyc.LabNotebook):
@@ -23,7 +40,7 @@ class JSONLabNotebook(epyc.LabNotebook):
         name: JSON file to persist the notebook to
         create: if True, erase existing file (defaults to False)
         description: free text description of the notebook'''
-        epyc.LabNotebook.__init__(self, name, description)
+        super(epyc.JSONLabNotebook, self).__init__(name, description)
 
         # check for the file already existing
         if os.path.isfile(self.name()):
@@ -69,7 +86,33 @@ class JSONLabNotebook(epyc.LabNotebook):
                 self._description = j['description']
                 self._pending = dict(j['pending'])
                 self._results = j['results']
+
+                # perform any post-load patching
+                self.patch()
+
+    def _patchDatetimeMetadata( self, res, mk ):
+        '''Private method to atch an ISO datetime string to a datetime object
+        for metadata key mk.
+
+        res: results dict
+        mk: metadata key'''
+        t = res[epyc.Experiment.METADATA][mk]
+        res[epyc.Experiment.METADATA][mk] = dateutil.parser.parse(t)
         
+    def patch( self ):
+        '''Patch the results dict. The default processes the Experiment.START_TIME
+        and Experiment.END_TIME metadata fields back into Python datetime objects
+        from ISO strings. This isn't strictly necessary, but it makes notebook
+        data structure more Pythonic.'''
+
+        for k in self._results.keys():
+            ars = self._results[k]
+            for res in ars:
+                if isinstance(res, dict):
+                    # not a pending result, patch its timing metadata
+                    self._patchDatetimeMetadata(res, epyc.Experiment.START_TIME)
+                    self._patchDatetimeMetadata(res, epyc.Experiment.END_TIME)
+            
     def _save( self, fn ):
         '''Persist the notebook to the given file.
 
@@ -79,7 +122,8 @@ class JSONLabNotebook(epyc.LabNotebook):
         j = json.dumps({ "description": self.description(),
                          "pending": self._pending.items(),
                          "results": self._results },
-                       indent = 4)
+                       indent = 4,
+                       cls = MetadataEncoder)
         
         # write to file
         with open(fn, 'w') as f:

@@ -188,7 +188,6 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(nb.results()), 2)
         self.assertEqual(nb.pendingResults(), [])
 
-    
     def testCancellingAllPendingResults( self ):
         '''Test all results get cancelled properly.'''
         nb = LabNotebook()
@@ -217,6 +216,24 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(nb.pendingResultsFor(params1), [])
         self.assertEqual(nb.pendingResultsFor(params2), [])
         self.assertEqual(nb.pendingResults(), [])
+
+    def testAddResultList( self ):
+        '''Test adding several results at once.'''
+        nb = LabNotebook()
+
+        e = SampleExperiment()
+        
+        params1 = dict(a  = 1, b = 2)
+        rc1 = e.set(params1).run()
+        params2 = dict(a  = 10, b = 12)
+        rc2 = e.set(params2).run()
+        rc3 = e.set(params2).run()
+
+        nb.addResult([ rc1, rc2, rc3 ])
+        self.assertEqual(nb.latestResultsFor(params1), rc1)
+        self.assertItemsEqual(nb.resultsFor(params2), [ rc2, rc3 ])
+        self.assertEqual(nb.latestResultsFor(params2), rc3)
+        
         
     def testDataFrame( self ):
         '''Test creating a pandas DataFrame'''

@@ -24,156 +24,133 @@ class SampleExperiment(Experiment):
     
 class JSONLabNotebookTests(unittest.TestCase):
 
-    def testCreate( self ):
-        '''Test creation of empty notebook (which won't create file)'''
+    def setUp( self ):
+        '''Set up with a temporary file.'''
         tf = NamedTemporaryFile()
         tf.close()
-        fn = tf.name
+        self._fn = tf.name
+
+    def tearDown( self ):
+        '''Delete the temporary file.'''
+        try:
+            os.remove(self._fn)
+        except OSError:
+            pass
         
-        js = JSONLabNotebook(fn)
+    def testCreate( self ):
+        '''Test creation of empty notebook (which won't create file)'''
+        js = JSONLabNotebook(self._fn)
         self.assertTrue(js.isPersistent())
-        self.assertEqual(js.name(), fn)
+        self.assertEqual(js.name(), self._fn)
 
     def testCreateAndSave( self ):
         '''Test creation and saving of notebook'''
-        tf = NamedTemporaryFile()
-        tf.close()
-        fn = tf.name
-         
-        try:
-            e = SampleExperiment()
-            params1 = dict( a = 1, b = 2 )
-            rc1 = e.set(params1).run()
-            params2 = dict( a = 1, b = 3 )
-            rc2 = e.set(params2).run()
-
-            js = JSONLabNotebook(fn, description = "A test notebook")
-            js.addResult(rc1)
-            js.addPendingResult(params2, 2)
-            js.commit()
-
-            jsr = JSONLabNotebook(fn)
-            self.assertEqual(jsr.description(), "A test notebook")
-            self.assertEqual(jsr.pendingResults(), js.pendingResults())
-            self.assertEqual(jsr.results(), js.results())
-        finally:
-            try:
-                os.remove(fn)
-            except OSError:
-                pass
+        e = SampleExperiment()
+        params1 = dict( a = 1, b = 2 )
+        rc1 = e.set(params1).run()
+        params2 = dict( a = 1, b = 3 )
+        rc2 = e.set(params2).run()
+        
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.addPendingResult(params2, 2)
+        js.commit()
+        
+        jsr = JSONLabNotebook(self._fn)
+        self.assertEqual(jsr.description(), "A test notebook")
+        self.assertItemsEqual(jsr.pendingResults(), js.pendingResults())
+        self.assertItemsEqual(jsr.results(), js.results())
  
     def testCreateAndUpdate( self ):
         '''Test creation and updating of notebook'''
-        tf = NamedTemporaryFile()
-        tf.close()
-        fn = tf.name
+        e = SampleExperiment()
+        params1 = dict( a = 1, b = 2 )
+        rc1 = e.set(params1).run()
+        params2 = dict( a = 1, b = 3 )
+        rc2 = e.set(params2).run()
         
-        try:
-            e = SampleExperiment()
-            params1 = dict( a = 1, b = 2 )
-            rc1 = e.set(params1).run()
-            params2 = dict( a = 1, b = 3 )
-            rc2 = e.set(params2).run()
-
-            js = JSONLabNotebook(fn, description = "A test notebook")
-            js.addResult(rc1)
-            js.addPendingResult(params2, 2)
-            js.commit()
-
-            js.addResult(rc2, 2)
-            js.commit()
-
-            jsr = JSONLabNotebook(fn)
-            self.assertEqual(jsr.description(), "A test notebook")
-            self.assertEqual(len(jsr.pendingResults()), 0)
-            self.assertEqual(jsr.results(), js.results())
-        finally:
-            try:
-                os.remove(fn)
-            except OSError:
-                pass
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.addPendingResult(params2, 2)
+        js.commit()
+        
+        js.addResult(rc2, 2)
+        js.commit()
+        
+        jsr = JSONLabNotebook(self._fn)
+        self.assertEqual(jsr.description(), "A test notebook")
+        self.assertEqual(len(jsr.pendingResults()), 0)
+        self.assertItemsEqual(jsr.results(), js.results())
         
     def testCreateOverwrite( self ):
         '''Test the create flag'''
-        tf = NamedTemporaryFile()
-        tf.close()
-        fn = tf.name
-
-        try:
-            e = SampleExperiment()
-            params1 = dict( a = 1, b = 2 )
-            rc1 = e.set(params1).run()
-            
-            js = JSONLabNotebook(fn, description = "A test notebook")
-            js.addResult(rc1)
-            js.commit()
-            
-            jsr = JSONLabNotebook(fn, create = True, description = "Nothing to see")
-            self.assertEqual(jsr.description(), "Nothing to see")
-            self.assertEqual(len(jsr.results()), 0)
-            self.assertEqual(len(jsr.pendingResults()), 0)
-        finally:
-            try:
-                os.remove(fn)
-            except OSError:
-                pass
+        e = SampleExperiment()
+        params1 = dict( a = 1, b = 2 )
+        rc1 = e.set(params1).run()
+        
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.commit()
+        
+        jsr = JSONLabNotebook(self._fn, create = True, description = "Nothing to see")
+        self.assertEqual(jsr.description(), "Nothing to see")
+        self.assertEqual(len(jsr.results()), 0)
+        self.assertEqual(len(jsr.pendingResults()), 0)
         
     def testCreateNoOverwrite( self ):
         '''Test that the create flag being false doesn't overwrite'''
-        tf = NamedTemporaryFile()
-        tf.close()
-        fn = tf.name
+        e = SampleExperiment()
+        params1 = dict( a = 1, b = 2 )
+        rc1 = e.set(params1).run()
         
-        try:
-            e = SampleExperiment()
-            params1 = dict( a = 1, b = 2 )
-            rc1 = e.set(params1).run()
-            
-            js = JSONLabNotebook(fn, description = "A test notebook")
-            js.addResult(rc1)
-            js.commit()
-            
-            jsr = JSONLabNotebook(fn, description = "Nothing to see")
-            self.assertEqual(jsr.description(), "A test notebook")
-            self.assertEqual(jsr.results(), js.results())
-            self.assertEqual(len(jsr.pendingResults()), 0)
-        finally:
-            try:
-                os.remove(fn)
-            except OSError:
-                pass
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.commit()
+        
+        jsr = JSONLabNotebook(self._fn, description = "Nothing to see")
+        self.assertEqual(jsr.description(), "A test notebook")
+        self.assertItemsEqual(jsr.results(), js.results())
+        self.assertEqual(len(jsr.pendingResults()), 0)
         
     def testReadEmpty( self ):
         '''Test we can correctly load an empty file, resulting in an empty notebook''' 
-        tf = NamedTemporaryFile()
-        tf.close()
-        fn = tf.name
+        e = SampleExperiment()
+        params1 = dict( a = 1, b = 2 )
+        rc1 = e.set(params1).run()
         
-        try:
-            e = SampleExperiment()
-            params1 = dict( a = 1, b = 2 )
-            rc1 = e.set(params1).run()
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.commit()
+        
+        js2 = JSONLabNotebook(self._fn, create = True,
+                              description = "Another test notebook")
+        
+        jsr = JSONLabNotebook(self._fn)
+        self.assertEqual(jsr.description(), None)
+        self.assertEqual(len(jsr.results()), 0)
+        self.assertEqual(len(jsr.pendingResults()), 0)
+        
+        js2.commit()
+        jsr = JSONLabNotebook(self._fn)
+        self.assertEqual(jsr.description(), "Another test notebook")
+        self.assertEqual(len(jsr.results()), 0)
+        self.assertEqual(len(jsr.pendingResults()), 0)            
 
-            js = JSONLabNotebook(fn, description = "A test notebook")
-            js.addResult(rc1)
-            js.commit()
-
-            js2 = JSONLabNotebook(fn, create = True, description = "Another test notebook")
-
-            jsr = JSONLabNotebook(fn)
-            self.assertEqual(jsr.description(), None)
-            self.assertEqual(len(jsr.results()), 0)
-            self.assertEqual(len(jsr.pendingResults()), 0)
-
-            js2.commit()
-            jsr = JSONLabNotebook(fn)
-            self.assertEqual(jsr.description(), "Another test notebook")
-            self.assertEqual(len(jsr.results()), 0)
-            self.assertEqual(len(jsr.pendingResults()), 0)            
-        finally:
-            try:
-                os.remove(fn)
-            except OSError:
-                pass
-            
+    def testTimePatching( self ):
+        '''Check that the timing metadata is persisted correctly.'''
+        e = SampleExperiment()
+        params1 = dict( a = 1, b = 2 )
+        rc1 = e.set(params1).run()
+        
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.commit()
+        
+        js2 = JSONLabNotebook(self._fn)
+        rc2 = js2.latestResultsFor(params1)
+        self.assertEqual(rc1[Experiment.METADATA][Experiment.START_TIME],
+                         rc2[Experiment.METADATA][Experiment.START_TIME])
+        self.assertEqual(rc1[Experiment.METADATA][Experiment.END_TIME],
+                         rc2[Experiment.METADATA][Experiment.END_TIME])
+                
             

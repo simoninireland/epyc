@@ -10,7 +10,7 @@ import epyc
 import collections
 
 
-class Lab:
+class Lab(object):
     '''A laboratory for computational experiments. The lab conducts an
     experiment at different points in a multi-dimensional parameter space.
     The default performs all the experiments locally; sub-classes exist
@@ -38,7 +38,7 @@ class Lab:
         k: parameter name
         r: parameter range'''
 
-        # if ramnge is a single value, make it a list
+        # if range is a single value, make it a list
         if not isinstance(r, collections.Iterable):
             r = [ r ]
         self._parameters[k] = r

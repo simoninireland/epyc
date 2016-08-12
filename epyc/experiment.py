@@ -5,10 +5,10 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
-import time
+from datetime import datetime, timedelta
 
 
-class Experiment:
+class Experiment(object):
     '''Base class for experiments conducted in a lab.
 
     From the developer's perspective, an experiment has five methods
@@ -24,7 +24,8 @@ class Experiment:
     has public methods set() and run(). The former sets the parameters
     for the experiment; the latter runs the experiment. producing a set
     of results that include direct experimental results and metadata on
-    how the experiment ran.
+    how the experiment ran. A single run may produce a list of result
+    dicts if desired, each filled-in with the correct metadata.
 
     Results can be accessed by the results() method. The experiment also
     exposes an indexing interface to direct experimental results.'''
@@ -35,12 +36,12 @@ class Experiment:
     RESULTS = 'results'                   # results generated at that point
 
     # Common metadata elements reported
-    START_TIME = 'start_time'             # experiment started
-    END_TIME = 'end_time'                 # experiment ended
-    ELAPSED_TIME = 'elapsed_time'         # time experiment took overall
-    SETUP_TIME = 'setup_time'             # time spent on setup
-    EXPERIMENT_TIME = 'experiment_time'   # time spent on experiment itself
-    TEARDOWN_TIME = 'teardown_time'       # time spent on teardown
+    START_TIME = 'start_time'             # datetime experiment started
+    END_TIME = 'end_time'                 # datetime experiment ended
+    ELAPSED_TIME = 'elapsed_time'         # time experiment took overall in ms
+    SETUP_TIME = 'setup_time'             # time spent on setup in ms
+    EXPERIMENT_TIME = 'experiment_time'   # time spent on experiment itself in ms
+    TEARDOWN_TIME = 'teardown_time'       # time spent on teardown in ms
     STATUS = 'status'                     # True if experiment completed successfully
     EXCEPTION = 'exception'               # exception thrown if experiment failed
 
@@ -92,18 +93,20 @@ class Experiment:
         returns: a dict of results'''
         raise NotYetImplementedError('do()')
 
-    def report( self, res ):
+    def report( self, params, meta, res ):
         '''Return a dict of results. The default returns a dict with
         results keyed by self.RESULTS, the data point in the parameter space
         keyed by self.PARAMETERS, and timing and other metadata keyed
         by self.METADATA. Overriding this method can be used to record extra
         values, but be sure to call the base method as well.
  
+        params: the parameters we ran under
+        meta: the metadata for this run
         res: the direct experimental results from do()
         returns: a dict of extended results'''
         rc = dict()
-        rc[self.METADATA] = self._metadata.copy()
-        rc[self.PARAMETERS] = self._parameters.copy()
+        rc[self.PARAMETERS] = params.copy()
+        rc[self.METADATA] = meta.copy()
         rc[self.RESULTS] = res
         return rc
 
@@ -120,24 +123,24 @@ class Experiment:
         self._metadata = dict()
         self._results = None
         res = None
-        doneSetupTime = doneExperimentTime = doneTeardownTime = 0
+        doneSetupTime = doneExperimentTime = doneTeardownTime = None
         try:
             # do the phases in order, recording the wallclock times at each phase
-            startTime = time.clock()
+            startTime = datetime.now()
             self.setUp(params)
-            doneSetupTime = time.clock()
+            doneSetupTime = datetime.now()
             res = self.do(params)
-            doneExperimentTime = time.clock() 
+            doneExperimentTime = datetime.now() 
             self.tearDown()
-            doneTeardownTime = time.clock() 
+            doneTeardownTime = datetime.now() 
 
             # record the various timings
             self._metadata[self.START_TIME] = startTime
             self._metadata[self.END_TIME] = doneTeardownTime
-            self._metadata[self.ELAPSED_TIME] = doneTeardownTime - startTime
-            self._metadata[self.SETUP_TIME] = doneSetupTime - startTime
-            self._metadata[self.EXPERIMENT_TIME] = doneExperimentTime - doneSetupTime
-            self._metadata[self.TEARDOWN_TIME] = doneTeardownTime - doneExperimentTime
+            self._metadata[self.ELAPSED_TIME] = (doneTeardownTime - startTime).total_seconds() / 1000.0
+            self._metadata[self.SETUP_TIME] = (doneSetupTime - startTime).total_seconds() / 1000.0
+            self._metadata[self.EXPERIMENT_TIME] = (doneExperimentTime - doneSetupTime).total_seconds() / 1000.0
+            self._metadata[self.TEARDOWN_TIME] = (doneTeardownTime - doneExperimentTime).total_seconds() / 1000.0
 
             # set the success flag
             self._metadata[self.STATUS] = True
@@ -145,7 +148,7 @@ class Experiment:
             print "Caught exception in experiment: {e}".format(e = e)
             
             # decide on the cleanup actions that need doing
-            if (doneSetupTime > 0) and (doneExperimentTime == 0):
+            if (doneSetupTime is not None) and (doneExperimentTime is None):
                 # we did the setup and then failed in the experiment, so
                 # we need to do the teardown
                 try:
@@ -159,17 +162,11 @@ class Experiment:
             self._metadata[self.EXCEPTION] = e
 
         # report the results
-        if res is None:
-            res = dict()
-        self._results  = self.report(res)
-        return self._results 
-
-    def results( self ):
-        '''Return the results of the experiment.
-
-        returns: a dict of results'''
-        return self._results
-
+        self._results = res
+        return self.report(self.parameters(),
+                           self.metadata(),
+                           res)
+    
     def __getitem__( self, k ):
         '''Return the given element of the experimental results. This only
         gives access to direct experimental results, not to parameters
@@ -180,17 +177,42 @@ class Experiment:
         if self._results is None:
             raise Exception("No results set")
         else:
-            return self._results[self.RESULTS][k]
+            return (self.results())[k]
     
     def success( self ):
-        '''Test whether the experiment has been run successfully.
+        '''Test whether the experiment has been run successfully. This will
+        be False if the experiment hasn't been run, or if it's been run and
+        failed (in which case the exception will be stored in the metadata).
 
         returns: True if the experiment has been run successfully'''
-        if self.STATUS in self._metadata:
-            return self._metadata[self.STATUS]
+        if self.STATUS in self.metadata().keys():
+            return (self.metadata())[self.STATUS]
         else:
             return False
-        
+
+    def results( self ):
+        '''Return the experimental results from our last run. This will
+        be None if we haven't been run, or if we ran and failed.
+
+        return: the experimental results or None'''
+        return self._results
+    
+    def parameters( self ):
+        '''Return the current experimental parameters, which will
+        be None if none have been given by a call to set()
+
+        returns: the parameters,'''
+        return self._parameters
+
+    def metadata( self ):
+        '''Return the metadata we collected at out last execution, which
+        will be None if we've not been executed and an empty dict if
+        we're mid-run (i.e., if this method is called from do() for
+        whatever reason).
+
+        returns: the metadata'''
+        return self._metadata
+    
     
         
     

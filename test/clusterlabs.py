@@ -22,8 +22,11 @@ class SampleExperiment(Experiment):
         for k in param:
             total = total + param[k]
         return dict(total = total)
-            
 
+    
+# use the existence of an ipcontroller-client.json file in the IPython
+# default profile's directory as a proxy for there being a cluster running
+# that we can use for our tests
 default_profile_dir = subprocess.check_output('ipython locate profile default'.split()).strip('\n')
 connection_file = default_profile_dir + '/security/ipcontroller-client.json'
 @unittest.skipUnless(os.path.isfile(connection_file),
@@ -49,6 +52,11 @@ class ClusterLabTests(unittest.TestCase):
         sp = [ v for v in (l == numpy.arange(0, n)) if v ]
         self.assertTrue(len(sp) <= (n * 0.005))
 
+    def testEmpty( self ):
+        '''Test that things work for an empty lab.'''
+        self.assertEqual(self._lab.readyFraction(), 0)
+        self.assertEqual(self._lab.results(), [])
+        
     def testRunExprimentSync( self ):
         '''Test running an experiment and grabbing all the results by waiting'''
         n = 100

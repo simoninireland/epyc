@@ -9,7 +9,7 @@ from epyc import *
 from pandas import DataFrame
 
 
-class LabNotebook:
+class LabNotebook(object):
     '''A "laboratory notebook" recording the results of a set of
     experiments conducted across a parameter space. The intention is
     to record all the metadata necessary to re-conduct the experiment.
@@ -77,39 +77,55 @@ class LabNotebook:
             k = k + "{p}=[[{v}]];".format(p = p, v = v)
         return k
         
-    def addResult( self, result, jobid = None ):
+    def addResult( self, results, jobids = [] ):
         '''Add a result. This should be a dict as returned from an instance of Experiment,
         that contains metadata, parameters, and result. Results cannot be overridden, as
         notebooks are immutable: adding more results simply adds another result set.
+
+        If results is a list of result dicts, they are added in order: the last result in
+        the list is assumed to be the latest.
+
         If the jobid is present, this result resolves the corresponding pending result.
+        As with result, jobid can be a list. (The two lists need not be the same
+        length, to allow for experiments that return lists of result dicts.)
 
-        result: the result
-        jobid: the pending result job id (efaults to None)'''
-        k = self._parametersAsIndex(result[Experiment.PARAMETERS])
+        result: the results (or a list of results)
+        jobid: the pending result job id(s) (defaults to no jobs)'''
 
-        # retrieve or create the result list
-        if k in self._results.keys():
-            rs = self._results[k]
-        else:
-            rs = []
-            self._results[k] = rs
+        # make single parameters into lists where appropriate 
+        if not isinstance(results, list):
+            results = [ results ]
+        if not isinstance(jobids, list):
+            jobids = [ jobids ]
 
-        # store the result
-        rs.insert(0, result)
+        # add each result
+        for result in results:
+            k = self._parametersAsIndex(result[Experiment.PARAMETERS])
 
-        # if there is a job id provided, cancel the corresponding pending job
-        if jobid is not None:
-            if (jobid in rs) and (jobid in self._pending.keys()):
-                # delete job id from current results
-                j = rs.index(jobid)
-                del rs[j]
-
-                # ...and from the set of pending results
-                del self._pending[jobid]
+            # retrieve or create the result list
+            if k in self._results.keys():
+                rs = self._results[k]
             else:
-                # we've screwed-up the internal data structures
-                raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
-                                                                                     ps = k))
+                rs = []
+                self._results[k] = rs
+
+            # store the result
+            rs.insert(0, result)
+
+        # if there is are job ids provided, cancel the corresponding pending jobs
+        if jobids is not []:
+            for jobid in jobids:
+                if (jobid in rs) and (jobid in self._pending.keys()):
+                    # delete job id from current results
+                    j = rs.index(jobid)
+                    del rs[j]
+                    
+                    # ...and from the set of pending results
+                    del self._pending[jobid]
+                else:
+                    # we've screwed-up the internal data structures
+                    raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
+                                                                                         ps = k))
         
     def addPendingResult( self, ps, jobid ):
         '''Add a "pending" result that we expect to get results for.

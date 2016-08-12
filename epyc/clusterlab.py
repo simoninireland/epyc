@@ -48,7 +48,7 @@ class ClusterLab(epyc.Lab):
            paramiko: True to use paramiko for ssh (defaults to False)
            timeout: timeout in seconds for ssh connection (defaults to 10s)
            cluster_id: string added to runtime files to prevent collisions'''
-        epyc.Lab.__init__(self, notebook)
+        super(epyc.ClusterLab, self).__init__(notebook)
         self._robust = robust
         
         # record all the connection arguments for later
@@ -230,8 +230,11 @@ class ClusterLab(epyc.Lab):
         between 0 and 1. This does not update the results fetched from the cluster.
 
         returns: the fraction of available results'''
-        return ((self._availableResults() + 0.0) / (self.notebook().numberOfResults() +
-                                                    self.notebook().numberOfPendingResults()))
+        tr = self.notebook().numberOfResults() + self.notebook().numberOfPendingResults()
+        if tr == 0:
+            return 0
+        else:
+            return (self._availableResults() + 0.0) / tr
     
     def readyFraction( self ):
         '''Test what fraction of results are available. This will change over
