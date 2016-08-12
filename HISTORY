@@ -1,3 +1,18 @@
+Version 0.4.1 2016-08-12
+
+   - Changed notebooks to keep lists of results for each point in
+     their parameter space
+   - Improved handling of pending results
+   - Allowed addition of lists of results, and experiments that return
+     lists of results
+   - Made all the classes "new style", based on object
+   - Changed Experiment metadata to use datetime objects
+   - Added Python datetime <-> ISO datetime string handling to JSON
+     notebooks
+   - Improved notebook persistence tests
+   - Refactored repeated experiments to separate repetition and
+     summarisation
+
 Version 0.3.1 2016-07-29
 
    - Made parameter spaces of a single point work properly

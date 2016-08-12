@@ -5,20 +5,17 @@ Basic infrastructure
 --------------------
 
    - Refactor SQL notebooks into structure and driver
-   - Any obvious additional experiment combinators?
    - Convert JSON notebooks to use JSON-LD
    
 
 Cluster functions
 -----------------
 
-   - Check handling of errors: are we masking too manye exceptions?
+   - Check handling of errors: are we masking too many exceptions?
    
 
 Testing
 -------
-
-   - Add test of notebook persistence, saving and coming back later
 
 
 Documentation
