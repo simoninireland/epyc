@@ -102,8 +102,8 @@ class Experiment:
         res: the direct experimental results from do()
         returns: a dict of extended results'''
         rc = dict()
-        rc[self.METADATA] = self._metadata
-        rc[self.PARAMETERS] = self._parameters
+        rc[self.METADATA] = self._metadata.copy()
+        rc[self.PARAMETERS] = self._parameters.copy()
         rc[self.RESULTS] = res
         return rc
 
@@ -117,6 +117,7 @@ class Experiment:
 
         # perform the experiment protocol
         params = self._parameters
+        self._metadata = dict()
         self._results = None
         res = None
         doneSetupTime = doneExperimentTime = doneTeardownTime = 0
@@ -189,8 +190,7 @@ class Experiment:
             return self._metadata[self.STATUS]
         else:
             return False
-    
-
+        
     
         
     

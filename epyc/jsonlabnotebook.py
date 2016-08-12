@@ -67,7 +67,7 @@ class JSONLabNotebook(epyc.LabNotebook):
                 # parse back into appropriate variables
                 j = json.loads(s)
                 self._description = j['description']
-                self._pending = j['pending']
+                self._pending = dict(j['pending'])
                 self._results = j['results']
         
     def _save( self, fn ):
@@ -77,7 +77,7 @@ class JSONLabNotebook(epyc.LabNotebook):
 
         # create JSON object
         j = json.dumps({ "description": self.description(),
-                         "pending": self._pending,
+                         "pending": self._pending.items(),
                          "results": self._results },
                        indent = 4)
         

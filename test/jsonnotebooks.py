@@ -39,7 +39,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         tf = NamedTemporaryFile()
         tf.close()
         fn = tf.name
-        
+         
         try:
             e = SampleExperiment()
             params1 = dict( a = 1, b = 2 )
@@ -49,7 +49,7 @@ class JSONLabNotebookTests(unittest.TestCase):
 
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)
-            js.addPendingResult(params2)
+            js.addPendingResult(params2, 2)
             js.commit()
 
             jsr = JSONLabNotebook(fn)
@@ -57,7 +57,10 @@ class JSONLabNotebookTests(unittest.TestCase):
             self.assertEqual(jsr.pendingResults(), js.pendingResults())
             self.assertEqual(jsr.results(), js.results())
         finally:
-            os.remove(fn)
+            try:
+                os.remove(fn)
+            except OSError:
+                pass
  
     def testCreateAndUpdate( self ):
         '''Test creation and updating of notebook'''
@@ -74,10 +77,10 @@ class JSONLabNotebookTests(unittest.TestCase):
 
             js = JSONLabNotebook(fn, description = "A test notebook")
             js.addResult(rc1)
-            js.addPendingResult(params2)
+            js.addPendingResult(params2, 2)
             js.commit()
 
-            js.addResult(rc2)
+            js.addResult(rc2, 2)
             js.commit()
 
             jsr = JSONLabNotebook(fn)
@@ -85,7 +88,10 @@ class JSONLabNotebookTests(unittest.TestCase):
             self.assertEqual(len(jsr.pendingResults()), 0)
             self.assertEqual(jsr.results(), js.results())
         finally:
-            os.remove(fn)
+            try:
+                os.remove(fn)
+            except OSError:
+                pass
         
     def testCreateOverwrite( self ):
         '''Test the create flag'''
@@ -107,7 +113,10 @@ class JSONLabNotebookTests(unittest.TestCase):
             self.assertEqual(len(jsr.results()), 0)
             self.assertEqual(len(jsr.pendingResults()), 0)
         finally:
-            os.remove(fn)
+            try:
+                os.remove(fn)
+            except OSError:
+                pass
         
     def testCreateNoOverwrite( self ):
         '''Test that the create flag being false doesn't overwrite'''
@@ -129,7 +138,10 @@ class JSONLabNotebookTests(unittest.TestCase):
             self.assertEqual(jsr.results(), js.results())
             self.assertEqual(len(jsr.pendingResults()), 0)
         finally:
-            os.remove(fn)
+            try:
+                os.remove(fn)
+            except OSError:
+                pass
         
     def testReadEmpty( self ):
         '''Test we can correctly load an empty file, resulting in an empty notebook''' 
@@ -159,6 +171,9 @@ class JSONLabNotebookTests(unittest.TestCase):
             self.assertEqual(len(jsr.results()), 0)
             self.assertEqual(len(jsr.pendingResults()), 0)            
         finally:
-            os.remove(fn)
+            try:
+                os.remove(fn)
+            except OSError:
+                pass
             
             

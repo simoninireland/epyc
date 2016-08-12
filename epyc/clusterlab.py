@@ -186,8 +186,9 @@ class ClusterLab(epyc.Lab):
                                                                   # into a single value
                         n = n + 1
 
-                        # update the result in the notebook
-                        nb.addResult(r)
+                        # update the result in the notebook, cancelling
+                        # the corresponding pending job
+                        nb.addResult(r, j)
                 except Exception as x:
                     if self._robust:
                         # we're running robustly, so elide the exception 
@@ -222,14 +223,15 @@ class ClusterLab(epyc.Lab):
         This does not update the results fetched from the cluster.
 
         returns: the number of available results'''
-        return len(self.notebook())
+        return self.notebook().numberOfResults()
 
     def _availableResultsFraction( self ):
         '''Private method to return the fraction of results available, as a real number
         between 0 and 1. This does not update the results fetched from the cluster.
 
         returns: the fraction of available results'''
-        return ((self._availableResults() + 0.0) / self.notebook().parameterSpaceSize())
+        return ((self._availableResults() + 0.0) / (self.notebook().numberOfResults() +
+                                                    self.notebook().numberOfPendingResults()))
     
     def readyFraction( self ):
         '''Test what fraction of results are available. This will change over
