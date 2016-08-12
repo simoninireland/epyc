@@ -27,7 +27,7 @@ class SummaryExperiment(epyc.Experiment):
 
     # Additional metadata
     UNDERLYING_RESULTS = 'repetitions'                         # repetitions summarised
-    UNDERLYING_SUCCESSFUL_RESULTS = 'successful-repetitions'   # repetitions included
+    UNDERLYING_SUCCESSFUL_RESULTS = 'successful_repetitions'   # repetitions included
                                                                # in the summary
 
     # Prefix and suffix tags attached to summarised result and metadata values

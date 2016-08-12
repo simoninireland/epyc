@@ -191,6 +191,15 @@ class Experiment(object):
             return False
 
     def results( self ):
+        '''Return a complete results dict. Only really makes sense for
+        recently-executed experimental runs.
+
+        return: the results dict'''
+        return self.report(self.parameters(),
+                           self.metadata(),
+                           self.experimentalResults())
+
+    def experimentalResults( self ):
         '''Return the experimental results from our last run. This will
         be None if we haven't been run, or if we ran and failed.
 
