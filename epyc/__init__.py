@@ -7,6 +7,7 @@
 
 from .experiment import Experiment
 from .repeatedexperiment import RepeatedExperiment
+from .summaryexperiment import SummaryExperiment
 
 from .lab import Lab
 from .clusterlab import ClusterLab

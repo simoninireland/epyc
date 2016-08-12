@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.3.1
+VERSION = 0.4.1
 
 # ----- Sources -----
 
@@ -16,6 +16,7 @@ SOURCES_CODE = \
 	epyc/__init__.py \
 	epyc/experiment.py \
 	epyc/repeatedexperiment.py \
+	epyc/summaryexperiment.py \
 	epyc/lab.py \
 	epyc/clusterlab.py \
 	epyc/labnotebook.py \
@@ -25,6 +26,7 @@ SOURCES_TESTS = \
 	test/__main__.py \
 	test/experiments.py \
 	test/repeatedexperiments.py \
+	test/summaryexperiments.py \
 	test/labs.py \
 	test/clusterlabs.py \
 	test/notebooks.py \
