@@ -18,14 +18,18 @@ class MetadataEncoder(json.JSONEncoder):
     JSON objects, using the standard ISO string representation.'''
 
     def default( self, o ):
-        '''If o is a datetime object, convert it to an ISO string.
+        '''If o is a datetime object, convert it to an ISO string. If it is an
+        exception, convert it to a string.
 
         o: the field to serialise
         returns: an ISO string if o is a datetime'''
         if isinstance(o, datetime):
             return o.isoformat()
         else:
-            return super(MetadataEncoder, self).default(o)
+            if isinstance(o, Exception):
+                return str(o)
+            else:
+                return super(MetadataEncoder, self).default(o)
 
 
 class JSONLabNotebook(epyc.LabNotebook):
@@ -108,8 +112,8 @@ class JSONLabNotebook(epyc.LabNotebook):
         for k in self._results.keys():
             ars = self._results[k]
             for res in ars:
-                if isinstance(res, dict):
-                    # not a pending result, patch its timing metadata
+                if isinstance(res, dict) and res[epyc.Experiment.METADATA][epyc.Experiment.STATUS]:
+                    # a successful, non-pending result, patch its timing metadata
                     self._patchDatetimeMetadata(res, epyc.Experiment.START_TIME)
                     self._patchDatetimeMetadata(res, epyc.Experiment.END_TIME)
             

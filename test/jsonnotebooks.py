@@ -21,6 +21,12 @@ class SampleExperiment(Experiment):
             total = total + param[k]
         return dict(total = total)
 
+class SampleExperiment1(Experiment):
+    '''An experiment that fails.'''
+    
+    def do( self, param ):
+        raise Exception('A (deliberate) failure')
+
     
 class JSONLabNotebookTests(unittest.TestCase):
 
@@ -153,4 +159,18 @@ class JSONLabNotebookTests(unittest.TestCase):
         self.assertEqual(rc1[Experiment.METADATA][Experiment.END_TIME],
                          rc2[Experiment.METADATA][Experiment.END_TIME])
                 
-            
+
+    def testPersistingException( self ):
+        '''Test we persist exceptions as strings.'''
+        e = SampleExperiment1()
+        params1 = dict(a = 1)
+        rc1 = e.set(params1).run()
+        
+        js = JSONLabNotebook(self._fn, description = "A test notebook")
+        js.addResult(rc1)
+        js.commit()
+        
+        js2 = JSONLabNotebook(self._fn)
+        rc2 = js2.latestResultsFor(params1)
+        self.assertFalse(rc2[Experiment.METADATA][Experiment.STATUS])
+        self.assertTrue(isinstance(rc2[Experiment.METADATA][Experiment.EXCEPTION], basestring))
