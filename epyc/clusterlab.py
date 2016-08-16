@@ -174,37 +174,40 @@ class ClusterLab(epyc.Lab):
         # sd: this may not be the most efficient way: may be better to
         # work out the ready jobs and then grab them all in one network transaction
         nb = self.notebook()
-        n = 0
-        try:
-            self.open()
-            for j in nb.pendingResults():
-                try:
-                    if self._client.get_result(j).ready():
-                        # result is ready, grab it
-                        r = (self._client.get_result(j).get())[0] # wrangle the list
-                                                                  # that gets returned
-                                                                  # into a single value
-                        n = n + 1
 
-                        # update the result in the notebook, cancelling
-                        # the corresponding pending job
-                        nb.addResult(r, j)
-                except Exception as x:
-                    if self._robust:
-                        # we're running robustly, so elide the exception 
-                        # (there seems to sometimes be a race condition
-                        # the makes retrieval fail, but succeed later)
-                        #print "Job id {id} inaccessible, will try again".format(id = j)
-                        pass
-                    else:
-                        # we're not running robustly, pass on the exception
-                        raise x
-        finally:
-            # whatever happens, commit changes to the notebook
-            # and close the connection to the cluster 
-            self.close()
-            if n > 0:
-                nb.commit()
+        n = 0
+        if nb.numberOfPendingResults() > 0:
+            # we have results to get, so query each from the cluster
+            try:
+                self.open()
+                for j in nb.pendingResults():
+                    try:
+                        if self._client.get_result(j).ready():
+                            # result is ready, grab it
+                            r = (self._client.get_result(j).get())[0] # wrangle the list
+                                                                      # that gets returned
+                                                                      # into a single value
+                            n = n + 1
+
+                            # update the result in the notebook, cancelling
+                            # the corresponding pending job
+                            nb.addResult(r, j)
+                    except Exception as x:
+                        if self._robust:
+                            # we're running robustly, so elide the exception 
+                            # (there seems to sometimes be a race condition
+                            # the makes retrieval fail, but succeed later)
+                            #print "Job id {id} inaccessible, will try again".format(id = j)
+                            pass
+                        else:
+                            # we're not running robustly, pass on the exception
+                            raise x
+            finally:
+                # whatever happens, commit changes to the notebook
+                # and close the connection to the cluster 
+                self.close()
+                if n > 0:
+                    nb.commit()
         return n
                 
     def results( self ):
