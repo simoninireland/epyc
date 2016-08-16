@@ -177,7 +177,7 @@ class Experiment(object):
         if self._results is None:
             raise Exception("No results set")
         else:
-            return (self.results())[k]
+            return (self.experimentalResults())[k]
     
     def success( self ):
         '''Test whether the experiment has been run successfully. This will
