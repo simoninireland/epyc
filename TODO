@@ -7,17 +7,6 @@ Basic infrastructure
    - Refactor SQL notebooks into structure and driver
    - Convert JSON notebooks to use JSON-LD
    
-
-Cluster functions
------------------
-
-   - Check handling of errors: are we masking too many exceptions?
-   
-
-Testing
--------
-
-
 Documentation
 -------------
 

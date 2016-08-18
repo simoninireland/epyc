@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.4.1
+VERSION = 0.5.1
 
 # ----- Sources -----
 
