@@ -11,7 +11,7 @@ import numpy
 import pickle
 import dill
 
-from ipyparallel import Client
+from ipyparallel import Client, RemoteError
 
 
 class ClusterLab(epyc.Lab):
@@ -170,14 +170,14 @@ class ClusterLab(epyc.Lab):
         '''Update the jobs record with any newly-completed jobs.
 
         returns: the number of jobs completed at this call'''
-
-        # sd: this may not be the most efficient way: may be better to
-        # work out the ready jobs and then grab them all in one network transaction
         nb = self.notebook()
 
+        # look for pending results if we're waiting for any
         n = 0
         if nb.numberOfPendingResults() > 0:
             # we have results to get, so query each from the cluster
+            # sd: this may not be the most efficient way: may be better to
+            # work out the ready jobs and then grab them all in one network transaction
             try:
                 self.open()
                 for j in nb.pendingResults():
@@ -192,16 +192,20 @@ class ClusterLab(epyc.Lab):
                             # update the result in the notebook, cancelling
                             # the corresponding pending job
                             nb.addResult(r, j)
-                    except Exception as x:
-                        if self._robust:
-                            # we're running robustly, so elide the exception 
+                    except RemoteError as re:
+                        # conduct a deep inspection of the exception using the
+                        # inappropriately complicated construction ipyparallel forces on us
+                        if (re.ename == 'KeyError') and (j in re.evalue) and self._robust:
+                            # we're running robustly, so elide the key error
+                            # exceptions that come from unrecognised message ids
                             # (there seems to sometimes be a race condition
                             # the makes retrieval fail, but succeed later)
-                            #print "Job id {id} inaccessible, will try again".format(id = j)
+                            #print "Pending result id {id} inaccessible, will try again".format(id = j)
                             pass
                         else:
                             # we're not running robustly, pass on the exception
-                            raise x
+                            raise re
+                    # other exceptions are propagated regardless of our robustness
             finally:
                 # whatever happens, commit changes to the notebook
                 # and close the connection to the cluster 

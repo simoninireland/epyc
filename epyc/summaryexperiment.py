@@ -15,12 +15,17 @@ class SummaryExperiment(epyc.Experiment):
     sense for experiments that return lists of results, such as those conducted
     using RepeatedExperiment.
 
-    When run, a summary experiment summarises the results of the
+    When run, a summary experiment summarises the experimental
     results, creating a new set of results that include the mean and
     variance for each result that the underyling experiments
     generated. (You can also select which results to summarise.) The
     raw results are discarded. The new results have the names of the
     raw results, suffixed by "_mean" and "_variance".
+
+    The summarisation obviously only works on result keys coming from the
+    underlying experiments that are numeric. The default behaviour is to try to
+    summarise all keys: you can restrict this by providing a list of keys to the
+    constructor in the summarised_results keyword argument.
 
     The summary calculations only include those experimental runs that succeeded,
     that is that have their status set to True. Failed runs are ignored.'''
@@ -82,10 +87,15 @@ class SummaryExperiment(epyc.Experiment):
             summary = dict()
 
             # work out the fields to summarise
+            allKeys = results[0][epyc.Experiment.RESULTS].keys()
             ks = self._summarised_results
             if ks is None:
-                ks = results[0][epyc.Experiment.RESULTS].keys()
-
+                # if we don't restrict, summarise all keys
+                ks = allKeys
+            else:
+                # protect against a key that's not present
+                ks = [ k for k in ks if k in allKeys ]
+                
             # add the summary statistics
             for k in ks:
                 vs = [ res[epyc.Experiment.RESULTS][k] for res in results ]

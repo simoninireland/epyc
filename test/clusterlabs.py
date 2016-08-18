@@ -12,6 +12,7 @@ import numpy
 import time
 import os
 import subprocess
+from tempfile import NamedTemporaryFile
 
 
 class SampleExperiment(Experiment):
@@ -22,6 +23,17 @@ class SampleExperiment(Experiment):
         for k in param:
             total = total + param[k]
         return dict(total = total)
+
+class SampleExperiment1(Experiment):
+    '''A more exercising experiment.'''
+
+    def do( self, param ):
+        total = 0
+        for k in param:
+            total = total + param[k]
+        return dict(total = total,
+                    nestedArray = [ 1, 2, 3 ],
+                    nestedDict = dict(a = 1, b = 'two'))
 
     
 # use the existence of an ipcontroller-client.json file in the IPython
@@ -104,3 +116,32 @@ class ClusterLabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
 
+    def testJSON( self ):
+        '''Test that we can persist repeated results in JSON format.'''
+
+        # reset the lab we're using to use a JSON notebook
+        tf = NamedTemporaryFile()
+        tf.close()
+        self._lab = ClusterLab(notebook = JSONLabNotebook(tf.name, create = True))
+        
+        repetitions = 5
+        self._lab['a'] = [ 1, 2, 3 ]
+        try:
+            self._lab.runExperiment(SummaryExperiment(RepeatedExperiment(SampleExperiment1(),
+                                                                         repetitions),
+                                                      summarised_results = [ 'total', 'nestedArray' ]))
+                                    
+            while not self._lab.ready():
+                print "..."
+                time.sleep(5)
+            res = self._lab.results()
+
+            # getting here is enough to exercise the persistence regime
+        finally:
+            try:
+                os.remove(tf.name)
+            except OSError:
+                pass
+
+        
+        
