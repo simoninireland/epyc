@@ -31,6 +31,18 @@ class Lab(object):
             self._notebook = notebook
         self._parameters = dict()
 
+    def open( self ):
+        '''Open a lab for business. Sub-classes might insist the they are
+        opened and closed explicitly when experiments are being performed.
+        The default does nothing.'''
+        pass
+
+    def close( self ):
+        '''Shut down a lab. Sub-classes might insist the they are
+        opened and closed explicitly when experiments are being performed.
+        The default does nothing.'''
+        pass
+    
     def addParameter( self, k, r ):
         '''Add a parameter to the experiment's parameter space. k is the
         parameter name, and r is its range.
