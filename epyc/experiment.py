@@ -195,9 +195,9 @@ class Experiment(object):
         recently-executed experimental runs.
 
         return: the results dict'''
-        return self._report(self.parameters(),
-                            self.metadata(),
-                            self.experimentalResults())
+        return self.report(self.parameters(),
+                           self.metadata(),
+                           self.experimentalResults())
 
     def experimentalResults( self ):
         '''Return the experimental results from our last run. This will
