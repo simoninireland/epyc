@@ -6,6 +6,7 @@
 #
 
 from .experiment import Experiment
+from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
 

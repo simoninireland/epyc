@@ -9,8 +9,8 @@ import epyc
 import numpy
 
 
-class SummaryExperiment(epyc.Experiment):
-    '''An experiment combinator that takes an underlying "base" experiment and 
+class SummaryExperiment(epyc.ExperimentCombinator):
+    '''An experiment combinator that takes an underlying experiment and 
     returns summary statistics for some of its results. This only really makes
     sense for experiments that return lists of results, such as those conducted
     using RepeatedExperiment.
@@ -47,15 +47,8 @@ class SummaryExperiment(epyc.Experiment):
 
         ex: the underlying experiment
         summarised_results: list of result values to summarise (defaults to all)'''
-        super(epyc.SummaryExperiment, self).__init__()
-        self._experiment = ex
+        super(epyc.SummaryExperiment, self).__init__(ex)
         self._summarised_results = summarised_results
-
-    def experiment( self ):
-        '''Return the underlying experiment.
-
-        returns: the underlying experiment'''
-        return self._experiment
 
     def _mean( self, k ):
         '''Return the tag associated with the mean of k.'''
@@ -69,8 +62,8 @@ class SummaryExperiment(epyc.Experiment):
         '''Return the tag associated with the variance of k.'''
         return k + self.VARIANCE_SUFFIX
     
-    def summarise( self, results ):
-        '''Generate a summary result dict from a list of result dicts
+    def _summarise( self, results ):
+        '''Private method to generate a summary result dict from a list of result dicts
         returned by do() on the repetitions of the underlying experiment.
         By default we generate order, mean and variance for each value recorded.
 
@@ -116,11 +109,10 @@ class SummaryExperiment(epyc.Experiment):
         params: the parameters to the underlying experiment
         returns: the summary statistics of the underlying results'''
 
-        # set the parameters of the underlying experiment
-        self.experiment().set(params)
-
         # perform the underlying experiment
         results = self.experiment().run()
+        if not isinstance(results, list):
+            results = [ results ]
 
         # extract only the successful runs
         sresults = [ res for res in results if res[epyc.Experiment.METADATA][epyc.Experiment.STATUS] ]
@@ -130,5 +122,5 @@ class SummaryExperiment(epyc.Experiment):
         self._metadata[self.UNDERLYING_SUCCESSFUL_RESULTS] = len(sresults)
         
         # construct summary results
-        return self.summarise(sresults)
+        return self._summarise(sresults)
 

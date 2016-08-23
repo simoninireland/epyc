@@ -13,7 +13,7 @@ import numpy.random
 
 
 class SampleExperiment1(Experiment):
-    
+        
     def do( self, params ):
         return dict(result = params['x'])
 

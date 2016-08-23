@@ -154,3 +154,18 @@ class SummaryExperimentTests(unittest.TestCase):
         self.assertEqual(res[Experiment.RESULTS]['result_variance'],
                          numpy.var(e.values()))
          
+    def testSingle( self ):
+        '''Test against a non-list-returning underlying experiment.'''
+
+        self._lab['x'] = [ 5 ]
+        
+        e = SampleExperiment1()
+        es = SummaryExperiment(e)
+
+        self._lab.runExperiment(es)
+        self.assertEqual(len(self._lab.results()), 1)
+        res = (self._lab.results())[0]
+        
+        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
+        self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], 1)
+        self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_SUCCESSFUL_RESULTS], 1)

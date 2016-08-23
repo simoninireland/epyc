@@ -64,24 +64,24 @@ class Experiment(object):
 
     def configure( self, params ):
         '''Configure the experiment for the given parameters.
-        Default does nothing.
+        Default stores the parameters fopr later use.
 
         params: the parameters'''
-        pass
+        self._parameters = params
 
     def deconfigure( self ):
         '''De-configure the experiment prior to setting new parameters.
-        Default does nothing.'''
-        pass
+        Default removes the parameters.'''
+        self._parameters = None
 
     def set( self, params ):
-        '''Set the parameters for the experiment.
+        '''Set the parameters for the experiment. To change the behaviour on 
+        parameter setting, override configure() and deconfigure().
 
         params: the parameters
-        returns: the experiment'''
+        returns: the experiment, newly configured'''
         if self._parameters is not None:
             self.deconfigure()
-        self._parameters = params
         self.configure(params)
         return self
 
@@ -94,7 +94,7 @@ class Experiment(object):
         raise NotYetImplementedError('do()')
 
     def report( self, params, meta, res ):
-        '''Return a dict of results. The default returns a dict with
+        '''Return a properly-structured dict of results. The default returns a dict with
         results keyed by self.RESULTS, the data point in the parameter space
         keyed by self.PARAMETERS, and timing and other metadata keyed
         by self.METADATA. Overriding this method can be used to record extra
@@ -119,7 +119,7 @@ class Experiment(object):
         returns: dict of reported results'''
 
         # perform the experiment protocol
-        params = self._parameters
+        params = self.parameters()
         self._metadata = dict()
         self._results = None
         res = None
@@ -133,7 +133,7 @@ class Experiment(object):
             doneExperimentTime = datetime.now() 
             self.tearDown()
             doneTeardownTime = datetime.now() 
-
+            
             # record the various timings
             self._metadata[self.START_TIME] = startTime
             self._metadata[self.END_TIME] = doneTeardownTime
@@ -141,7 +141,7 @@ class Experiment(object):
             self._metadata[self.SETUP_TIME] = (doneSetupTime - startTime).total_seconds() / 1000.0
             self._metadata[self.EXPERIMENT_TIME] = (doneExperimentTime - doneSetupTime).total_seconds() / 1000.0
             self._metadata[self.TEARDOWN_TIME] = (doneTeardownTime - doneExperimentTime).total_seconds() / 1000.0
-
+            
             # set the success flag
             self._metadata[self.STATUS] = True
         except Exception as e:
@@ -160,7 +160,7 @@ class Experiment(object):
             # (there will be no timing information recorded)
             self._metadata[self.STATUS] = False
             self._metadata[self.EXCEPTION] = e
-
+                
         # report the results
         self._results = res
         return self.report(self.parameters(),
@@ -195,9 +195,9 @@ class Experiment(object):
         recently-executed experimental runs.
 
         return: the results dict'''
-        return self.report(self.parameters(),
-                           self.metadata(),
-                           self.experimentalResults())
+        return self._report(self.parameters(),
+                            self.metadata(),
+                            self.experimentalResults())
 
     def experimentalResults( self ):
         '''Return the experimental results from our last run. This will

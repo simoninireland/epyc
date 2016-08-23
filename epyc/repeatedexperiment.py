@@ -9,7 +9,7 @@
 import epyc
 
 
-class RepeatedExperiment(epyc.Experiment):
+class RepeatedExperiment(epyc.ExperimentCombinator):
     '''A experiment combinator that takes a "base" experiment and runs it
     several times. This means you can define a single experiment separate
     from its repeating logic.
@@ -25,15 +25,8 @@ class RepeatedExperiment(epyc.Experiment):
 
         ex: the underlying experiment
         N: the number of repetitions to perform'''
-        super(epyc.RepeatedExperiment, self).__init__()
-        self._experiment = ex
+        super(epyc.RepeatedExperiment, self).__init__(ex)
         self._N = N
-
-    def experiment( self ):
-        '''Return the underlying experiment.
-
-        returns: the underlying experiment'''
-        return self._experiment
 
     def repetitions( self ):
         '''Return the number of repetitions of the underlying experiment
@@ -47,7 +40,6 @@ class RepeatedExperiment(epyc.Experiment):
 
         params: the parameters to the experiment
         returns: a list of result dicts'''
-        self.experiment().set(params)
         N = self.repetitions()
         results = []
         for i in xrange(N):
@@ -59,7 +51,7 @@ class RepeatedExperiment(epyc.Experiment):
         return results
 
     def report( self, params, meta, res ):
-        '''Return just the results, don't add any more metadata.
+        '''Return just the list of results, don't add any more metadata.
 
         params: the parameters we ran under
         meta: the metadata for this run
