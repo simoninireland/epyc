@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.5.1
+VERSION = 0.6.1
 
 # ----- Sources -----
 
@@ -15,6 +15,7 @@ SOURCES_SETUP_IN = setup.py.in
 SOURCES_CODE = \
 	epyc/__init__.py \
 	epyc/experiment.py \
+	epyc/experimentcombinator.py \
 	epyc/repeatedexperiment.py \
 	epyc/summaryexperiment.py \
 	epyc/lab.py \

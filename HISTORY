@@ -1,3 +1,14 @@
+Version 0.6.1 2016-08-23
+
+   - Refactored experiment combinators
+   - Fixed summarisation of non-list-returning experiments
+
+Version 0.5.1
+
+   - Some refactoring
+   - Improved exception-handling
+   - Fixed integration with JSON persistence
+
 Version 0.4.1 2016-08-12
 
    - Changed notebooks to keep lists of results for each point in
