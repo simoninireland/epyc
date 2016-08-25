@@ -10,6 +10,8 @@ from epyc import *
 import unittest
 import numpy
 import numpy.random
+import os
+from tempfile import NamedTemporaryFile
 
 
 class SampleExperiment1(Experiment):
@@ -51,6 +53,17 @@ class SampleExperiment3(SampleExperiment2):
 
     def ran( self ):
         return self._ran
+
+class SampleExperiment4(Experiment):
+    '''A more exercising experiment.'''
+
+    def do( self, param ):
+        total = 0
+        for k in param:
+            total = total + param[k]
+        return dict(total = total,
+                    nestedArray = [ 1, 2, 3 ],
+                    nestedDict = dict(a = 1, b = 'two'))
 
     
 class SummaryExperimentTests(unittest.TestCase):
@@ -169,3 +182,28 @@ class SummaryExperimentTests(unittest.TestCase):
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], 1)
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_SUCCESSFUL_RESULTS], 1)
+
+    def testJSON( self ):
+        '''Test that we can persist repeated results in JSON format.'''
+
+        # reset the lab we're using to use a JSON notebook
+        tf = NamedTemporaryFile()
+        tf.close()
+        self._lab = Lab(notebook = JSONLabNotebook(tf.name, create = True))
+        
+        repetitions = 5
+        self._lab['a'] = [ 1, 2, 3 ]
+        try:
+            self._lab.runExperiment(SummaryExperiment(RepeatedExperiment(SampleExperiment4(),
+                                                                         repetitions),
+                                                      summarised_results = [ 'total', 'nestedArray' ]))
+                                    
+            res = self._lab.results()
+
+            # getting here is enough to exercise the persistence regime
+        finally:
+            try:
+                os.remove(tf.name)
+            except OSError:
+                pass
+
