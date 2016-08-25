@@ -216,6 +216,7 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(nb.pendingResultsFor(params1), [])
         self.assertEqual(nb.pendingResultsFor(params2), [])
         self.assertEqual(nb.pendingResults(), [])
+        self.assertEqual(nb.results(), [])
 
     def testAddResultList( self ):
         '''Test adding several results at once.'''
@@ -260,4 +261,34 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(df[df['a'] == 1]['b'].iloc[0], 2)
         self.assertEqual(df[df['b'] == 12]['a'].iloc[0], 10)
         self.assertEqual(df[(df['a'] == 10) & (df['b'] == 12)]['total'].iloc[0], 10 + 12)
+        
+    def testNoJob( self ):
+        '''Test we can't remove a non-existent job.'''
+        nb = LabNotebook()
+
+        params = dict(a  = 1, b = 2)
+        nb.addPendingResult(params, 1)
+        self.assertEqual(nb.resultsFor(params), [])
+        self.assertEqual(len(nb.results()), 0)
+        self.assertEqual(nb.pendingResults(), [ 1 ])
+
+        with self.assertRaises(KeyError):
+            nb.cancelPendingResult(2)
+        
+    def testNoJobTwice( self ):
+        '''Test we can't remove the same job twice.'''
+        nb = LabNotebook()
+
+        params = dict(a  = 1, b = 2)
+        nb.addPendingResult(params, 1)
+        self.assertEqual(nb.resultsFor(params), [])
+        self.assertEqual(len(nb.results()), 0)
+        self.assertEqual(nb.pendingResults(), [ 1 ])
+        
+        nb.cancelPendingResult(1)
+        self.assertEqual(len(nb.results()), 0)
+        self.assertEqual(nb.pendingResults(), [])
+
+        with self.assertRaises(KeyError):
+            nb.cancelPendingResult(1)
         

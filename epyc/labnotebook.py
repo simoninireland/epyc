@@ -101,7 +101,7 @@ class LabNotebook(object):
         # add each result
         for result in results:
             k = self._parametersAsIndex(result[Experiment.PARAMETERS])
-
+            
             # retrieve or create the result list
             if k in self._results.keys():
                 rs = self._results[k]
@@ -115,13 +115,21 @@ class LabNotebook(object):
         # if there is are job ids provided, cancel the corresponding pending jobs
         if jobids is not []:
             for jobid in jobids:
-                if (jobid in rs) and (jobid in self._pending.keys()):
-                    # delete job id from current results
-                    j = rs.index(jobid)
-                    del rs[j]
+                if jobid in self._pending.keys():
+                    # grab the results list for which this is a pending job
+                    k = self._pending[jobid]
+                    if k in self._results.keys():
+                        # delete job id from current results
+                        rs = self._results[k]
+                        j = rs.index(jobid)
+                        del rs[j]
                     
-                    # ...and from the set of pending results
-                    del self._pending[jobid]
+                        # ...and from the set of pending results
+                        del self._pending[jobid]
+                    else:
+                        # we've screwed-up the internal data structures
+                        raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
+                                                                                             ps = k))
                 else:
                     # we've screwed-up the internal data structures
                     raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
