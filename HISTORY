@@ -1,3 +1,18 @@
+Version 0.7.1
+
+   - Added Lab.dataframe() method to save going to the notebook
+   - Added updateResults() at Lab level, removed now-unnecessary
+     overriding at ClusterLab level
+   - Optimised updateResults() to grab all completed pending results
+     in a single network transaction
+   - Added global wait() to ClusterLab, coding around the
+     ipyparallel.Client code's wait() method (which can't be used
+     directly -- see notes in the method)
+
+Version 0.6.2 2016-08-23
+
+   - Oops, forgot to fix one of the changed method names....
+   
 Version 0.6.1 2016-08-23
 
    - Refactored experiment combinators

@@ -6,6 +6,11 @@ Basic infrastructure
 
    - Refactor SQL notebooks into structure and driver
    - Convert JSON notebooks to use JSON-LD
+
+Clusters
+--------
+
+   - Add cancelation of pending jobs
    
 Documentation
 -------------
