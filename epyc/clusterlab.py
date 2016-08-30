@@ -10,6 +10,7 @@ import epyc
 import numpy
 import pickle
 import dill
+import time
 
 from ipyparallel import Client, RemoteError
 
@@ -26,14 +27,19 @@ class ClusterLab(epyc.Lab):
     for persistent access, with access to the necessary code and libraries,
     and with appropriate security information available.'''
 
-    def __init__( self, notebook = None, robust = True, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
+    # The "waiting time", the period between checks when waiting for the
+    # completion of penbding results. Setting this too low increases network
+    # traffic, probably unnecessarily. Default is 30s
+    WaitingTime = 30
+
+    
+    def __init__( self, notebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
         '''Create an empty lab attached to the given cluster. most of the arguments
         are as expected by the ipyparallel.Client class, and are used to create the
         underlying connection to the cluster.
 
         Lab arguments:
            notebook: the notebook used to results (defaults to an empty LabNotebook)
-           robust: if False, fails at individual job failures (defaults to True)
 
         Cluster client arguments:
            url_file: file containing connection information for accessing cluster
@@ -49,7 +55,6 @@ class ClusterLab(epyc.Lab):
            timeout: timeout in seconds for ssh connection (defaults to 10s)
            cluster_id: string added to runtime files to prevent collisions'''
         super(epyc.ClusterLab, self).__init__(notebook)
-        self._robust = robust
         
         # record all the connection arguments for later
         self._arguments = dict(url_file = url_file,
@@ -100,6 +105,7 @@ class ClusterLab(epyc.Lab):
 
     def use_dill( self ):
         '''Make the cluster use Dill as pickler for transferring results.'''
+        self.open()
         with self.sync_imports(quiet = True):
             import dill
         self._client.direct_view().use_dill()
@@ -162,11 +168,11 @@ class ClusterLab(epyc.Lab):
                 for (p, j) in psjs:
                     nb.addPendingResult(p, j)
             finally:
-                # close our connection to the cluster and commit our pending results
-                self.close()
+                # commit our pending results in the notebook
                 nb.commit()
+                self.close()
 
-    def _updateResults( self ):
+    def updateResults( self ):
         '''Update the jobs record with any newly-completed jobs.
 
         returns: the number of jobs completed at this call'''
@@ -175,56 +181,59 @@ class ClusterLab(epyc.Lab):
         # look for pending results if we're waiting for any
         n = 0
         if nb.numberOfPendingResults() > 0:
-            # we have results to get, so query each from the cluster
-            # sd: this may not be the most efficient way: may be better to
-            # work out the ready jobs and then grab them all in one network transaction
+            # we have results to get, so query the cluster for all the
+            # pending results in a single transaction
+            retrieved = []
             try:
                 self.open()
-                for j in nb.pendingResults():
-                    try:
-                        if self._client.get_result(j).ready():
-                            # result is ready, grab it
-                            r = (self._client.get_result(j).get())[0] # wrangle the list
-                                                                      # that gets returned
-                                                                      # into a single value
-                            n = n + 1
-
-                            # update the result in the notebook, cancelling
-                            # the corresponding pending job
-                            nb.addResult(r, j)
-                    except RemoteError as re:
-                        # conduct a deep inspection of the exception using the
-                        # inappropriately complicated construction ipyparallel forces on us
-                        if (re.ename == 'KeyError') and (j in re.evalue) and self._robust:
-                            # we're running robustly, so elide the key error
-                            # exceptions that come from unrecognised message ids
-                            # (there seems to sometimes be a race condition
-                            # the makes retrieval fail, but succeed later)
-                            #print "Pending result id {id} inaccessible, will try again".format(id = j)
-                            pass
+                try:
+                    status = self._client.result_status(nb.pendingResults(), status_only = False)
+                    #print "{c} jobs completed, {p} pending".format(c = len(status['completed']),
+                    #                                               p = len(status['pending']))
+                except RemoteError as re:
+                    print re.ename, re.evalue
+                    # deep-inspect the exception to check if we're a key error to one
+                    # of the job ids, using the unfortunately conviluted syntac ipyparallel
+                    # forces upon us
+                    if re.ename is 'KeyError':
+                        # it's a key error, check for the job id
+                        j = re.evalue.rsplit(' ', 1)
+                        if j in nb.pendingResults():
+                            # there seems to be a race condition when retrieving jobs,
+                            # so mask these errors since they shouldn't occur (assuming
+                            # we're managing the data structures properly)
+                            print "Can't retrieve {id}, will try again".format(id = j)
                         else:
-                            # we're not running robustly, pass on the exception
+                            # not a job id we asked for propagate the error
                             raise re
-                    # other exceptions are propagated regardless of our robustness
+                    else:
+                        # not an error we should mask, propagate it
+                        raise re
+                if len(status['completed']) > 0:
+                    # add all the completed results to the notebook
+                    for j in status['completed']:
+                        r = status[j]
+
+                        # update the result in the notebook, cancelling
+                        # the pending result as well
+                        nb.addResult(r, j)
+
+                        # record that we retrieved the results
+                        #print "Job {j}, results {r}".format(j = j, r = r)
+                        n = n + 1
+                        retrieved.append(j)
             finally:
-                # whatever happens, commit changes to the notebook
-                # and close the connection to the cluster 
-                self.close()
                 if n > 0:
+                    # commit changes to the notebook
                     nb.commit()
+
+                    # purge the completed jobs from the cluster
+                    self._client.purge_hub_results(retrieved)
+
+                # whatever happens, close our connection 
+                self.close()
         return n
                 
-    def results( self ):
-        '''Return all the results we have at present.
-
-        returns: a list of available results'''
-
-        # grab any results that have come in recently
-        self._updateResults()
-
-        # collect the results into a list
-        return self.notebook().results()
-
     def _availableResults( self ):
         '''Private method to return the number of results available.
         This does not update the results fetched from the cluster.
@@ -241,18 +250,14 @@ class ClusterLab(epyc.Lab):
         if tr == 0:
             return 0
         else:
-            return (self._availableResults() + 0.0) / tr
+            return (self.notebook().numberOfResults() + 0.0) / tr
     
     def readyFraction( self ):
         '''Test what fraction of results are available. This will change over
         time as the results come in.
 
         returns: the fraction from 0 to 1'''
-
-        # grab any results that have come in recently
-        self._updateResults()
-        
-        # return the fraction
+        self.updateResults()
         return self._availableResultsFraction()
     
     def ready( self ):
@@ -261,3 +266,66 @@ class ClusterLab(epyc.Lab):
 
         returns: True if all the results are available'''
         return (self.readyFraction() == 1)
+
+    def wait( self, timeout = -1 ):
+        '''Wait for all pending results to be finished. If timeout is set,
+        return after this many seconds regardless.
+
+        timeout: timeout period in seconds (defaults to forever)
+        returns: True if all the results completed'''
+
+        # sd: we can't use ipyparallel.Client.wait() for this, because that
+        # method only works for cases where the Client object is the one that
+        # submitted the jobs to the cluster hub -- and therefore has the
+        # necessary data structures to perform synchronisation. This isn't the
+        # case for us, as one of the main goals of eypc is to support disconnected
+        # operation, which implies a different Client object retrieving results
+        # than the one that submitted the jobs in the first place. This is
+        # unfortunate, but understandable given the typical use cases for
+        # Client objects.
+        #
+        # Instead. we have to code around a little busily. The ClusterLab.WaitingTime
+        # global sets the latency for waiting, and we repeatedly wait for this amount
+        # of time before updating the results. The latency value essentially controls
+        # how busy this process is: given that most simulations are expected to
+        # be long, a latency in the tens of seconds feels about right as a default
+        nb = self.notebook()
+        
+        if nb.numberOfPendingResults() > 0:
+            # we've got pending results, wait for them
+            jobs = nb.pendingResults()
+            timeWaited = 0
+            while (timeout < 0) or (timeWaited < timeout):
+                # get any jobs that have completed
+                self.updateResults()
+                
+                if nb.numberOfPendingResults() == 0:
+                    # no pending jobs left, we're complete
+                    return True
+                else:
+                    # not done yet, calculate the waiting period
+                    if timeout == -1:
+                        # wait for the default waiting period
+                        dt = self.WaitingTime
+                    else:
+                        # wait for the default waiting period or until the end of the timeout.
+                        # whichever comes first
+                        if (timeout - timeWaited) < self.WaitingTime:
+                            dt = timeout - timeWaited
+                        else:
+                            dt = self.WaitingTime
+                            
+                    # sleep for a while
+                    time.sleep(dt)
+                    timeWaited = timeWaited + dt
+
+            # if we get here, the timeout expired, so do a final check
+            # and then exit
+            self.updateResults()
+            return (nb.numberOfPendingResults() == 0)
+
+        else:
+            # no results, so we got them all
+            return True
+        
+        

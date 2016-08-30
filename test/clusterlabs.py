@@ -24,16 +24,15 @@ class SampleExperiment(Experiment):
             total = total + param[k]
         return dict(total = total)
 
-class SampleExperiment1(Experiment):
-    '''A more exercising experiment.'''
+class SampleExperiment2(Experiment):
+    '''Add up after waiting.'''
 
     def do( self, param ):
+        time.sleep(2)
         total = 0
         for k in param:
             total = total + param[k]
-        return dict(total = total,
-                    nestedArray = [ 1, 2, 3 ],
-                    nestedDict = dict(a = 1, b = 'two'))
+        return dict(total = total)
 
     
 # use the existence of an ipcontroller-client.json file in the IPython
@@ -48,6 +47,8 @@ class ClusterLabTests(unittest.TestCase):
     def setUp( self ):
         '''Create a lab in which to perform tests.'''
         self._lab = ClusterLab()
+        with self._lab.sync_imports():
+            import time
 
     def tearDown( self ):
         '''Close the conection to the cluster.'''
@@ -56,7 +57,7 @@ class ClusterLabTests(unittest.TestCase):
         
     def testMixup( self ):
         '''Test that parameter spaces are suitably mixed, defined as not
-        more than 0.5% of elements landing in their original place'''
+        more than 0.5% of elements landing in their original place.'''
         n = 1000
         
         l = numpy.arange(0, n)
@@ -65,18 +66,18 @@ class ClusterLabTests(unittest.TestCase):
         self.assertTrue(len(sp) <= (n * 0.005))
 
     def testEmpty( self ):
-        '''Test that things work for an empty lab.'''
+        '''Test that things work for an empty lab'''
         self.assertEqual(self._lab.readyFraction(), 0)
         self.assertEqual(self._lab.results(), [])
         
     def testRunExprimentSync( self ):
-        '''Test running an experiment and grabbing all the results by waiting'''
-        n = 100
+        '''Test running an experiment and grabbing all the results by sleeping for a while.'''
+        n = 20
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment())
-        time.sleep(5)
+        time.sleep(n * 2.5 / self._lab.numberOfEngines())
         self.assertTrue(self._lab.ready())
         res = self._lab.results()
         
@@ -88,10 +89,33 @@ class ClusterLabTests(unittest.TestCase):
         # check that each result corresponds to its parameter
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
+            
+    def testWait( self ):
+        '''Test waiting for all jobs to complete.'''
+        n = 20
+
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+        self.assertTrue(self._lab.wait())
+        self.assertTrue(self._lab.ready())
+            
+    def testWaitShortTimeout( self ):
+        '''Test short-timeout (and short-latency) waiting.'''
+        n = 20
+        self._lab.WaitingTime = 5
+        
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+        self.assertFalse(self._lab.wait(timeout = 5))
+        self.assertFalse(self._lab.ready())
+        self.assertTrue(self._lab.wait())
+        self.assertTrue(self._lab.ready())
 
     def testRunExprimentAsync( self ):
-        '''Test running an experiment and check the results come in piecemeal'''
-        n = 100
+        '''Test running an experiment and check the results come in piecemeal.'''
+        n = 20
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
@@ -105,6 +129,7 @@ class ClusterLabTests(unittest.TestCase):
             self.assertTrue(f1 >= f)
             f = f1
         self.assertTrue(self._lab.ready())
+        self.assertEqual(self._lab.notebook().numberOfPendingResults(), 0)
         res = self._lab.results()
         
         # check that the whole parameter space has a result
@@ -116,32 +141,15 @@ class ClusterLabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
 
-    def testJSON( self ):
-        '''Test that we can persist repeated results in JSON format.'''
-
-        # reset the lab we're using to use a JSON notebook
-        tf = NamedTemporaryFile()
-        tf.close()
-        self._lab = ClusterLab(notebook = JSONLabNotebook(tf.name, create = True))
         
-        repetitions = 5
-        self._lab['a'] = [ 1, 2, 3 ]
-        try:
-            self._lab.runExperiment(SummaryExperiment(RepeatedExperiment(SampleExperiment1(),
-                                                                         repetitions),
-                                                      summarised_results = [ 'total', 'nestedArray' ]))
-                                    
-            while not self._lab.ready():
-                print "..."
-                time.sleep(5)
-            res = self._lab.results()
+    def testReturnWithNoJobs( self ):
+        '''Test wait() retruens True when there are no jobs pending.'''
+        n = 20
+          
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment())
+        self.assertTrue(self._lab.wait())
 
-            # getting here is enough to exercise the persistence regime
-        finally:
-            try:
-                os.remove(tf.name)
-            except OSError:
-                pass
-
-        
-        
+        # calling wait() again should also be true (with no delay, which we don't check for)
+        self.assertTrue(self._lab.wait())

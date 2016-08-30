@@ -268,7 +268,7 @@ class LabNotebook(object):
         '''Return ther number of addiitonal results we expect.
 
         returns: number of pending results'''
-        return len(self._pending.keys())
+        return len(self.pendingResults())
     
     def __len__( self ):
         '''The length of a notebook is the number of results it currently

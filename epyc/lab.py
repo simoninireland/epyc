@@ -42,6 +42,12 @@ class Lab(object):
         opened and closed explicitly when experiments are being performed.
         The default does nothing.'''
         pass
+
+    def updateResults( self ):
+        '''Update the lab's results. This method is called by all other methods
+        that return results in some sense, and may be overridden to let the reuslts
+        "catch up" with external processing. The default does nothing.'''
+        pass
     
     def addParameter( self, k, r ):
         '''Add a parameter to the experiment's parameter space. k is the
@@ -153,13 +159,22 @@ class Lab(object):
         result).
 
         returns: a list of experimental results'''
+        self.updateResults()
         return self.notebook().results()
+
+    def dataframe( self ):
+        '''Return the resultsd as a pandas DataFrame.
+
+        returns: the resulting dataset as a DataFrame'''
+        self.updateResults()
+        return self.notebook().dataframe()
     
     def ready( self ):
         '''Test whether all the results are ready, that is none are
         pending.
 
         returns: True if the results are in'''
+        self.updateResults()
         return (len(self.notebook().pendingResults()) == 0)
 
 
