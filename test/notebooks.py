@@ -109,7 +109,7 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(nb.results()), 0)
         self.assertEqual(len(nb.pendingResults()), 0)
 
-    def testCancellingAllPendingResult( self ):
+    def testCancellingAllPendingResults( self ):
         '''Test cancelling of all pending result'''
         nb = LabNotebook()
 
@@ -207,7 +207,7 @@ class LabNotebookTests(unittest.TestCase):
         self.assertItemsEqual(nb.pendingResultsFor(params2), [ 2, 3 ])
         self.assertItemsEqual(nb.pendingResults(), [ 1, 2, 3 ])
 
-        nb.cancelAllPendingResultsFor(params2)
+        nb.cancelPendingResultsFor(params2)
         self.assertItemsEqual(nb.pendingResultsFor(params1), [ 1 ])
         self.assertEqual(nb.pendingResultsFor(params2), [])
         self.assertItemsEqual(nb.pendingResults(), [ 1 ])

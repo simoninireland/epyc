@@ -143,7 +143,7 @@ class ClusterLabTests(unittest.TestCase):
 
         
     def testReturnWithNoJobs( self ):
-        '''Test wait() retruens True when there are no jobs pending.'''
+        '''Test wait() returns True when there are no jobs pending.'''
         n = 20
           
         r = numpy.arange(0, n)
@@ -153,3 +153,33 @@ class ClusterLabTests(unittest.TestCase):
 
         # calling wait() again should also be true (with no delay, which we don't check for)
         self.assertTrue(self._lab.wait())
+
+    def testCancelSomeJobs( self ):
+        '''Test we can cancel some jobs while keeping the rest.'''
+        n = 20
+          
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+
+        params = dict(a = n / 2)
+        self._lab.cancelPendingResultsFor(params)
+        self._lab.wait()
+        self.assertEqual(self._lab.numberOfResults(), n - 1)
+        self.assertEqual(self._lab.numberOfPendingResults(), 0)
+        self.assertEqual(self._lab.notebook().latestResultsFor(params), None)
+
+    def testCancelAllJobs( self ):
+        '''Test we can cancel all jobs.'''
+        n = 20
+          
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+
+        self._lab.cancelAllPendingResults()
+        self._lab.wait()
+        self.assertEqual(self._lab.numberOfResults(), 0)
+        self.assertEqual(self._lab.numberOfPendingResults(), 0)
+        
+       

@@ -188,7 +188,7 @@ class LabNotebook(object):
         else:
             return []
                 
-    def cancelAllPendingResultsFor( self, ps ):
+    def cancelPendingResultsFor( self, ps ):
         '''Cancel all pending results for the given parameters. Note that
         this only affects the notebook's record, not any job running in a lab.
 

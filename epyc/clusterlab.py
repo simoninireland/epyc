@@ -173,74 +173,82 @@ class ClusterLab(epyc.Lab):
                 self.close()
 
     def updateResults( self ):
-        '''Update the jobs record with any newly-completed jobs.
+        '''Update our results withn any pending results that have completed since we
+        last retrieved results from the cluster.
 
-        returns: the number of jobs completed at this call'''
+        returns: the number of pending results completed at this call'''
         nb = self.notebook()
 
         # look for pending results if we're waiting for any
         n = 0
         if nb.numberOfPendingResults() > 0:
-            # we have results to get, so query the cluster for all the
-            # pending results in a single transaction
+            # we have results to get
             retrieved = []
             try:
                 self.open()
                 try:
+                    # query the cluster for all pending results, in a
+                    # single network transaction
                     status = self._client.result_status(nb.pendingResults(), status_only = False)
-                    #print "{c} jobs completed, {p} pending".format(c = len(status['completed']),
-                    #                                               p = len(status['pending']))
+
+                    # add all the completed results to the notebook
+                    for j in status['completed']:
+                        # status dict contains a mapping for each completed job
+                        r = status[j]
+                        
+                        # update the result in the notebook, cancelling
+                        # the pending result as well
+                        nb.addResult(r, j)
+                        
+                        # record that we retrieved the results for the given job
+                        n = n + 1
+                        retrieved.append(j)
                 except RemoteError as re:
-                    print re.ename, re.evalue
-                    # deep-inspect the exception to check if we're a key error to one
-                    # of the job ids, using the unfortunately conviluted syntac ipyparallel
+                    # sd: there seems to be a race condition when retrieving jobs,
+                    # so mask the exceptions since they shouldn't occur (assuming
+                    # we're managing our own data structures properly)
+                    #
+                    # Deep-inspect the exception to check if we're a key error to one
+                    # of the job ids, using the unfortunately convoluted syntax ipyparallel
                     # forces upon us
-                    if re.ename is 'KeyError':
+                    if re.ename == 'KeyError':
                         # it's a key error, check for the job id
-                        j = re.evalue.rsplit(' ', 1)
+                        j = (re.evalue.strip("'").split(' '))[-1]   # sd: why do we need to strip() here?
                         if j in nb.pendingResults():
-                            # there seems to be a race condition when retrieving jobs,
-                            # so mask these errors since they shouldn't occur (assuming
-                            # we're managing the data structures properly)
-                            print "Can't retrieve {id}, will try again".format(id = j)
+                            #print "Can't retrieve {id}, will try again".format(id = j)
+                            pass
                         else:
-                            # not a job id we asked for propagate the error
+                            # not a job id we asked for, propagate the error
                             raise re
                     else:
                         # not an error we should mask, propagate it
                         raise re
-                if len(status['completed']) > 0:
-                    # add all the completed results to the notebook
-                    for j in status['completed']:
-                        r = status[j]
-
-                        # update the result in the notebook, cancelling
-                        # the pending result as well
-                        nb.addResult(r, j)
-
-                        # record that we retrieved the results
-                        #print "Job {j}, results {r}".format(j = j, r = r)
-                        n = n + 1
-                        retrieved.append(j)
             finally:
                 if n > 0:
                     # commit changes to the notebook
                     nb.commit()
 
-                    # purge the completed jobs from the cluster
+                    # purge the retrieved, completed jobs from the cluster
                     self._client.purge_hub_results(retrieved)
 
                 # whatever happens, close our connection 
                 self.close()
         return n
-                
-    def _availableResults( self ):
-        '''Private method to return the number of results available.
-        This does not update the results fetched from the cluster.
 
-        returns: the number of available results'''
+    def numberOfResults( self ):
+        '''Return the number of results we have available at the moment.
+
+        returns: the number of results'''
+        self.updateResults()
         return self.notebook().numberOfResults()
 
+    def numberOfPendingResults( self ):
+        '''Return the number of resultswe are waiting for.
+
+        returns: the number of pending results'''
+        self.updateResults()
+        return self.notebook().numberOfPendingResults()
+    
     def _availableResultsFraction( self ):
         '''Private method to return the fraction of results available, as a real number
         between 0 and 1. This does not update the results fetched from the cluster.
@@ -328,4 +336,54 @@ class ClusterLab(epyc.Lab):
             # no results, so we got them all
             return True
         
+    def pendingResults( self ):
+        '''Return the list of job iods for any pending results.
+
+        returns: a list of job ids'''
+        return self.notebook().pendingResults()
+    
+    def pendingResultsFor( self, params ):
+        '''Return a list of job ids for any results pending for experiments
+        at the given point in the parameter space.
         
+        params: the experimental parameters
+        returns: a list of job ids'''
+        return self.notebook().pendingResultsFor(params)
+    
+    def _abortJobs( self, js ):
+        '''Private method to abort a set of jobs.
+        
+        js: the job ids to be aborted'''
+        self.open()
+        self._client.abort(jobs = js)
+        self.close()
+        
+    def cancelPendingResultsFor( self, params ):
+        '''Cancel any results pending for experiments at the given point
+        in the parameter space.
+        
+        params: the experimental parameters'''
+        
+        # grab the result job ids
+        jobs = self.pendingResultsFor(params)
+        
+        if len(jobs) > 0:
+            # abort in the cluster
+            self._abortJobs(jobs)
+            
+            # cancel in the notebook                  
+            self.notebook().cancelPendingResultsFor(params)
+        
+    def cancelAllPendingResults( self ):
+        '''Cancel all pending results.'''
+
+        # grab all the pending job ids
+        jobs = self.pendingResults()
+        
+        if len(jobs) > 0:
+            # abort in the cluster
+            self._abortJobs(jobs)
+            
+            # cancel in the notebook                  
+            self.notebook().cancelAllPendingResults()
+       
