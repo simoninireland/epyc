@@ -19,7 +19,16 @@ class SampleExperiment(Experiment):
         for k in param:
             total = total + param[k]
         return dict(total = total)
-            
+
+    
+class NullExperiment(Experiment):
+    '''An experiment that just returns the value of its (one)
+    parameter as its result.'''
+
+    def do( self, param ):
+        k = (param.keys())[0]
+        return dict(result = param[k])
+    
         
 class LabTests(unittest.TestCase):
 
@@ -108,4 +117,13 @@ class LabTests(unittest.TestCase):
         # check that each result corresponds to its parameter
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'] + p[Experiment.PARAMETERS]['b'], p[Experiment.RESULTS]['total'])
-        
+
+    def testNull( self ):
+        '''Test we don't unpack strings'''
+        v = 'A string'
+
+        self._lab['s'] = v
+        self._lab.runExperiment(NullExperiment())
+        res = self._lab.results()
+        self.assertEqual(len(res), 1)
+        self.assertEqual(res[0][Experiment.RESULTS]['result'], v)

@@ -11,20 +11,23 @@ import collections
 
 
 class Lab(object):
-    '''A laboratory for computational experiments. The lab conducts an
-    experiment at different points in a multi-dimensional parameter space.
-    The default performs all the experiments locally; sub-classes exist
-    to perform remote parallel experiments.
+    '''A laboratory for computational experiments.
 
-    A Lab stores its result in a notebook, an instance of LabNotebook. By
-    default the ordinary Lab classes uses an in-memory notebook, essentially
+    A :class:`Lab` conducts an experiment at different points in a
+    multi-dimensional parameter space.  The default performs all the
+    experiments locally; sub-classes exist to perform remote parallel
+    experiments.
+
+    A :class:`Lab` stores its result in a notebook, an instance of :class:`LabNotebook`.
+    By default the base :class:`Lab` class uses an in-memory notebook, essentially
     just a dict; sub-clasess use persistent notebooks to manage larger
-    sets of experiments.'''
+    sets of experiments.
+    '''
 
     def __init__( self, notebook = None ):
         '''Create an empty lab.
  
-        notebook: the notebook used to store results (defaults to an empty LabNotebook)'''
+        :param notebook: the notebook used to store results (defaults to an empty :class:`LabNotebook`)'''
         if notebook is None:
             self._notebook = epyc.LabNotebook()
         else:
@@ -53,25 +56,25 @@ class Lab(object):
         '''Add a parameter to the experiment's parameter space. k is the
         parameter name, and r is its range.
 
-        k: parameter name
-        r: parameter range'''
+        :param k: parameter name
+        :param r: parameter range'''
 
         # if range is a single value, make it a list
-        if not isinstance(r, collections.Iterable):
+        if isinstance(r, basestring) or not isinstance(r, collections.Iterable):
             r = [ r ]
         self._parameters[k] = r
 
     def parameters( self ):
         '''Return a list of parameter names.
 
-        returns: a list of names'''
+        :returns: a list of parameter names'''
         return self._parameters.keys()
 
     def __len__( self ):
         '''The length of an experiment is the total number of data points
         that will be explored. 
 
-        returns: the length of the experiment'''
+        :returns: the length of the experiment'''
         n = 1
         for p in self.parameters():
             n = n * len(self._parameters[p])
@@ -80,23 +83,23 @@ class Lab(object):
     def __getitem__( self, k ):
         '''Access a parameter range using array notation.
 
-        k: parameter name
-        returns: the parameter range'''
+        :param k: parameter name
+        :returns: the parameter range'''
         return self._parameters[k]
 
     def __setitem__( self, k, r ):
         '''Add a parameter using array notation.
 
-        k: the parameter name
-        r: the parameter range'''
+        :param k: the parameter name
+        :param r: the parameter range'''
         return self.addParameter(k, r)
 
     def _crossProduct( self, ls ):
         '''Internal method to generate the cross product of all parameter
         values, creating the parameter space for the experiment.
 
-        ls: an array of parameter names
-        returns: list of dicts'''
+        :param ls: an array of parameter names
+        :returns: list of dicts'''
         p = ls[0]
         ds = []
         if len(ls) == 1:
@@ -122,7 +125,7 @@ class Lab(object):
         '''Return the parameter space of the experiment as a list of dicts,
         with each dict mapping each parameter name to a value.
 
-        returns: the parameter space as a list of dicts'''
+        :returns: the parameter space as a list of dicts'''
         ps = self.parameters()
         if len(ps) == 0:
             return []
@@ -131,8 +134,9 @@ class Lab(object):
     
     def runExperiment( self, e ):
         '''Run an experiment over all the points in the parameter space.
+        The results will be stored in the notebook.
 
-        e: the experiment'''
+        :param e: the experiment'''
 
         # create the parameter space
         ps = self.parameterSpace()
@@ -150,22 +154,22 @@ class Lab(object):
     def notebook( self ):
         '''Return the notebook being used by this lab.
 
-        returns: the notebook'''
+        :returns: the notebook'''
         return self._notebook
     
     def results( self ):
-        '''Retrieve the list of result dicts (each of which contains the
+        '''Retrieve the list of :term:`results dict` hashes (each of which contains the
         point at which the experiment was evaluated to get this
         result).
 
-        returns: a list of experimental results'''
+        :returns: a list of results dicts'''
         self.updateResults()
         return self.notebook().results()
 
     def dataframe( self ):
         '''Return the resultsd as a pandas DataFrame.
 
-        returns: the resulting dataset as a DataFrame'''
+        :returns: the resulting dataset as a DataFrame'''
         self.updateResults()
         return self.notebook().dataframe()
     
@@ -173,7 +177,7 @@ class Lab(object):
         '''Test whether all the results are ready, that is none are
         pending.
 
-        returns: True if the results are in'''
+        :returns: True if the results are in'''
         self.updateResults()
         return (len(self.notebook().pendingResults()) == 0)
 
