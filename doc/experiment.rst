@@ -1,5 +1,5 @@
-Experiment: A single computational experiment
-=============================================
+:class:`Experiment`: A single computational experiment
+======================================================
 
 .. currentmodule:: epyc
    

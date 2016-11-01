@@ -48,7 +48,7 @@ class Lab(object):
 
     def updateResults( self ):
         '''Update the lab's results. This method is called by all other methods
-        that return results in some sense, and may be overridden to let the reuslts
+        that return results in some sense, and may be overridden to let the results
         "catch up" with external processing. The default does nothing.'''
         pass
     

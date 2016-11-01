@@ -1,5 +1,5 @@
-Lab: An environment for running experiments
-===========================================
+:class:`Lab`: An environment for running experiments
+====================================================
 
 .. currentmodule:: epyc
    

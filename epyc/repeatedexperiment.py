@@ -23,8 +23,8 @@ class RepeatedExperiment(epyc.ExperimentCombinator):
     def __init__( self, ex, N ):
         '''Create a repeated version of the given experiment.
 
-        ex: the underlying experiment
-        N: the number of repetitions to perform'''
+        :param ex: the underlying experiment
+        :param N: the number of repetitions to perform'''
         super(epyc.RepeatedExperiment, self).__init__(ex)
         self._N = N
 
@@ -53,9 +53,9 @@ class RepeatedExperiment(epyc.ExperimentCombinator):
     def report( self, params, meta, res ):
         '''Return just the list of results, don't add any more metadata.
 
-        params: the parameters we ran under
-        meta: the metadata for this run
-        res: the list of results
-        returns: the list of results'''
+        :param params: the parameters we ran under
+        :param meta: the metadata for this run
+        :param res: the list of results
+        :returns: the list of results'''
         return res
     

@@ -12,9 +12,10 @@ from pandas import DataFrame
 class LabNotebook(object):
     '''A "laboratory notebook" recording the results of a set of
     experiments conducted across a parameter space. The intention is
-    to record all the metadata necessary to re-conduct the experiment.
+    to record both results and all the metadata necessary to
+    re-conduct the experiment.
 
-    A notebook maps points nn a parameter space to a set of results. There
+    A notebook maps points in a parameter space to a set of results. There
     may be multiple results mapped to the same point, to allow for
     repetition of experiments: the notbook can re-cquire all, or only the
     most recent, results for a given parameter point.
@@ -32,8 +33,8 @@ class LabNotebook(object):
     def __init__( self, name = None, description = None ):
         '''Create an empty notebook.
 
-        name: the notebook's name
-        description a free text description'''
+        :param name: the notebook's name
+        :param description: a free text description'''
         self._name = name
         self._description = description
         self._results = dict()
@@ -44,19 +45,19 @@ class LabNotebook(object):
         this likely relates to its storage in some way (for example a
         file name).
 
-        returns: the notebook name'''
+        :returns: the notebook name'''
         return self._name
 
     def description( self ):
         '''Return the free text description of the notebook.
 
-        returns: the notebook description'''
+        :returns: the notebook description'''
         return self._description
 
     def isPersistent( self ):
         '''By default notebooks are not persistent.
 
-        returns: False'''
+        :returns: False'''
         return False
 
     def commit( self ):
@@ -76,30 +77,42 @@ class LabNotebook(object):
             v = ps[p]
             k = k + "{p}=[[{v}]];".format(p = p, v = v)
         return k
+
+    def _flatten( self, es ):
+        '''Private method to flatten an arbitrarily nested list structure
+        (including a non-list) into a single flat list.
+
+        es: the list (or not)
+        returns: a flat list of elemnents'''
+        if isinstance(es, list):
+            if len(es) == 0:
+                return [ ]
+            else:
+                return self._flatten(es[0]) + self._flatten(es[1:])
+        else:
+            return [ es ]
         
-    def addResult( self, results, jobids = [] ):
-        '''Add a result. This should be a dict as returned from an instance of Experiment,
-        that contains metadata, parameters, and result. Results cannot be overridden, as
-        notebooks are immutable: adding more results simply adds another result set.
+    def addResult( self, results, jobids = None ):
+        '''Add a result. This should be :term:`results dict` as returned from
+        an instance of :class:`Experiment`, that contains metadata,
+        parameters, and result. Results cannot be overridden, as
+        notebooks are immutable: adding more results simply adds
+        another result set.
 
         If results is a list of result dicts, they are added in order: the last result in
-        the list is assumed to be the latest.
+        the list is assumed to be the latest. The result dicts can be embedded in any depth
+        of list structure: they're flattened and added in order, left to right.
 
         If the jobid is present, this result resolves the corresponding pending result.
         As with result, jobid can be a list. (The two lists need not be the same
         length, to allow for experiments that return lists of result dicts.)
 
-        result: the results (or a list of results)
-        jobid: the pending result job id(s) (defaults to no jobs)'''
-
-        # make single parameters into lists where appropriate 
-        if not isinstance(results, list):
-            results = [ results ]
-        if not isinstance(jobids, list):
-            jobids = [ jobids ]
+        :param result: the results (or a list of results)
+        :param jobid: the pending result job id(s) (defaults to no jobs)
+        '''
 
         # add each result
-        for result in results:
+        for result in self._flatten(results):
             k = self._parametersAsIndex(result[Experiment.PARAMETERS])
             
             # retrieve or create the result list
@@ -113,8 +126,8 @@ class LabNotebook(object):
             rs.insert(0, result)
 
         # if there is are job ids provided, cancel the corresponding pending jobs
-        if jobids is not []:
-            for jobid in jobids:
+        if jobids is not None:
+            for jobid in self._flatten(jobids):
                 if jobid in self._pending.keys():
                     # grab the results list for which this is a pending job
                     k = self._pending[jobid]
@@ -138,8 +151,8 @@ class LabNotebook(object):
     def addPendingResult( self, ps, jobid ):
         '''Add a "pending" result that we expect to get results for.
 
-        ps: the parameters for the result
-        jobid: an identifier for the pending result'''
+        :param ps: the parameters for the result
+        :param jobid: an identifier for the pending result'''
         k = self._parametersAsIndex(ps)
 
         # retrieve or create the result list
@@ -159,7 +172,7 @@ class LabNotebook(object):
         '''Cancel a particular pending result. Note that this only affects the
         notebook's record, not any job running in a lab.
 
-        jobid: job id for pending result'''
+        :param jobid: job id for pending result'''
         if jobid in self._pending.keys():
             k = self._pending[jobid]
             del self._pending[jobid]
@@ -179,8 +192,8 @@ class LabNotebook(object):
     def pendingResultsFor( self, ps ):
         '''Retrieve a list of all pending results associated with the given parameters.
 
-        ps: the parameters
-        returns: a list of pending result job ids, which may be empty'''
+        :param ps: the parameters
+        :returns: a list of pending result job ids, which may be empty'''
         k = self._parametersAsIndex(ps)
         if k in self._results.keys():
             # filter out pending job ids, which can be anything except dicts
@@ -192,7 +205,7 @@ class LabNotebook(object):
         '''Cancel all pending results for the given parameters. Note that
         this only affects the notebook's record, not any job running in a lab.
 
-        ps: the parameters'''
+        :param ps: the parameters'''
         k = self._parametersAsIndex(ps)
 
         if k in self._results.keys():
@@ -222,8 +235,8 @@ class LabNotebook(object):
     def resultsFor( self, ps ):
         '''Retrieve a list of all results associated with the given parameters.
 
-        ps: the parameters
-        returns: a list of results, which may be empty'''
+        :param ps: the parameters
+        :returns: a list of results, which may be empty'''
         k = self._parametersAsIndex(ps)
         if k in self._results.keys():
             # filter out pending job ids, which can be anything except dicts
@@ -234,8 +247,8 @@ class LabNotebook(object):
     def latestResultsFor( self, ps ):
         '''Retrieve only the latest result for the given parameters.
 
-        ps: the parameters
-        returns: a single result, or None if there are none'''
+        :param ps: the parameters
+        :returns: a single result, or None if there are none'''
         rs = self.resultsFor(ps)
         if rs is None:
             return None
@@ -250,7 +263,7 @@ class LabNotebook(object):
         excludes pending results. Results are returned as a single flat
         list, so any repetition structure is lost.
 
-        returns: a list of results'''
+        :returns: a list of results'''
         rs = []
         for k in self._results.keys():
             # filter out pending job ids, which can be anything except dicts
@@ -274,29 +287,47 @@ class LabNotebook(object):
         '''The length of a notebook is the number of results it currently
         has available. A synonym for numberOfResults().
 
-        returns: the number of results available'''
+        :returns: the number of results available'''
         return self.numberOfResults()
     
     def __iter__( self ):
         '''Return an iterator over the results available.
 
-        returns: an iteration over the results'''
+        :returns: an iteration over the results'''
         return self.results().__iter__()
     
-    def dataframe( self ):
+    def dataframe( self, only_successful = True ):
         '''Return the results as a pandas DataFrame. Note that there is a danger
         of duplicate labels here, for example if the results contain a value
         with the same name as one of the parameters. To resolve this, parameter names
         take precedence over metadata values, and result names take precedence over
         parameter names.
+ 
+        If the only_successful flag is set (the default), then the DataFrame will
+        only include results that completed without an exception; if it is set to
+        False, the DataFrame will include all results and also the exception details.
 
-        returns: the parameters, results, and metadata in a DataFrame'''
+        :param only_successful: include only successful experiments (defaults to True)
+        :returns: the parameters, results, and metadata in a DataFrame'''
 
         def extract( r ):
-            rs = r[Experiment.METADATA].copy()
-            rs.update(r[Experiment.PARAMETERS])
-            rs.update(r[Experiment.RESULTS])
-            return rs
+            if r[Experiment.METADATA][Experiment.STATUS]:
+                # experiment was a success, include it
+                rd = r[Experiment.METADATA].copy()
+                rd.update(r[Experiment.PARAMETERS])
+                rd.update(r[Experiment.RESULTS])
+            else:
+                # experiment returned an exception
+                if not only_successful:
+                    # ...but we want it anyway
+                    rd = r[Experiment.METADATA].copy()
+                    rd.update(r[Experiment.PARAMETERS])
+            
+                    # ...and there are no results to add
+                else:
+                    rd = None
+            return rd
 
-        return DataFrame.from_dict(map(extract, self.results()))
+        records = [ r for r in map(extract, self.results()) if r is not None ]
+        return DataFrame.from_records(records)
     

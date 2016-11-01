@@ -20,7 +20,7 @@ class SummaryExperiment(epyc.ExperimentCombinator):
     variance for each result that the underyling experiments
     generated. (You can also select which results to summarise.) The
     raw results are discarded. The new results have the names of the
-    raw results, suffixed by "_mean" and "_variance".
+    raw results with suffices for mean, median, and variance".
 
     The summarisation obviously only works on result keys coming from the
     underlying experiments that are numeric. The default behaviour is to try to
@@ -31,22 +31,23 @@ class SummaryExperiment(epyc.ExperimentCombinator):
     that is that have their status set to True. Failed runs are ignored.'''
 
     # Additional metadata
-    UNDERLYING_RESULTS = 'repetitions'                         # repetitions summarised
-    UNDERLYING_SUCCESSFUL_RESULTS = 'successful_repetitions'   # repetitions included
-                                                               # in the summary
+    UNDERLYING_RESULTS = 'repetitions'                         #: Metadata relement for the number of repetitions performed
+    UNDERLYING_SUCCESSFUL_RESULTS = 'successful_repetitions'   #: Mettadata elements for the number of repetitions summarised
 
     # Prefix and suffix tags attached to summarised result and metadata values
-    MEAN_SUFFIX = '_mean'
-    MEDIAN_SUFFIX = '_median'
-    VARIANCE_SUFFIX = '_variance'
+    MEAN_SUFFIX = '_mean'              #: Suffix the mean of the underlking values
+    MEDIAN_SUFFIX = '_median'          #: Suffix the median of the underlking values
+    VARIANCE_SUFFIX = '_variance'      #: Suffix the variance of the underlking values
     
     
     def __init__( self, ex, summarised_results = None ):
         '''Create a summarised version of the given experiment. The given
         fields in the experimental results will be summarised, defaulting to all.
+        If there are fields that can't be sujmmarised (because they're not
+        numbers), remove them here. 
 
-        ex: the underlying experiment
-        summarised_results: list of result values to summarise (defaults to all)'''
+        :param ex: the underlying experiment
+        :param summarised_results: list of result values to summarise (defaults to all)'''
         super(epyc.SummaryExperiment, self).__init__(ex)
         self._summarised_results = summarised_results
 
@@ -106,8 +107,8 @@ class SummaryExperiment(epyc.ExperimentCombinator):
         We drop from the calculations any experiments whose completion status
         was False, indicating an error.
 
-        params: the parameters to the underlying experiment
-        returns: the summary statistics of the underlying results'''
+        :param params: the parameters to the underlying experiment
+        :returns: the summary statistics of the underlying results'''
 
         # perform the underlying experiment
         results = self.experiment().run()

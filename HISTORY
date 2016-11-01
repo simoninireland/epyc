@@ -1,4 +1,11 @@
-Version 0.7.1
+Version 0.8.1 2016-11-01
+
+   - Added cancellation of pending results to ClusterLab
+   - Added Sphinx API documentation
+   - Converted class and method docstrings to Sphinx
+   - Made labs treat string parameters as single vclues, not iterables 
+
+Version 0.7.1 2016-08-30
 
    - Added Lab.dataframe() method to save going to the notebook
    - Added updateResults() at Lab level, removed now-unnecessary

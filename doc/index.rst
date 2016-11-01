@@ -8,21 +8,34 @@ epyc: Computational experiment management in Python
 
 .. automodule:: epyc
 
-		
-Contents:
+
+Core classes and concepts
+-------------------------
 
 .. toctree::
    :maxdepth: 2
 
-   overview
    experiment
+   labnotebook
+   lab
    glossary
-		  
+   
+Extended functionality
+----------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   repeatedexperiment
+   summaryexperiment
+   jsonlabnotebook
+   clusterlab
+   
+   
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
-* :ref:`modindex`
 * :ref:`search`
 

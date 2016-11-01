@@ -41,9 +41,9 @@ class JSONLabNotebook(epyc.LabNotebook):
         and loaded unless create is True, in which case it will
         be erased.
 
-        name: JSON file to persist the notebook to
-        create: if True, erase existing file (defaults to False)
-        description: free text description of the notebook'''
+        :param name: JSON file to persist the notebook to
+        :param create: if True, erase existing file (defaults to False)
+        :param description: free text description of the notebook'''
         super(epyc.JSONLabNotebook, self).__init__(name, description)
 
         # check for the file already existing
@@ -63,7 +63,7 @@ class JSONLabNotebook(epyc.LabNotebook):
     def isPersistent( self ):
         '''Return True to indicate the notebook is persisted to a JSON file.
 
-        returns: True'''
+        :returns: True'''
         return True
 
     def commit( self ):
@@ -73,7 +73,7 @@ class JSONLabNotebook(epyc.LabNotebook):
     def _load( self, fn ):
         '''Retrieve the notebook from the given file.
 
-        fn: the file name'''
+        :param fn: the file name'''
 
         # if file is empty, create an empty notebook
         if os.path.getsize(fn) == 0:
@@ -95,11 +95,11 @@ class JSONLabNotebook(epyc.LabNotebook):
                 self.patch()
 
     def _patchDatetimeMetadata( self, res, mk ):
-        '''Private method to atch an ISO datetime string to a datetime object
+        '''Private method to patch an ISO datetime string to a datetime object
         for metadata key mk.
 
-        res: results dict
-        mk: metadata key'''
+        :param res: results dict
+        :param mk: metadata key'''
         t = res[epyc.Experiment.METADATA][mk]
         res[epyc.Experiment.METADATA][mk] = dateutil.parser.parse(t)
         
@@ -120,7 +120,7 @@ class JSONLabNotebook(epyc.LabNotebook):
     def _save( self, fn ):
         '''Persist the notebook to the given file.
 
-        fn: the file name'''
+        :param fn: the file name'''
 
         # create JSON object
         j = json.dumps({ "description": self.description(),

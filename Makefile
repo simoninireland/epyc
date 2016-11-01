@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.7.1
+VERSION = 0.8.1
 
 # ----- Sources -----
 
@@ -33,14 +33,30 @@ SOURCES_TESTS = \
 	test/notebooks.py \
 	test/jsonnotebooks.py
 TESTSUITE = test
-SOURCES_DOC = doc/epyc.ipynb
+
+SOURCES_TUTORIAL = doc/epyc.ipynb
+SOURCES_DOC_CONF_IN = doc/conf.py.in
+SOURCES_DOC_CONF = doc/conf.py
+SOURCES_DOC_BUILD_DIR = doc/_buiild
+SOURCES_DOCUMENTATION = \
+	doc/index.rst \
+	doc/experiment.rst \
+	doc/lab.rst \
+	doc/repeatedexperiment.rst \
+	doc/summaryexperiment.rst \
+	doc/jsonlabnotebook.rst \
+	doc/clusterlab.rst \
+	doc/glossary.rst \
+	doc/index.rst
+
 SOURCES_EXTRA = \
 	README.rst \
 	LICENSE \
 	HISTORY
 SOURCES_GENERATED = \
 	MANIFEST \
-	setup.py
+	setup.py \
+	$(SOURCES_DOC_CONF)
 
 # Python packages needed
 # For the system to install and run
@@ -49,7 +65,8 @@ PY_COMPUTATIONAL = \
 	pyzmq \
 	ipyparallel \
 	dill \
-	pandas
+	pandas \
+	sphinx
 # For the documentation
 PY_INTERACTIVE = \
 	numpy \
@@ -85,6 +102,7 @@ RUN_TESTS = $(IPYTHON) -m $(TESTSUITE)
 RUN_CLUSTER = $(IPCLUSTER) start --profile=default --n=2
 RUN_NOTEBOOK = $(JUPYTER) notebook
 RUN_SETUP = $(PYTHON) setup.py
+RUN_SPHINX_HTML = make html
 
 # Virtual environment support
 ENV_COMPUTATIONAL = venv
@@ -107,9 +125,14 @@ test: env-computational
 cluster: env-computational
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_CLUSTER))
 
-# Run a server for writing the documentation
+# Build the documentation using Sphinx
 .PHONY: doc
-doc:
+doc: $(SOURCES_DOCUMENTATION) $(SOURCES_DOC_CONF)
+	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) ../doc && PYTHONPATH=.. $(RUN_SPHINX_HTML))
+
+# Run a server for writing the documentation
+.PHONY: docserver
+docserver:
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) ../doc && PYTHONPATH=.. $(RUN_NOTEBOOK))
 
 # Build a source distribution
@@ -122,7 +145,7 @@ upload: $(SOURCES_GENERATED)
 
 # Clean up the distribution build 
 clean:
-	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist
+	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist $(SOURCES_DOC_BUILD_DIR)
 
 # Clean up everything, including the computational environment (which is expensive to rebuild)
 reallyclean: clean
@@ -158,13 +181,19 @@ MANIFEST: Makefile
 setup.py: $(SOURCES_SETUP_IN) Makefile
 	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's/VERSION/$(VERSION)/g' -e 's/REQ_SETUP/$(REQ_SETUP)/g' >$@
 
+# The conf.py documentation configuration file
+doc/conf.py: $(SOURCES_DOC_CONF_IN) Makefile
+	$(CAT) $(SOURCES_DOC_CONF_IN) | $(SED) -e 's/VERSION/"$(VERSION)"/g' >$@
+
 
 # ----- Usage -----
 
 define HELP_MESSAGE
 Available targets:
    make test         run the test suite in a suitable virtualenv
+   make doc          build the API documentation using Sphinx
    make cluster      run a small compute cluster for use by the tests
+   make docserver    run a Jupyter notebook to edit the tutorial
    make dist         create a source distribution
    make upload       upload distribution to PyPi
    make clean        clean-up the build

@@ -6,14 +6,14 @@ Basic infrastructure
 
    - Refactor SQL notebooks into structure and driver
    - Convert JSON notebooks to use JSON-LD
-
+   - SummaryExperiment isn't getting the elapsed times etc right
+   
 Clusters
 --------
 
-   - Add cancelation of pending jobs
-   
 Documentation
 -------------
 
    - UML class diagram
+   - Add discussion of come-again use of labs
    
