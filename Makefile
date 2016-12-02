@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.8.1
+VERSION = 0.8.2
 
 # ----- Sources -----
 
@@ -35,9 +35,10 @@ SOURCES_TESTS = \
 TESTSUITE = test
 
 SOURCES_TUTORIAL = doc/epyc.ipynb
-SOURCES_DOC_CONF_IN = doc/conf.py.in
 SOURCES_DOC_CONF = doc/conf.py
-SOURCES_DOC_BUILD_DIR = doc/_buiild
+SOURCES_DOC_BUILD_DIR = doc/_build
+SOURCES_DOC_BUILD_HTML_DIR = $(SOURCES_DOC_BUILD_DIR)/html
+SOURCES_DOC_ZIP = epyc-doc-$(VERSION).zip
 SOURCES_DOCUMENTATION = \
 	doc/index.rst \
 	doc/experiment.rst \
@@ -96,6 +97,7 @@ SED = sed
 RM = rm -fr
 CP = cp
 CHDIR = cd
+ZIP = zip -r
 
 # Constructed commands
 RUN_TESTS = $(IPYTHON) -m $(TESTSUITE)
@@ -125,10 +127,12 @@ test: env-computational
 cluster: env-computational
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_CLUSTER))
 
-# Build the documentation using Sphinx
+# Build the API documentation using Sphinx
 .PHONY: doc
 doc: $(SOURCES_DOCUMENTATION) $(SOURCES_DOC_CONF)
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) ../doc && PYTHONPATH=.. $(RUN_SPHINX_HTML))
+	($(CHDIR) $(SOURCES_DOC_BUILD_HTML_DIR) && $(ZIP) $(SOURCES_DOC_ZIP) *)
+	$(CP) $(SOURCES_DOC_BUILD_HTML_DIR)/$(SOURCES_DOC_ZIP) .
 
 # Run a server for writing the documentation
 .PHONY: docserver
@@ -145,7 +149,7 @@ upload: $(SOURCES_GENERATED)
 
 # Clean up the distribution build 
 clean:
-	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist $(SOURCES_DOC_BUILD_DIR)
+	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist $(SOURCES_DOC_BUILD_DIR) $(SOURCES_DOC_ZIP)
 
 # Clean up everything, including the computational environment (which is expensive to rebuild)
 reallyclean: clean
@@ -180,10 +184,6 @@ MANIFEST: Makefile
 # The setup.py script
 setup.py: $(SOURCES_SETUP_IN) Makefile
 	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's/VERSION/$(VERSION)/g' -e 's/REQ_SETUP/$(REQ_SETUP)/g' >$@
-
-# The conf.py documentation configuration file
-doc/conf.py: $(SOURCES_DOC_CONF_IN) Makefile
-	$(CAT) $(SOURCES_DOC_CONF_IN) | $(SED) -e 's/VERSION/"$(VERSION)"/g' >$@
 
 
 # ----- Usage -----

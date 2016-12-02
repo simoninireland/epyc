@@ -31,7 +31,7 @@ class Experiment(object):
        :term:`results dict`
 
     5. (Optionally) call :meth:`Experiment.run` repeatedly to re-run the experiment
-       at the same point, useulf for stochastic experiments
+       at the same point, useful for stochastic experiments
 
     6. (Optionally) call :meth:`Experiment.set` again to configure the experiment
        to run at a different point in the parameter space
@@ -56,10 +56,10 @@ class Experiment(object):
     # Common metadata elements reported
     START_TIME = 'start_time'             #: Metadata element for the datetime experiment started
     END_TIME = 'end_time'                 #: Metadata element for the datetime experiment ended
-    ELAPSED_TIME = 'elapsed_time'         #: Metadata element for the time experiment took overall in ms
-    SETUP_TIME = 'setup_time'             #: Metadata element for the time spent on setup in ms
-    EXPERIMENT_TIME = 'experiment_time'   #: Metadata element for the time spent on experiment itself in ms
-    TEARDOWN_TIME = 'teardown_time'       #: Metadata element for the time spent on teardown in ms
+    ELAPSED_TIME = 'elapsed_time'         #: Metadata element for the time experiment took overall in seconds
+    SETUP_TIME = 'setup_time'             #: Metadata element for the time spent on setup in seconds
+    EXPERIMENT_TIME = 'experiment_time'   #: Metadata element for the time spent on experiment itself in seconds
+    TEARDOWN_TIME = 'teardown_time'       #: Metadata element for the time spent on teardown in seconds
     STATUS = 'status'                     #: Metadata element that will be True if experiment completed successfully, False otherwise
     EXCEPTION = 'exception'               #: Metadata element containing the exception thrown if experiment failed
 
@@ -156,10 +156,10 @@ class Experiment(object):
             # record the various timings
             self._metadata[self.START_TIME] = startTime
             self._metadata[self.END_TIME] = doneTeardownTime
-            self._metadata[self.ELAPSED_TIME] = (doneTeardownTime - startTime).total_seconds() / 1000.0
-            self._metadata[self.SETUP_TIME] = (doneSetupTime - startTime).total_seconds() / 1000.0
-            self._metadata[self.EXPERIMENT_TIME] = (doneExperimentTime - doneSetupTime).total_seconds() / 1000.0
-            self._metadata[self.TEARDOWN_TIME] = (doneTeardownTime - doneExperimentTime).total_seconds() / 1000.0
+            self._metadata[self.ELAPSED_TIME] = (doneTeardownTime - startTime).total_seconds()
+            self._metadata[self.SETUP_TIME] = (doneSetupTime - startTime).total_seconds()
+            self._metadata[self.EXPERIMENT_TIME] = (doneExperimentTime - doneSetupTime).total_seconds()
+            self._metadata[self.TEARDOWN_TIME] = (doneTeardownTime - doneExperimentTime).total_seconds()
             
             # set the success flag
             self._metadata[self.STATUS] = True

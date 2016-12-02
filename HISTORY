@@ -1,9 +1,17 @@
+Version 0.9.1
+
+Version 0.8.2
+
+   - Changed scale of timing metadata from milliseconds to seconds 
+   - Replaced generated doc/conf.py with a static file
+   - Added creation of HTML doc ZIP file
+   
 Version 0.8.1 2016-11-01
 
    - Added cancellation of pending results to ClusterLab
    - Added Sphinx API documentation
    - Converted class and method docstrings to Sphinx
-   - Made labs treat string parameters as single vclues, not iterables 
+   - Made labs treat string parameters as single values, not iterables 
 
 Version 0.7.1 2016-08-30
 
