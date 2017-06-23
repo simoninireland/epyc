@@ -167,7 +167,7 @@ class Lab(object):
         return self.notebook().results()
 
     def dataframe( self ):
-        '''Return the resultsd as a pandas DataFrame.
+        '''Return the results as a pandas DataFrame.
 
         :returns: the resulting dataset as a DataFrame'''
         self.updateResults()

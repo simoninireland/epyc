@@ -6,7 +6,7 @@
 # 
 
 # The version we're building
-VERSION = 0.8.2
+VERSION = 0.10.1
 
 # ----- Sources -----
 
@@ -66,19 +66,22 @@ PY_COMPUTATIONAL = \
 	pyzmq \
 	ipyparallel \
 	dill \
-	pandas \
-	sphinx
+	pandas
 # For the documentation
 PY_INTERACTIVE = \
 	numpy \
 	jupyter \
 	matplotlib \
-	seaborn
+	seaborn \
+	sphinx \
+	twine
 
 # Packages that shouldn't be saved as requirements (because they're
 # OS-specific, in this case OS X, and screw up Linux compute servers)
 PY_NON_REQUIREMENTS = \
-	appnope
+	appnope \
+	functools32 \
+	subprocess32
 
 
 # ----- Tools -----
@@ -89,6 +92,8 @@ IPYTHON = ipython
 JUPYTER = jupyter
 IPCLUSTER = ipcluster
 PIP = pip
+TWINE = twine
+GPG = gpg
 VIRTUALENV = virtualenv
 ACTIVATE = . bin/activate
 TR = tr
@@ -111,6 +116,7 @@ ENV_COMPUTATIONAL = venv
 REQ_COMPUTATIONAL = requirements.txt
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
 REQ_SETUP = $(PY_COMPUTATIONAL:%="%",)
+RUN_TWINE = $(TWINE) upload dist/epydemic-$(VERSION).tar.gz dist/epydemic-$(VERSION).tar.gz.asc
 
 
 # ----- Top-level targets -----
@@ -144,8 +150,9 @@ dist: $(SOURCES_GENERATED)
 	$(RUN_SETUP) sdist
 
 # Upload a source distribution to PyPi (has to be done in one command)
-upload: $(SOURCES_GENERATED)
-	$(RUN_SETUP) sdist upload
+upload: $(SOURCES_GENERATED) dict
+	$(GPG) --detach-sign -a dist/epydemic-$(VERSION).tar.gz
+	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_TWINE))
 
 # Clean up the distribution build 
 clean:

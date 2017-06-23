@@ -6,7 +6,8 @@
 #
 
 from datetime import datetime, timedelta
-
+import sys
+import traceback
 
 class Experiment(object):
     '''Base class for experiments conducted in a lab.
@@ -62,6 +63,7 @@ class Experiment(object):
     TEARDOWN_TIME = 'teardown_time'       #: Metadata element for the time spent on teardown in seconds
     STATUS = 'status'                     #: Metadata element that will be True if experiment completed successfully, False otherwise
     EXCEPTION = 'exception'               #: Metadata element containing the exception thrown if experiment failed
+    TRACEBACK = 'traceback'               #: Metadata element containing the traceback from the exception
 
     
     def __init__( self ):
@@ -130,10 +132,12 @@ class Experiment(object):
         return rc
 
     def run( self ):
-        '''Run the experiment, using the parameters set using set().
-        A "run" consists of calling setUp(), do(), and tearDown(),
+        '''Run the experiment, using the parameters set using :meth:`set`.
+        A "run" consists of calling :meth:`setUp`, :meth:`do`, and :meth:`tearDown`,
         followed by collecting and storing (and returning) the
-        experiment's results.
+        experiment's results. If running the experiment raises an
+        exception, that will be returned in the metadata along with
+        its traceback to help with experiment debugging.
 
         :returns: a :term:`results dict`'''
 
@@ -165,6 +169,9 @@ class Experiment(object):
             self._metadata[self.STATUS] = True
         except Exception as e:
             print "Caught exception in experiment: {e}".format(e = e)
+
+            # grab the traceback before we do anything else
+            _, _, tb = sys.exc_info()
             
             # decide on the cleanup actions that need doing
             if (doneSetupTime is not None) and (doneExperimentTime is None):
@@ -179,6 +186,7 @@ class Experiment(object):
             # (there will be no timing information recorded)
             self._metadata[self.STATUS] = False
             self._metadata[self.EXCEPTION] = e
+            self._metadata[self.TRACEBACK] = tb
                 
         # report the results
         self._results = res

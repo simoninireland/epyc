@@ -42,6 +42,9 @@ include:
 .. autoattribute:: Experiment.EXCEPTION
    :annotation:
       
+.. autoattribute:: Experiment.TRACEBACK
+   :annotation:
+      
 .. autoattribute:: Experiment.START_TIME
    :annotation:
 

@@ -1,6 +1,10 @@
-Version 0.9.1
+Version 0.10.1 2016-06-23
 
-Version 0.8.2
+   - Added traceback objects to metadata for failed experiments, to help debugging
+   - Fixed JSON notebooks to handle tracebacks
+   - Added slightly more documentation in places
+
+Version 0.9.1 2016-12-02
 
    - Changed scale of timing metadata from milliseconds to seconds 
    - Replaced generated doc/conf.py with a static file

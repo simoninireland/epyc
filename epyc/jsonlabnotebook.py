@@ -11,6 +11,7 @@ import os
 import json
 from datetime import datetime
 import dateutil.parser
+import types
 
 
 class MetadataEncoder(json.JSONEncoder):
@@ -19,21 +20,40 @@ class MetadataEncoder(json.JSONEncoder):
 
     def default( self, o ):
         '''If o is a datetime object, convert it to an ISO string. If it is an
-        exception, convert it to a string.
+        exception, convert it to a string. If it a stack trace for an exception
+        (a traceback object), blank it out to None.
 
         o: the field to serialise
-        returns: an ISO string if o is a datetime'''
+        returns: a string encoding of the field'''
         if isinstance(o, datetime):
+            # date/time, return an ISO formatted string
             return o.isoformat()
         else:
             if isinstance(o, Exception):
+                # exception, stringify it
                 return str(o)
             else:
-                return super(MetadataEncoder, self).default(o)
+                if isinstance(o, types.TracebackType):
+                    # traceback, ignore it (essentially)
+                    return None
+                else:
+                    # everything else, pass through
+                    return super(MetadataEncoder, self).default(o)
 
 
 class JSONLabNotebook(epyc.LabNotebook):
-    '''A lab notebook that persists intself to a JSON file.'''
+    '''A lab notebook that persists intself to a JSON file.This is
+    the most basic kind of persistent notebook, readable by
+    virtually any tooling.
+
+    Using JSON presents some disadvantages, as not all types can be
+    represented. Specifically, exceptions and their associated
+    traceback objects from the metadata of failed experiments (with the
+    :attr:`Experiment.EXCEPTION` and :attr:`Experiment.TRACEBACK` keys)
+    will be saved as strings (for the exception)
+    or blanked-out to `None` (for the traceback). We also need to convert
+    `datetime` objects to ISO-format strings.
+    '''
 
     def __init__( self, name, create = False, description = None ):
         '''Create a new JSON notebook, using the notebook's name
@@ -104,8 +124,8 @@ class JSONLabNotebook(epyc.LabNotebook):
         res[epyc.Experiment.METADATA][mk] = dateutil.parser.parse(t)
         
     def patch( self ):
-        '''Patch the results dict. The default processes the Experiment.START_TIME
-        and Experiment.END_TIME metadata fields back into Python datetime objects
+        '''Patch the results dict. The default processes the :attr:`Experiment.START_TIME`
+        and :attr:`Experiment.END_TIME` metadata fields back into Python `datetime` objects 
         from ISO strings. This isn't strictly necessary, but it makes notebook
         data structure more Pythonic.'''
 
