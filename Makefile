@@ -5,6 +5,9 @@
 # Licensed under the GNU General Public Licence v.2.0
 # 
 
+# The name of our package on PyPi
+PACKAGENAME = epyc
+
 # The version we're building
 VERSION = 0.10.1
 
@@ -116,7 +119,7 @@ ENV_COMPUTATIONAL = venv
 REQ_COMPUTATIONAL = requirements.txt
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
 REQ_SETUP = $(PY_COMPUTATIONAL:%="%",)
-RUN_TWINE = $(TWINE) upload dist/epydemic-$(VERSION).tar.gz dist/epydemic-$(VERSION).tar.gz.asc
+RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 
 
 # ----- Top-level targets -----
@@ -150,8 +153,8 @@ dist: $(SOURCES_GENERATED)
 	$(RUN_SETUP) sdist
 
 # Upload a source distribution to PyPi (has to be done in one command)
-upload: $(SOURCES_GENERATED) dict
-	$(GPG) --detach-sign -a dist/epydemic-$(VERSION).tar.gz
+upload: $(SOURCES_GENERATED) dist
+	$(GPG) --detach-sign -a dist/$(PACKAGENAME)-$(VERSION).tar.gz
 	($(CHDIR) $(ENV_COMPUTATIONAL) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_TWINE))
 
 # Clean up the distribution build 
