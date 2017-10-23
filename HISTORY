@@ -1,3 +1,5 @@
+Version 0.11.1
+
 Version 0.10.1 2016-06-23
 
    - Added traceback objects to metadata for failed experiments, to help debugging
