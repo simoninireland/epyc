@@ -33,26 +33,21 @@ class MetadataEncoder(json.JSONEncoder):
                 # exception, stringify it
                 return str(o)
             else:
-                if isinstance(o, types.TracebackType):
-                    # traceback, ignore it (essentially)
-                    return None
-                else:
-                    # everything else, pass through
-                    return super(MetadataEncoder, self).default(o)
+                # everything else, pass through
+                return super(MetadataEncoder, self).default(o)
 
 
 class JSONLabNotebook(epyc.LabNotebook):
-    '''A lab notebook that persists intself to a JSON file.This is
+    '''A lab notebook that persists intself to a JSON file. This is
     the most basic kind of persistent notebook, readable by
     virtually any tooling.
 
     Using JSON presents some disadvantages, as not all types can be
-    represented. Specifically, exceptions and their associated
-    traceback objects from the metadata of failed experiments (with the
-    :attr:`Experiment.EXCEPTION` and :attr:`Experiment.TRACEBACK` keys)
-    will be saved as strings (for the exception)
-    or blanked-out to `None` (for the traceback). We also need to convert
-    `datetime` objects to ISO-format strings.
+    represented. Specifically, exceptions from the metadata of failed
+    experiments (with the :attr:`Experiment.EXCEPTION`)
+    will be saved as strings (for the exception). (Traceback objects,
+    with the :attr:`Experiment.TRACEBACK` key, are stringified anyway.)
+    We also need to convert `datetime` objects to ISO-format strings.
     '''
 
     def __init__( self, name, create = False, description = None ):
