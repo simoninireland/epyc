@@ -62,7 +62,7 @@ online <https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb>.
 Author and license
 ------------------
 
-Copyright (c) 2016, Simon Dobson <simon.dobson@computer.org>
+Copyright (c) 2016-2018, Simon Dobson <simon.dobson@computer.org>
 
 Licensed under the `GNU General Public Licence v.2.0 <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`.
 
