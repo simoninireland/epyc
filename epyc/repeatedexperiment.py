@@ -17,7 +17,7 @@ class RepeatedExperiment(epyc.ExperimentCombinator):
     When run, a repeated experiment runs a number of repetitions of the underlying
     experiment at the same point in the parameter space. The result of the
     repeated experiment is the list of results from the underlying experiment.
-    If the underlying experiment returns a list of results, these are all
+    If the underlying experiment itself returns a list of results, these are all
     flattened into a single list.'''
 
     def __init__( self, ex, N ):
