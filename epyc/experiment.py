@@ -171,7 +171,8 @@ class Experiment(object):
             print "Caught exception in experiment: {e}".format(e = e)
 
             # grab the traceback before we do anything else
-            _, _, tb = sys.exc_info()
+            #_, _, tb = sys.exc_info()
+            tb = traceback.format_exc()
             
             # decide on the cleanup actions that need doing
             if (doneSetupTime is not None) and (doneExperimentTime is None):
