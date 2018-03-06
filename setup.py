@@ -13,7 +13,7 @@ with open('README.rst') as f:
     longDescription = f.read()
 
 setup(name = 'epyc',
-      version = '0.11.1',
+      version = '0.12.1',
       description = 'Python computational experiment management',
       long_description = longDescription,
       url = 'http://github.com/simoninireland/epyc',
@@ -27,6 +27,6 @@ setup(name = 'epyc',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
       zip_safe = True,
-      install_requires = [  ])
+      install_requires = [ "ipython", "pyzmq", "ipyparallel", "dill", ])
 
 
