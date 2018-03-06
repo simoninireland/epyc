@@ -153,7 +153,7 @@ env: $(VENV)
 
 $(VENV):
 	$(VIRTUALENV) $(VENV)
-	$(CP) $(REQUIREMENTS) $(VENV)/requirements.txt
+	$(CP) $(DEV_REQUIREMENTS) $(VENV)/requirements.txt
 	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt
 
 # Build a development venv from the latest versions of the required packages,
