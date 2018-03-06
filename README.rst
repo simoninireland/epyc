@@ -54,9 +54,9 @@ copy, just clone the repo:
 Documentation
 -------------
 
-The ``doc/`` directory contains an IPython notebook that describes the
-use of ``epyc`` in detail. You can also read it directly
-online <https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb>.
+API documentation for `epyc` can be found on `ReadTheDocs <https://epyc.readthedocs.io/en/latest/>`.
+You can also read a Jupyter notebook describing several `epyc` use
+cases online at <https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb>.
 
 
 Author and license
