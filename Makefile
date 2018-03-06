@@ -9,7 +9,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.11.1
+VERSION = 0.12.1
 
 # ----- Sources -----
 
@@ -69,15 +69,14 @@ PY_REQUIREMENTS = \
 	ipython \
 	pyzmq \
 	ipyparallel \
-	dill \
-	pandas
-# For the documentation
+	dill
+# For the documentation and development venv
 PY_DEV_REQUIREMENTS = \
-	$(PY_REQUIREMENTS) \
 	numpy \
 	jupyter \
 	matplotlib \
 	seaborn \
+	pandas \
 	sphinx \
 	twine
 
@@ -89,6 +88,7 @@ PY_NON_REQUIREMENTS = \
 	subprocess32
 VENV = venv
 REQUIREMENTS = requirements.txt
+DEV_REQUIREMENTS = dev-requirements.txt
 
 
 # ----- Tools -----
@@ -154,16 +154,21 @@ env: $(VENV)
 $(VENV):
 	$(VIRTUALENV) $(VENV)
 	$(CP) $(REQUIREMENTS) $(VENV)/requirements.txt
-	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
+	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt
 
 # Build a development venv from the latest versions of the required packages,
 # creating a new requirements.txt ready for committing to the repo. Make sure
 # things actually work in this venv before committing!
 .PHONY: newenv
 newenv:
-	echo $(PY_DEV_REQUIREMENTS) | $(TR) ' ' '\n' >$(REQUIREMENTS)
-	make env
+	$(RM) $(VENV)
+	$(VIRTUALENV) $(VENV)
+	echo $(PY_REQUIREMENTS) | $(TR) ' ' '\n' >$(VENV)/$(REQUIREMENTS)
+	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
 	$(NON_REQUIREMENTS) $(VENV)/requirements.txt >$(REQUIREMENTS)
+	echo $(PY_DEV_REQUIREMENTS) | $(TR) ' ' '\n' >$(VENV)/$(REQUIREMENTS)
+	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
+	$(NON_REQUIREMENTS) $(VENV)/requirements.txt >$(DEV_REQUIREMENTS)
 
 # Build a source distribution
 sdist: $(SOURCES_SDIST)
