@@ -9,7 +9,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.11.2
+VERSION = 0.12.1
 
 # ----- Sources -----
 
@@ -69,14 +69,14 @@ PY_REQUIREMENTS = \
 	ipython \
 	pyzmq \
 	ipyparallel \
-	dill
+	dill \
+	pandas
 # For the documentation and development venv
 PY_DEV_REQUIREMENTS = \
 	numpy \
 	jupyter \
 	matplotlib \
 	seaborn \
-	pandas \
 	sphinx \
 	twine
 

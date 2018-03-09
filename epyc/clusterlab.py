@@ -32,9 +32,14 @@ class ClusterLab(epyc.Lab):
     '''
 
     # The "waiting time", the period between checks when waiting for the
-    # completion of penbding results. Setting this too low increases network
+    # completion of pending results. Setting this too low increases network
     # traffic, probably unnecessarily. Default is 30s
     WaitingTime = 30
+
+    # The "chunk size" of the number of pending job ids queried in a single
+    # transaction. Larger uses less transactions, but some ipcontroller backends 
+    # have (undocumented) upper limits
+    PendingJobsChunkSize = 100
 
     
     def __init__( self, notebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
@@ -76,9 +81,6 @@ class ClusterLab(epyc.Lab):
         # connect to the cluster
         self.open()
         
-        # make us use Dill as pickler by default
-        self._use_dill()
-
     def open( self ):
         '''Connect to the cluster.'''
         if self._client is None:
@@ -160,7 +162,10 @@ class ClusterLab(epyc.Lab):
             try:
                 # connect to the cluster
                 self.open()
-            
+
+                # make sure cluster is using Dill as pickler
+                self._use_dill()
+                
                 # submit an experiment at each point in the parameter space to the cluster
                 view = self._client.load_balanced_view()
                 jobs = view.map_async((lambda p: e.set(p).run()), ps)
@@ -189,25 +194,31 @@ class ClusterLab(epyc.Lab):
             try:
                 self.open()
                 try:
-                    # query the cluster for all pending results, in a
-                    # single network transaction
-                    status = self._client.result_status(nb.pendingResults(), status_only = False)
+                    # generate a list of chunks of pending job ids
+                    # (we have to do this because some database backends in ipcontroller
+                    # have a limit on how many can be accessed in a single query)
+                    js = nb.pendingResults()
+                    chunks = [ js[i:i + self.PendingJobsChunkSize] for i in xrange(0, len(js), self.PendingJobsChunkSize) ]
+                    for chunk in chunks:
+                        # query the status of a set of jobs
+                        #print "checking jobs {c}".format(c = chunk)
+                        status = self._client.result_status(chunk, status_only = False)
 
-                    # add all the completed results to the notebook
-                    for j in status['completed']:
-                        # status dict contains a mapping for each completed job
-                        r = status[j]
-                        
-                        # update the result in the notebook, cancelling
-                        # the pending result as well
-                        # sd: values come back from Client.result_status() in
-                        # varying degrees of list-nesting, which LabNotebook.addResult()
-                        # handles itself
-                        nb.addResult(r, j)
-                    
-                        # record that we retrieved the results for the given job
-                        n = n + 1
-                        retrieved.append(j)
+                        # add all completed jobs to the notebook
+                        for j in status['completed']:
+                            #print "job {j} completed".format(j = j)
+                            r = status[j]
+
+                            # update the result in the notebook, cancelling
+                            # the pending result as well
+                            # sd: values come back from Client.result_status() in
+                            # varying degrees of list-nesting, which LabNotebook.addResult()
+                            # handles itself
+                            nb.addResult(r, j)
+
+                            # record that we retrieved the results for the given job
+                            n = n + 1
+                            retrieved.append(j)
                 except RemoteError as re:
                     # sd: there seems to be a race condition when retrieving jobs,
                     # so mask the exceptions since they shouldn't occur (assuming

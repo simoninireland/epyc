@@ -1,3 +1,9 @@
+Version 0.12.1 2017-03-09
+
+   - Chunked downloading of pending results from clusters to work around
+     some undocumented limits in some database backends 
+   - Added slightly improved error handling in summary experiments
+
 Version 0.11.2 2018-03-06
 
    - Maintenance release changing the build system slightly to allow for

@@ -27,6 +27,6 @@ setup(name = 'epyc',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
       zip_safe = True,
-      install_requires = [ "ipython", "pyzmq", "ipyparallel", "dill", ])
+      install_requires = [ "ipython", "pyzmq", "ipyparallel", "dill", "pandas", ])
 
 

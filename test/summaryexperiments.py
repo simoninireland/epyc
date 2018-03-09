@@ -207,3 +207,34 @@ class SummaryExperimentTests(unittest.TestCase):
             except OSError:
                 pass
 
+    def testSummaryExceptions( self ):
+        '''Test we generate (and record) exceptions for illegal summary keys.'''
+        N = 10
+        
+        self._lab['x'] = 'hello'
+        
+        e = SampleExperiment1()
+        es = SummaryExperiment(RepeatedExperiment(e, N))
+
+        self._lab.runExperiment(es)
+        res = (self._lab.results())[0]
+        
+        self.assertFalse(res[Experiment.METADATA][Experiment.STATUS])
+                         
+    def testUnderlyingExceptions( self ):
+        '''Test we record the underlying exceptions.'''
+        N = 10
+        
+        self._lab['x'] = [ 5 ]
+        
+        e = SampleExperiment3()
+        es = SummaryExperiment(RepeatedExperiment(e, N))
+
+        self._lab.runExperiment(es)
+        res = (self._lab.results())[0]
+        
+        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
+        self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], N)
+        self.assertEqual(len(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_EXCEPTIONS]), N - e.ran())
+
+        

@@ -24,9 +24,13 @@ labsSuite = unittest.TestLoader().loadTestsFromTestCase(LabTests)
 clusterlabsSuite = unittest.TestLoader().loadTestsFromTestCase(ClusterLabTests)
 
 suite = unittest.TestSuite([ experimentsSuite,
-                             repeatedExperimentsSuite, summaryExperimentsSuite,
-                             notebooksSuite, jsonnotebooksSuite,
-                             labsSuite, clusterlabsSuite ])
+                             repeatedExperimentsSuite,
+                             summaryExperimentsSuite,
+                             notebooksSuite,
+                             jsonnotebooksSuite,
+                             labsSuite,
+                             clusterlabsSuite
+                           ])
 
 if __name__ == '__main__':
     unittest.TextTestRunner(verbosity = 2).run(suite)
