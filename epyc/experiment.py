@@ -1,6 +1,6 @@
 # Base class for experiments
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under the GNU General Public Licence v.2.0
 #
@@ -140,7 +140,7 @@ class Experiment(object):
         its traceback to help with experiment debugging.
 
         :returns: a :term:`results dict`'''
-
+        
         # perform the experiment protocol
         params = self.parameters()
         self._metadata = dict()
@@ -191,8 +191,8 @@ class Experiment(object):
                 
         # report the results
         self._results = res
-        return self.report(self.parameters(),
-                           self.metadata(),
+        return self.report(params,
+                           self._metadata,
                            res)
     
     def __getitem__( self, k ):
