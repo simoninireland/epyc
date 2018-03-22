@@ -1,12 +1,11 @@
 # Simulation "lab" experiment management, sequential version
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under the GNU General Public Licence v.2.0
 #
 
 import epyc
-
 import collections
 
 
@@ -144,7 +143,7 @@ class Lab(object):
         # run the experiment at each point
         nb = self.notebook()
         for p in ps:
-            # print "Running {p}".format(p = p)
+            #print "Running {p}".format(p = p)
             res = e.set(p).run()
             nb.addResult(res)
 
@@ -180,5 +179,5 @@ class Lab(object):
         :returns: True if the results are in'''
         self.updateResults()
         return (len(self.notebook().pendingResults()) == 0)
-
+    
 

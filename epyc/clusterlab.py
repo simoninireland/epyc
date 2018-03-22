@@ -1,6 +1,6 @@
 # Simulation "lab" experiment management, parallel cluster version
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under the GNU General Public Licence v.2.0
 #
@@ -31,21 +31,15 @@ class ClusterLab(epyc.Lab):
     and with appropriate security information available to the client.
     '''
 
-    # The "waiting time", the period between checks when waiting for the
-    # completion of pending results. Setting this too low increases network
-    # traffic, probably unnecessarily. Default is 30s
-    WaitingTime = 30
-
-    # The "chunk size" of the number of pending job ids queried in a single
-    # transaction. Larger uses less transactions, but some ipcontroller backends 
-    # have (undocumented) upper limits
-    PendingJobsChunkSize = 100
+    # Tuning parameters
+    WaitingTime = 30           #: Waiting time for checking for job completion. Lower values increase network traffic.
 
     
-    def __init__( self, notebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
-        '''Create an empty lab attached to the given cluster. most of the arguments
+    def __init__( self, notebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, use_dill = False, **extra_args ):
+        '''Create an empty lab attached to the given cluster. Most of the arguments
         are as expected by the ``ipyparallel.Client`` class, and are used to create the
-        underlying connection to the cluster.
+        underlying connection to the cluster. The connection is opened immediately,
+        meaning the cluster must be up and accessible when creating a lab to use it.
 
         :param notebook: the notebook used to results (defaults to an empty :class:`LabNotebook`)
         :param url_file: file containing connection information for accessing cluster
@@ -59,7 +53,8 @@ class ClusterLab(epyc.Lab):
         :param password: ssh password
         :param paramiko: True to use paramiko for ssh (defaults to False)
         :param timeout: timeout in seconds for ssh connection (defaults to 10s)
-        :param cluster_id: string added to runtime files to prevent collisions'''
+        :param cluster_id: string added to runtime files to prevent collisions
+        :param use_dill: whether to use Dill as pickler (defaults to False)'''
         super(epyc.ClusterLab, self).__init__(notebook)
         
         # record all the connection arguments for later
@@ -80,6 +75,10 @@ class ClusterLab(epyc.Lab):
 
         # connect to the cluster
         self.open()
+
+        # use Dill if requested
+        if use_dill:
+            self.use_dill()
         
     def open( self ):
         '''Connect to the cluster.'''
@@ -96,8 +95,7 @@ class ClusterLab(epyc.Lab):
         '''Return the number of engines available to this lab.
 
         :returns: the number of engines'''
-        self.open()
-        return len(self._client[:])
+        return len(self.engines())
 
     def engines( self ):
         '''Return a list of the available engines.
@@ -106,8 +104,11 @@ class ClusterLab(epyc.Lab):
         self.open()
         return self._client[:]
 
-    def _use_dill( self ):
-        '''Make the cluster use Dill as pickler for transferring results.'''
+    def use_dill( self ):
+        '''Make the cluster use Dill as pickler for transferring results. This isn't
+        generally needed, but is sometimes useful for particularly complex experiments
+        such as those involving closures. (Or, to put it another way, if you find yourself
+        tempted to use this method, consider re-structuring your experiment code.)'''
         self.open()
         with self.sync_imports(quiet = True):
             import dill
@@ -116,6 +117,12 @@ class ClusterLab(epyc.Lab):
     def sync_imports( self, quiet = False ):
         '''Return a context manager to control imports onto all the engines
         in the underlying cluster. This method is used within a ``with`` statement.
+        
+        Any imports should be done with no experiments running, otherwise the
+        method will block until the cluster is quiet. Generally imports will be one
+        of the first things done when connecting to a cluster. (But be careful
+        not to accidentally try to re-import if re-connecting to a running
+        cluster.)
 
         :param quiet: if True, suppresses messages (defaults to False)
         :returns: a context manager'''
@@ -155,7 +162,7 @@ class ClusterLab(epyc.Lab):
             nb = self.notebook()
             
             # randomise the order of the parameter space so that we evaluate across
-            # the space as we go along to make intermediate (incomplete) result
+            # the space as we go along to try to make intermediate (incomplete) result
             # sets more representative of the overall result set
             ps = self._mixup(space)
 
@@ -163,15 +170,18 @@ class ClusterLab(epyc.Lab):
                 # connect to the cluster
                 self.open()
 
-                # make sure cluster is using Dill as pickler
-                self._use_dill()
-                
                 # submit an experiment at each point in the parameter space to the cluster
                 view = self._client.load_balanced_view()
-                jobs = view.map_async((lambda p: e.set(p).run()), ps)
+                jobs = []
+                for p in ps:
+                    jobs.extend((view.apply_async((lambda p: e.set(p).run()), p)).msg_ids)
+
+                    # there seems to be a race condition in submitting jobs,
+                    # whereby jobs get dropped if they're submitted too quickly
+                    time.sleep(0.01)
                 
                 # record the mesage ids of all the jobs as submitted but not yet completed
-                psjs = zip(ps, jobs.msg_ids)
+                psjs = zip(ps, jobs)
                 for (p, j) in psjs:
                     nb.addPendingResult(p, j)
             finally:
@@ -180,10 +190,13 @@ class ClusterLab(epyc.Lab):
                 self.close()
 
     def updateResults( self ):
-        '''Update our results withn any pending results that have completed since we
+        '''Update our results within any pending results that have completed since we
         last retrieved results from the cluster.
 
         :returns: the number of pending results completed at this call'''
+
+        # we do all the tests for pending results against the notebook directly,
+        # as the corresponding methods on self call this method themselves
         nb = self.notebook()
 
         # look for pending results if we're waiting for any
@@ -193,52 +206,24 @@ class ClusterLab(epyc.Lab):
             retrieved = []
             try:
                 self.open()
-                try:
-                    # generate a list of chunks of pending job ids
-                    # (we have to do this because some database backends in ipcontroller
-                    # have a limit on how many can be accessed in a single query)
-                    js = nb.pendingResults()
-                    chunks = [ js[i:i + self.PendingJobsChunkSize] for i in xrange(0, len(js), self.PendingJobsChunkSize) ]
-                    for chunk in chunks:
-                        # query the status of a set of jobs
-                        #print "checking jobs {c}".format(c = chunk)
-                        status = self._client.result_status(chunk, status_only = False)
-
-                        # add all completed jobs to the notebook
-                        for j in status['completed']:
-                            #print "job {j} completed".format(j = j)
-                            r = status[j]
-
-                            # update the result in the notebook, cancelling
-                            # the pending result as well
-                            # sd: values come back from Client.result_status() in
-                            # varying degrees of list-nesting, which LabNotebook.addResult()
-                            # handles itself
-                            nb.addResult(r, j)
-
-                            # record that we retrieved the results for the given job
-                            n = n + 1
-                            retrieved.append(j)
-                except RemoteError as re:
-                    # sd: there seems to be a race condition when retrieving jobs,
-                    # so mask the exceptions since they shouldn't occur (assuming
-                    # we're managing our own data structures properly)
-                    #
-                    # Deep-inspect the exception to check if we're a key error to one
-                    # of the job ids, using the unfortunately convoluted syntax ipyparallel
-                    # forces upon us
-                    if re.ename == 'KeyError':
-                        # it's a key error, check for the job id
-                        j = (re.evalue.strip("'").split(' '))[-1]   # sd: why do we need to strip() here?
-                        if j in nb.pendingResults():
-                            #print "Can't retrieve {id}, will try again".format(id = j)
-                            pass
-                        else:
-                            # not a job id we asked for, propagate the error
-                            raise re
-                    else:
-                        # not an error we should mask, propagate it
-                        raise re
+                for j in nb.pendingResults():
+                    # query the status of a job
+                    status = self._client.result_status(j, status_only = False)
+                    
+                    # add all completed jobs to the notebook
+                    if j in status['completed']:
+                        r = status[j]
+                        
+                        # update the result in the notebook, cancelling
+                        # the pending result as well
+                        # values come back from Client.result_status() in
+                        # varying degrees of list-nesting, which LabNotebook.addResult()
+                        # handles itself
+                        nb.addResult(r, j)
+                        
+                        # record that we retrieved the results for the given job
+                        n = n + 1
+                        retrieved.append(j)
             finally:
                 if n > 0:
                     # commit changes to the notebook
@@ -246,9 +231,6 @@ class ClusterLab(epyc.Lab):
 
                     # purge the retrieved, completed jobs from the cluster
                     self._client.purge_hub_results(retrieved)
-
-                # whatever happens, close our connection 
-                self.close()
         return n
 
     def numberOfResults( self ):
@@ -298,7 +280,7 @@ class ClusterLab(epyc.Lab):
         :param timeout: timeout period in seconds (defaults to forever)
         :returns: True if all the results completed'''
 
-        # sd: we can't use ipyparallel.Client.wait() for this, because that
+        # we can't use ipyparallel.Client.wait() for this, because that
         # method only works for cases where the Client object is the one that
         # submitted the jobs to the cluster hub -- and therefore has the
         # necessary data structures to perform synchronisation. This isn't the
@@ -313,17 +295,11 @@ class ClusterLab(epyc.Lab):
         # of time before updating the results. The latency value essentially controls
         # how busy this process is: given that most simulations are expected to
         # be long, a latency in the tens of seconds feels about right as a default
-        nb = self.notebook()
-        
-        if nb.numberOfPendingResults() > 0:
+        if self.numberOfPendingResults() > 0:
             # we've got pending results, wait for them
-            jobs = nb.pendingResults()
             timeWaited = 0
             while (timeout < 0) or (timeWaited < timeout):
-                # get any jobs that have completed
-                self.updateResults()
-                
-                if nb.numberOfPendingResults() == 0:
+                if self.numberOfPendingResults() == 0:
                     # no pending jobs left, we're complete
                     return True
                 else:
@@ -345,8 +321,7 @@ class ClusterLab(epyc.Lab):
 
             # if we get here, the timeout expired, so do a final check
             # and then exit
-            self.updateResults()
-            return (nb.numberOfPendingResults() == 0)
+            return (self.numberOfPendingResults() == 0)
 
         else:
             # no results, so we got them all
