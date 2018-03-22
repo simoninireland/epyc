@@ -26,6 +26,7 @@ Extended functionality
 .. toctree::
    :maxdepth: 2
 
+   experimentcombinator
    repeatedexperiment
    summaryexperiment
    jsonlabnotebook
