@@ -9,7 +9,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.12.1
+VERSION = 0.13.1
 
 # ----- Sources -----
 
@@ -47,6 +47,7 @@ SOURCES_DOCUMENTATION = \
 	doc/index.rst \
 	doc/experiment.rst \
 	doc/lab.rst \
+	doc/experimentcombinator.rst \
 	doc/repeatedexperiment.rst \
 	doc/summaryexperiment.rst \
 	doc/jsonlabnotebook.rst \
@@ -120,7 +121,7 @@ RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
-RUN_CLUSTER = $(IPCLUSTER) start --profile=default --n=2
+RUN_CLUSTER = PYTHONPATH=. $(IPCLUSTER) start --profile=default --n=2
 RUN_NOTEBOOK = $(JUPYTER) notebook
 
 

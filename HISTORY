@@ -1,3 +1,15 @@
+Version 0.13.1
+
+   - Got rid of the chunking as there seems to be a race condition
+     in ipyparallel or ZeroMQ. A small delay fixes it (for now)
+   - Changed the way repeated experiments work, from returning a
+     list of results dicts to returning a single one whose results
+     were a list of results dicts (so embedding the list one level down)
+   - Corresponding changes to summary experiments
+   - Added more summary information to summary experiments
+   - Removed the default use of dill in ClusterLab
+   - ADded documentation for ExperimentCombinator
+   
 Version 0.12.1 2017-03-09
 
    - Chunked downloading of pending results from clusters to work around
