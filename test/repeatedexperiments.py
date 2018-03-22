@@ -1,6 +1,6 @@
 # Tests of repeated experiments combinator
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under the GNU General Public Licence v.2.0
 #
@@ -34,10 +34,15 @@ class RepeatedExperimentTests(unittest.TestCase):
 
         self._lab.runExperiment(er)
         self.assertTrue(er.success())
+
+        rresults = self._lab.results()
+        self.assertEqual(len(rresults), 1)
+
+        self.assertEqual(rresults[0][Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
         
-        results = self._lab.results()
+        results = rresults[0][Experiment.RESULTS]
         self.assertEqual(len(results), N * len(self._lab['x']))
-        for res in self._lab.notebook().resultsFor(dict(x = self._lab['x'][0])):
+        for res in results:
             self.assertEqual(res[Experiment.RESULTS]['result'], self._lab['x'][0])
             
     def testRepetitionsMultiplePoint( self ):
@@ -50,12 +55,18 @@ class RepeatedExperimentTests(unittest.TestCase):
         er = RepeatedExperiment(e, N)
 
         self._lab.runExperiment(er)
-        results = self._lab.results()
-        self.assertEqual(len(results), N * len(self._lab['x']))
+        self.assertTrue(er.success())
+        
+        rresults = self._lab.results()
+        self.assertEqual(len(rresults), 3)
 
-        for x in range(len(self._lab['x'])):
-            for res in self._lab.notebook().resultsFor(dict(x = x)):
-                self.assertIn(res[Experiment.PARAMETERS]['x'], x)
-                self.assertEqual(res[Experiment.RESULTS]['result'], x)
+        for i in xrange(3):
+            results = rresults[i][Experiment.RESULTS]
+            self.assertEqual(len(results), N)
+
+            for j in range(N):
+                res = results[j]
+                self.assertIn(res[Experiment.PARAMETERS]['x'], self._lab['x'])
+                self.assertEqual(res[Experiment.RESULTS]['result'], res[Experiment.PARAMETERS]['x'])
 
 

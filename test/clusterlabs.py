@@ -14,6 +14,10 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
+# set limits low for testing purposes
+ClusterLab.PendingJobsChunkSize = 5
+ClusterLab.WaitingTime = 10
+
 
 class SampleExperiment(Experiment):
     '''A very simple experiment that adds up its parameters.'''
@@ -47,6 +51,7 @@ class ClusterLabTests(unittest.TestCase):
     def setUp( self ):
         '''Create a lab in which to perform tests.'''
         self._lab = ClusterLab()
+        #self._lab._use_dill()
         with self._lab.sync_imports():
             import time
 
@@ -96,7 +101,7 @@ class ClusterLabTests(unittest.TestCase):
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
-        self._lab.runExperiment(SampleExperiment2())
+        self._lab.runExperiment(SampleExperiment())
         self.assertTrue(self._lab.wait())
         self.assertTrue(self._lab.ready())
             
@@ -141,7 +146,6 @@ class ClusterLabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
 
-        
     def testReturnWithNoJobs( self ):
         '''Test wait() returns True when there are no jobs pending.'''
         n = 20
@@ -150,7 +154,7 @@ class ClusterLabTests(unittest.TestCase):
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment())
         self.assertTrue(self._lab.wait())
-
+        
         # calling wait() again should also be true (with no delay, which we don't check for)
         self.assertTrue(self._lab.wait())
 
@@ -181,5 +185,24 @@ class ClusterLabTests(unittest.TestCase):
         self._lab.wait()
         self.assertEqual(self._lab.numberOfResults(), 0)
         self.assertEqual(self._lab.numberOfPendingResults(), 0)
+
+    def testAddExperiments( self ):
+        '''Test we can add experiments while some are running, without locking up.'''
+        n = 20
+
+        # run the first experiment
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+
+        # while this is waiting, run another
+        r = numpy.arange(n, 2 * n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+
+        self._lab.wait()
+        self.assertEqual(self._lab.numberOfResults(), 2 * n)
+        self.assertEqual(self._lab.numberOfPendingResults(), 0)
+
         
        

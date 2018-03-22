@@ -1,6 +1,6 @@
 # Tests of summarising experiments combinator
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under the GNU General Public Licence v.2.0
 #
@@ -65,6 +65,17 @@ class SampleExperiment4(Experiment):
                     nestedArray = [ 1, 2, 3 ],
                     nestedDict = dict(a = 1, b = 'two'))
 
+class SampleExperiment5(Experiment):
+
+    def __init__( self ):
+        super(SampleExperiment5, self).__init__()
+        self._values = []
+
+    def do( self, params ):
+        v = numpy.random.random()
+        self._values.append(v)
+        return dict(result = v)
+    
     
 class SummaryExperimentTests(unittest.TestCase):
 
@@ -82,7 +93,7 @@ class SummaryExperimentTests(unittest.TestCase):
 
         self._lab.runExperiment(es)
         res = (self._lab.results())[0]
-
+        
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], N)
         
@@ -137,15 +148,18 @@ class SummaryExperimentTests(unittest.TestCase):
 
         self._lab.runExperiment(es)
         res = (self._lab.results())[0]
-        
+
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
-        self.assertEqual(len(res[Experiment.RESULTS].keys()), 3)
-        self.assertIn('dummy_mean', res[Experiment.RESULTS].keys())
+        self.assertItemsEqual(res[Experiment.RESULTS].keys(), [ 'dummy_mean',
+                                                                'dummy_median',
+                                                                'dummy_variance',
+                                                                'dummy_min',
+                                                                'dummy_max' ])
         self.assertEqual(res[Experiment.RESULTS]['dummy_mean'], 1)
-        self.assertIn('dummy_median', res[Experiment.RESULTS].keys())
         self.assertEqual(res[Experiment.RESULTS]['dummy_median'], 1)
-        self.assertIn('dummy_variance', res[Experiment.RESULTS].keys())
         self.assertEqual(res[Experiment.RESULTS]['dummy_variance'], 0)
+        self.assertEqual(res[Experiment.RESULTS]['dummy_min'], 1)
+        self.assertEqual(res[Experiment.RESULTS]['dummy_max'], 1)
 
     def testIgnoring( self ):
         '''Test that we ignore failed experiments'''
@@ -237,4 +251,23 @@ class SummaryExperimentTests(unittest.TestCase):
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], N)
         self.assertEqual(len(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_EXCEPTIONS]), N - e.ran())
 
+    def testNoPoint( self ):
+        '''Test we do nothing if we have an empty parameter space.'''
+        e = SampleExperiment5()
+        self._lab.runExperiment(e)
+        self.assertEqual(len(self._lab.results()), 0)
         
+    def testExtrema( self ):
+        '''Test we capture the extrema correctly.'''
+        N = 10
+        self._lab['x'] = [ 5 ]    # dummy data point, we don't use it
+        
+        e = SampleExperiment5()
+        es = SummaryExperiment(RepeatedExperiment(e, N))
+
+        self._lab.runExperiment(es)
+        res = (self._lab.results())[0]
+
+        self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_SUCCESSFUL_RESULTS], 10)
+        self.assertEqual(res[Experiment.RESULTS]['result_min'], numpy.min(e._values))
+        self.assertEqual(res[Experiment.RESULTS]['result_max'], numpy.max(e._values))
