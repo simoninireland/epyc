@@ -1,4 +1,4 @@
-Version 0.13.1
+Version 0.13.1 2018-03-22
 
    - Got rid of the chunking as there seems to be a race condition
      in ipyparallel or ZeroMQ. A small delay fixes it (for now)
@@ -10,7 +10,7 @@ Version 0.13.1
    - Removed the default use of dill in ClusterLab
    - ADded documentation for ExperimentCombinator
    
-Version 0.12.1 2017-03-09
+Version 0.12.1 2018-03-09
 
    - Chunked downloading of pending results from clusters to work around
      some undocumented limits in some database backends 
