@@ -46,7 +46,9 @@ experiment available in the cluster.
 
 .. automethod:: ClusterLab.sync_imports
 
+.. automethod:: ClusterLab.use_dill
 
+		
 Running experiments
 -------------------
 
