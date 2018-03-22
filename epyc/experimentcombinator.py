@@ -4,44 +4,45 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
-import epyc
-
-import numpy
+from epyc import *
 
 
-class ExperimentCombinator(epyc.Experiment):
+class ExperimentCombinator(Experiment):
     '''An experiment that wraps-up another, underlying experiment. This is an abstract
     class that just provides the common wrapping logic.
 
     Experiment combinators aren't expected to have parameters of their own: they
-    simply use the parameters of their underlying experiment.'''
+    simply use the parameters of their underlying experiment. They may however
+    give rise to metadata of their own, and modify the results returned by running
+    their underlying experiment.'''
 
     def __init__( self, ex ):
         '''Create a combinator based on the given experiment.
 
         ex: the underlying experiment'''
-        super(epyc.ExperimentCombinator, self).__init__()
+        super(ExperimentCombinator, self).__init__()
         self._experiment = ex
 
     def experiment( self ):
         '''Return the underlying experiment.
 
-        returns: the underlying experiment'''
+        :returns: the underlying experiment'''
         return self._experiment
 
-    def configure( self, params ):
-        '''Configuring the summary configures the underlying experiment.
+    def set( self, params ):
+        '''Set the parameters for the experiment, returning the
+        now-configured experiment.
 
-        params: the experiment's parameters'''
-        self.experiment().configure(params)
-
-    def deconfigure( self ):
-        '''De-configuring the summary de-configures the underlying experiment.'''
-        self.experiment().deconfigure()
+        :param params: the parameters
+        :returns: the experiment combinator itself'''
+        self.experiment().set(params)
+        return self
 
     def parameters( self ):
         '''Return the current experimental parameters, taken from the
         underlying experiment.
 
-        returns: the parameters,'''
+        :returns: the parameters,'''
         return self.experiment().parameters()
+
+    
