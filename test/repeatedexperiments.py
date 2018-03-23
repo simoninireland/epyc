@@ -35,12 +35,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         self.assertTrue(er.success())
 
-        rresults = self._lab.results()
-        self.assertEqual(len(rresults), 1)
-
-        self.assertEqual(rresults[0][Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
-        
-        results = rresults[0][Experiment.RESULTS]
+        results = self._lab.results()
         self.assertEqual(len(results), N * len(self._lab['x']))
         for res in results:
             self.assertEqual(res[Experiment.RESULTS]['result'], self._lab['x'][0])
@@ -57,15 +52,11 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         self.assertTrue(er.success())
         
-        rresults = self._lab.results()
-        self.assertEqual(len(rresults), 3)
-
         for i in xrange(3):
-            results = rresults[i][Experiment.RESULTS]
+            x = self._lab['x'][i]
+            results = self._lab.notebook().resultsFor(dict(x = x))
             self.assertEqual(len(results), N)
-
-            for j in range(N):
-                res = results[j]
+            for res in results:
                 self.assertIn(res[Experiment.PARAMETERS]['x'], self._lab['x'])
                 self.assertEqual(res[Experiment.RESULTS]['result'], res[Experiment.PARAMETERS]['x'])
 

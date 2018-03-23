@@ -78,56 +78,59 @@ class LabNotebook(object):
             k = k + "{p}=[[{v}]];".format(p = p, v = v)
         return k
 
-    def _flatten( self, es ):
-        '''Private method to flatten an arbitrarily nested list structure
-        (including a non-list) into a single flat list.
-
-        es: the list (or not)
-        returns: a flat list of elemnents'''
-        if isinstance(es, list):
-            if len(es) == 0:
-                return [ ]
-            else:
-                return self._flatten(es[0]) + self._flatten(es[1:])
-        else:
-            return [ es ]
-        
-    def addResult( self, results, jobids = None ):
+    def addResult( self, result, jobids = None ):
         '''Add a result. This should be :term:`results dict` as returned from
         an instance of :class:`Experiment`, that contains metadata,
         parameters, and result. Results cannot be overridden, as
         notebooks are immutable: adding more results simply adds
         another result set.
 
-        If results is a list of result dicts, they are added in order: the last result in
-        the list is assumed to be the latest. The result dicts can be embedded in any depth
-        of list structure: they're flattened and added in order, left to right.
+        The results may include one or more nested results dicts, for example as
+        returned by :meth:`RepeatedExperiment`, whose results are a list of results
+        at the same point in the parameter space. In this case the emebedded
+        results will themselves be unpacked and added.
+
+        One may also add a list of results dicts directly, in which case they will
+        be added individually.
 
         If the jobid is present, this result resolves the corresponding pending result.
         As with result, jobid can be a list. (The two lists need not be the same
         length, to allow for experiments that return lists of result dicts.)
 
-        :param result: the results (or a list of results)
+        :param result: a results dict
         :param jobid: the pending result job id(s) (defaults to no jobs)
         '''
 
-        # add each result
-        for result in self._flatten(results):
-            k = self._parametersAsIndex(result[Experiment.PARAMETERS])
+        # deal with the dufferent ways of presenting results to be added
+        if isinstance(result, list):
+            # a list, recursively add
+            for res in result:
+                self.addResult(res)
             
-            # retrieve or create the result list
-            if k in self._results.keys():
-                rs = self._results[k]
+        else:
+            if isinstance(result[Experiment.RESULTS], list):
+                # a result with embedded results, unwrap and and add them
+                for res in result[Experiment.RESULTS]:
+                    self.addResult(res)
             else:
-                rs = []
-                self._results[k] = rs
-
-            # store the result
-            rs.insert(0, result)
+                # a single results dict with a single set of experimental results
+                k = self._parametersAsIndex(result[Experiment.PARAMETERS])
+            
+                # retrieve or create the result list
+                if k in self._results.keys():
+                    rs = self._results[k]
+                else:
+                    rs = []
+                    self._results[k] = rs
+                    
+                # store the result
+                rs.insert(0, result)
 
         # if there is are job ids provided, cancel the corresponding pending jobs
         if jobids is not None:
-            for jobid in self._flatten(jobids):
+            if not isinstance(jobids, list):
+                jobids = [ jobids ]
+            for jobid in jobids:
                 if jobid in self._pending.keys():
                     # grab the results list for which this is a pending job
                     k = self._pending[jobid]
