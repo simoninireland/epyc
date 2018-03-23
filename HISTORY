@@ -1,3 +1,7 @@
+Version 0.13.4 2018-03-23
+
+   - Fixed a bug in adding repeated experiments to notebooks
+
 Version 0.13.1 2018-03-22
 
    - Got rid of the chunking as there seems to be a race condition

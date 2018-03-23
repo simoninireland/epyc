@@ -1,6 +1,6 @@
 # Makefile for epyc
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under the GNU General Public Licence v.2.0
 # 
@@ -9,7 +9,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.13.1
+VERSION = 0.13.2
 
 # ----- Sources -----
 
