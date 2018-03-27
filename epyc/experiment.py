@@ -84,7 +84,8 @@ class Experiment(object):
 
     def configure( self, params ):
         '''Configure the experiment for the given parameters.
-        The default stores the parameters for later use.
+        The default stores the parameters for later use. Be sure
+        to call this base method when overriding.
 
         :param params: the parameters
         :type params: hash of paramater names to values'''
@@ -92,12 +93,13 @@ class Experiment(object):
 
     def deconfigure( self ):
         '''De-configure the experiment prior to setting new parameters.
-        Default removes the parameters.'''
+        Default removes the parameters.  Be sure
+        to call this base method when overriding.'''
         self._parameters = None
 
     def set( self, params ):
         '''Set the parameters for the experiment, returning the
-        now-configured experiment.
+        now-configured experiment.  Be sure to call this base method when overriding.
 
         :param params: the parameters
         :returns: The experiment'''
