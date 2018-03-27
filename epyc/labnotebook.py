@@ -106,26 +106,28 @@ class LabNotebook(object):
             # a list, recursively add
             for res in result:
                 self.addResult(res)
-            
         else:
-            if isinstance(result[Experiment.RESULTS], list):
-                # a result with embedded results, unwrap and and add them
-                for res in result[Experiment.RESULTS]:
-                    self.addResult(res)
-            else:
-                # a single results dict with a single set of experimental results
-                k = self._parametersAsIndex(result[Experiment.PARAMETERS])
-            
-                # retrieve or create the result list
-                if k in self._results.keys():
-                    rs = self._results[k]
+            if isinstance(result, dict):
+                if isinstance(result[Experiment.RESULTS], list):
+                    # a result with embedded results, unwrap and and add them
+                    for res in result[Experiment.RESULTS]:
+                        self.addResult(res)
                 else:
-                    rs = []
-                    self._results[k] = rs
-                    
-                # store the result
-                rs.insert(0, result)
+                    # a single results dict with a single set of experimental results
+                    k = self._parametersAsIndex(result[Experiment.PARAMETERS])
+            
+                    # retrieve or create the result list
+                    if k in self._results.keys():
+                        rs = self._results[k]
+                    else:
+                        rs = []
+                        self._results[k] = rs
 
+                    # store the result
+                    rs.insert(0, result)
+            else:
+                raise Exception("Can't deal with results like this: {r}".format(r = result)) 
+                    
         # if there is are job ids provided, cancel the corresponding pending jobs
         if jobids is not None:
             if not isinstance(jobids, list):
