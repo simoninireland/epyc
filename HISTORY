@@ -1,4 +1,10 @@
-Version 0.13.4 2018-03-23
+Version 0.13.3 2018-03-27
+
+   - Updated some docstrings that were misleading
+   - Tightened-up type checking for variable results argument
+   - Re-introduced the use of Dill by default
+   
+Version 0.13.2 2018-03-23
 
    - Fixed a bug in adding repeated experiments to notebooks
 
