@@ -37,9 +37,14 @@ class RepeatedExperimentTests(unittest.TestCase):
 
         results = self._lab.results()
         self.assertEqual(len(results), N * len(self._lab['x']))
+        indices = set()
         for res in results:
             self.assertEqual(res[Experiment.RESULTS]['result'], self._lab['x'][0])
-            
+            self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
+            self.assertFalse(res[Experiment.METADATA][RepeatedExperiment.I] in indices)
+            indices.add(res[Experiment.METADATA][RepeatedExperiment.I])
+        self.assertItemsEqual(indices, range(N))
+        
     def testRepetitionsMultiplePoint( self ):
         '''Test we can repeat an experiment across a parameter space'''
         N = 10
@@ -51,13 +56,19 @@ class RepeatedExperimentTests(unittest.TestCase):
 
         self._lab.runExperiment(er)
         self.assertTrue(er.success())
-        
+        self.assertEqual(len(self._lab.notebook()), N * len(self._lab['x']))
+
         for i in xrange(3):
             x = self._lab['x'][i]
             results = self._lab.notebook().resultsFor(dict(x = x))
             self.assertEqual(len(results), N)
+            indices = set()
             for res in results:
                 self.assertIn(res[Experiment.PARAMETERS]['x'], self._lab['x'])
                 self.assertEqual(res[Experiment.RESULTS]['result'], res[Experiment.PARAMETERS]['x'])
+                self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
+                self.assertFalse(res[Experiment.METADATA][RepeatedExperiment.I] in indices)
+                indices.add(res[Experiment.METADATA][RepeatedExperiment.I])
+            self.assertItemsEqual(indices, range(N))
 
 
