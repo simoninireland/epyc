@@ -58,9 +58,14 @@ class Lab(object):
         :param k: parameter name
         :param r: parameter range'''
 
-        # if range is a single value, make it a list
         if isinstance(r, basestring) or not isinstance(r, collections.Iterable):
+            # range is a single value, make it a list
             r = [ r ]
+        else:
+            if isinstance(r, collections.Iterable):
+                # range is an iterable, make into a list
+                r = list(r)
+
         self._parameters[k] = r
 
     def parameters( self ):
