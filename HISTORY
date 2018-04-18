@@ -1,3 +1,10 @@
+Version 0.14.1 2018-04-18
+
+   - Changed metadata for repeated experiments to retain number of repetitions,
+     added the index of each result
+   - Eagerly expanded parameter ranges in labs to avoid issues with repeated
+     traversal of, for example, ranges
+
 Version 0.13.3 2018-03-27
 
    - Updated some docstrings that were misleading
