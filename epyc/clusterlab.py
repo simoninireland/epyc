@@ -203,34 +203,30 @@ class ClusterLab(epyc.Lab):
         n = 0
         if nb.numberOfPendingResults() > 0:
             # we have results to get
-            retrieved = []
-            try:
-                self.open()
-                for j in nb.pendingResults():
-                    # query the status of a job
-                    status = self._client.result_status(j, status_only = False)
+            self.open()
+            for j in nb.pendingResults():
+                # query the status of a job
+                status = self._client.result_status(j, status_only = False)
                     
-                    # add all completed jobs to the notebook
-                    if j in status['completed']:
-                        r = status[j]
+                # add all completed jobs to the notebook
+                if j in status['completed']:
+                    r = status[j]
                         
-                        # update the result in the notebook, cancelling
-                        # the pending result as well
-                        # values come back from Client.result_status() in
-                        # varying degrees of list-nesting, which LabNotebook.addResult()
-                        # handles itself
-                        nb.addResult(r, j)
-                        
-                        # record that we retrieved the results for the given job
-                        n = n + 1
-                        retrieved.append(j)
-            finally:
-                if n > 0:
+                    # update the result in the notebook, cancelling
+                    # the pending result as well
+                    # values come back from Client.result_status() in
+                    # varying degrees of list-nesting, which LabNotebook.addResult()
+                    # handles itself
+                    nb.addResult(r, j)
+
                     # commit changes to the notebook
                     nb.commit()
 
-                    # purge the retrieved, completed jobs from the cluster
-                    self._client.purge_hub_results(retrieved)
+                    # purge the completed job from the cluster
+                    self._client.purge_hub_results(j)
+                         
+                    # record that we retrieved the results for the given job
+                    n = n + 1
         return n
 
     def numberOfResults( self ):
