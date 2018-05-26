@@ -6,14 +6,13 @@
 #
 
 import unittest
-from .experiments import *
-from .repeatedexperiments import *
-from .summaryexperiments import *
-from .labs import *
-from .clusterlabs import *
-from .notebooks import *
-from .jsonnotebooks import *
-from .sqlitenotebooks import *
+from .test_experiments import *
+from .test_repeatedexperiments import *
+from .test_summaryexperiments import *
+from .test_labs import *
+from .test_clusterlabs import *
+from .test_notebooks import *
+from .test_jsonnotebooks import *
 
 experimentsSuite = unittest.TestLoader().loadTestsFromTestCase(ExperimentTests)
 repeatedExperimentsSuite = unittest.TestLoader().loadTestsFromTestCase(RepeatedExperimentTests)
