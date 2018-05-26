@@ -29,13 +29,13 @@ SOURCES_CODE = \
 SOURCES_TESTS = \
 	test/__init__.py \
 	test/__main__.py \
-	test/experiments.py \
-	test/repeatedexperiments.py \
-	test/summaryexperiments.py \
-	test/labs.py \
-	test/clusterlabs.py \
-	test/notebooks.py \
-	test/jsonnotebooks.py
+	test/test_experiments.py \
+	test/test_repeatedexperiments.py \
+	test/test_summaryexperiments.py \
+	test/test_labs.py \
+	test/test_clusterlabs.py \
+	test/test_notebooks.py \
+	test/test_jsonnotebooks.py
 TESTSUITE = test
 
 SOURCES_TUTORIAL = doc/epyc.ipynb
@@ -103,7 +103,7 @@ PIP = pip
 TWINE = twine
 GPG = gpg
 VIRTUALENV = virtualenv
-ACTIVATE = . bin/activate
+ACTIVATE = . $(VENV)/bin/activate
 TR = tr
 CAT = cat
 SED = sed
@@ -116,13 +116,13 @@ ZIP = zip -r
 ROOT = $(shell pwd)
 
 # Constructed commands
-RUN_TESTS = $(IPYTHON) -m $(TESTSUITE)
+RUN_TESTS = $(PYTHON) -m unittest discover -s test
 RUN_SETUP = $(PYTHON) setup.py
-RUN_SPHINX_HTML = make html
+RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
-RUN_CLUSTER = PYTHONPATH=. $(IPCLUSTER) start --profile=default --n=2
-RUN_NOTEBOOK = $(JUPYTER) notebook
+RUN_CLUSTER = PYTHONPATH=.:test $(IPCLUSTER) start --profile=default --n=2
+RUN_NOTEBOOK = PYTHONPATH=$(ROOT) $(JUPYTER) notebook
 
 
 # ----- Top-level targets -----
@@ -133,20 +133,20 @@ help:
 
 # Run the test suite in a suitable (predictable) virtualenv
 test: env
-	($(CHDIR) $(VENV) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_TESTS))
+	$(ACTIVATE) && $(RUN_TESTS)
 
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env
-	($(CHDIR) $(VENV) && $(ACTIVATE) && $(CHDIR) .. && $(RUN_CLUSTER))
+	$(ACTIVATE) && $(RUN_CLUSTER)
 
 # Build the API documentation using Sphinx
 .PHONY: doc
 doc: $(SOURCES_DOCUMENTATION) $(SOURCES_DOC_CONF)
-	$(CHDIR) $(VENV) && $(ACTIVATE) && $(CHDIR) $(ROOT)/doc && PYTHONPATH=$(ROOT) $(RUN_SPHINX_HTML)
+	(ACTIVATE) && $(CHDIR) doc && $(RUN_SPHINX_HTML)
 
 .PHONY: docserver
 docserver:
-	($(CHDIR) $(VENV) && $(ACTIVATE) && $(CHDIR) ../doc && PYTHONPATH=.. $(RUN_NOTEBOOK))
+	$(ACTIVATE) && $(CHDIR) doc && $(RUN_NOTEBOOK))
 
 # Build a development venv from the known-good requirements in the repo
 .PHONY: env
@@ -165,10 +165,10 @@ newenv:
 	$(RM) $(VENV)
 	$(VIRTUALENV) $(VENV)
 	echo $(PY_REQUIREMENTS) | $(TR) ' ' '\n' >$(VENV)/$(REQUIREMENTS)
-	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
+	$(ACTIVATE) && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
 	$(NON_REQUIREMENTS) $(VENV)/requirements.txt >$(REQUIREMENTS)
 	echo $(PY_DEV_REQUIREMENTS) | $(TR) ' ' '\n' >$(VENV)/$(REQUIREMENTS)
-	$(CHDIR) $(VENV) && $(ACTIVATE) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
+	$(ACTIVATE) && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
 	$(NON_REQUIREMENTS) $(VENV)/requirements.txt >$(DEV_REQUIREMENTS)
 
 # Build a source distribution
@@ -177,7 +177,7 @@ sdist: $(SOURCES_SDIST)
 # Upload a source distribution to PyPi
 upload: $(SOURCES_SDIST)
 	$(GPG) --detach-sign -a dist/$(PACKAGENAME)-$(VERSION).tar.gz
-	($(CHDIR) $(VENV) && $(ACTIVATE) && $(CHDIR) $(ROOT) && $(RUN_TWINE))
+	$(ACTIVATE) && $(RUN_TWINE)
 
 # Clean up the distribution build 
 clean:
@@ -200,7 +200,7 @@ setup.py: $(SOURCES_SETUP_IN) Makefile
 
 # The source distribution tarball
 $(SOURCES_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
-	($(CHDIR) $(VENV) && $(ACTIVATE) && $(CHDIR) $(ROOT) && $(RUN_SETUP) sdist)
+	$(ACTIVATE) && $(RUN_SETUP) sdist
 
 
 # ----- Usage -----
