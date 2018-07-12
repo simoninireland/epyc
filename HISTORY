@@ -1,3 +1,7 @@
+Version 0.15.1 2018-07-12
+
+   - Made compatible with Python 3 as well as Python 2.7
+
 Version 0.14.1 2018-04-18
 
    - Changed metadata for repeated experiments to retain number of repetitions,
