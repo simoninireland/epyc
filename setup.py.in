@@ -2,7 +2,7 @@
 
 # Setup for epyc
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2018 Simon Dobson
 # 
 # Licensed under GPL 2.0
 #
@@ -24,6 +24,7 @@ setup(name = 'epyc',
                       'Intended Audience :: Science/Research',
                       'Intended Audience :: Developers',
                       'Programming Language :: Python :: 2.7',
+                      'Programming Language :: Python :: 3.7',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
       zip_safe = True,

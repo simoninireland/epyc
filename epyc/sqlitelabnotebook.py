@@ -12,9 +12,9 @@ import os
 
 
 class SqliteLabNotebook(LabNotebook):
-    '''A "laboratory notebook" recording the results of a set of
+    """A "laboratory notebook" recording the results of a set of
     experiments conducted across a parameter space. The intention is
-    to record all the metadata necessary to re-conduct the experiment.'''
+    to record all the metadata necessary to re-conduct the experiment."""
 
     # names of significant database elements
     EXPERIMENT_METADATA_TABLE = "experiment_metadata"
@@ -22,12 +22,12 @@ class SqliteLabNotebook(LabNotebook):
     RESULTS_ID = "job"
     
     def __init__( self, name, dbfile = ':memory:', create = False ):
-        '''Create an empty notebook in the given database file, or in
+        """Create an empty notebook in the given database file, or in
         memory by default.
 
         dbfile: name of the database. By default creates an in-memory database
         create: if True, overwrite any existing database in the named file.
-                By default opens the database'''
+                By default opens the database"""
         super(SqlliteLabNotebook, self).__init__(name)
         
         self._dbfile = dbfile
@@ -50,28 +50,28 @@ class SqliteLabNotebook(LabNotebook):
             self._createDatabase()
 
     def isPersistent( self ):
-        '''Tests whether the notebook is persistent (i.e., stored on disc).
+        """Tests whether the notebook is persistent (i.e., stored on disc).
 
-        returns: True if notebook is persistent, False otherwise'''
+        returns: True if notebook is persistent, False otherwise"""
         return not (self._dbfile == ':memory:')
         
     def open( self ):
-        '''Open the database connection.'''
+        """Open the database connection."""
         if self._connection is None:
             self._connection = sqlite3.connect(self._dbfile)
 
     def close( self ):
-        '''Close the database connection.'''
+        """Close the database connection."""
         if self._connection is not None:
             self._connection.close()
             self._connection = None
 
     def commit( self ):
-        '''Private method to commit changes to database.'''
+        """Private method to commit changes to database."""
         self._connection.commit()
         
     def _createDatabase( self ):
-        '''Private method to create the SQLite database file.'''
+        """Private method to create the SQLite database file."""
 
         # create experiment metadata table
         command = """
@@ -92,12 +92,12 @@ class SqliteLabNotebook(LabNotebook):
         self.commit()
         
     def addExperiment( self, rc ):
-        '''Add the results of an experiment to the notebook. The dict
+        """Add the results of an experiment to the notebook. The dict
         of results should be structured according to the Experiment
         class, with metadata and results stored separately. The
         metadata is placed into the experiment_metadata table,
         the results into the experiment_results table; and the two
         linked through the experiment_instances table.
 
-        rc: the dict of experimental results'''
+        rc: the dict of experimental results"""
         pass

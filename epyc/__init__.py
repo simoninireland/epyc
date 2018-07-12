@@ -5,7 +5,7 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
-'''`epyc` is a Python module for controlling a long-running series of
+"""`epyc` is a Python module for controlling a long-running series of
 computational experiments, as is often found when writing simulations
 of complex networks and other such domains. There is often a need to
 perform a computation across a multi-dimensional parameter space,
@@ -31,7 +31,7 @@ separate the logic of a single experiment from the logic of performing
 multiple repetitions and other structuring tasks. This means that any
 experiment can be repeated and statistically summarised, for example.
 
-'''
+"""
 
 from .experiment import Experiment
 from .experimentcombinator import ExperimentCombinator

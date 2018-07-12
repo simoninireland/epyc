@@ -130,7 +130,7 @@ class ExperimentTests(unittest.TestCase):
         res = e.run()
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
 
-        timing = res[Experiment.METADATA]
+        timing = res[Experiment.METADATA]        print(timing)
         self.assertTrue(timing[Experiment.END_TIME] > timing[Experiment.START_TIME])
         self.assertTrue(timing[Experiment.ELAPSED_TIME] > 0)
         self.assertTrue(timing[Experiment.SETUP_TIME] > 0)

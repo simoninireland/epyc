@@ -7,6 +7,7 @@
 
 from epyc import *
 
+import six
 import unittest
 import os
 from tempfile import NamedTemporaryFile
@@ -64,8 +65,8 @@ class JSONLabNotebookTests(unittest.TestCase):
         
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(jsr.description(), "A test notebook")
-        self.assertItemsEqual(jsr.pendingResults(), js.pendingResults())
-        self.assertItemsEqual(jsr.results(), js.results())
+        six.assertCountEqual(self, jsr.pendingResults(), js.pendingResults())
+        six.assertCountEqual(self, jsr.results(), js.results())
  
     def testCreateAndUpdate( self ):
         '''Test creation and updating of notebook'''
@@ -86,7 +87,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(jsr.description(), "A test notebook")
         self.assertEqual(len(jsr.pendingResults()), 0)
-        self.assertItemsEqual(jsr.results(), js.results())
+        six.assertCountEqual(self, jsr.results(), js.results())
         
     def testCreateOverwrite( self ):
         '''Test the create flag'''
@@ -115,7 +116,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         
         jsr = JSONLabNotebook(self._fn, description = "Nothing to see")
         self.assertEqual(jsr.description(), "A test notebook")
-        self.assertItemsEqual(jsr.results(), js.results())
+        six.assertCountEqual(self, jsr.results(), js.results())
         self.assertEqual(len(jsr.pendingResults()), 0)
         
     def testReadEmpty( self ):
@@ -173,4 +174,4 @@ class JSONLabNotebookTests(unittest.TestCase):
         js2 = JSONLabNotebook(self._fn)
         rc2 = js2.latestResultsFor(params1)
         self.assertFalse(rc2[Experiment.METADATA][Experiment.STATUS])
-        self.assertTrue(isinstance(rc2[Experiment.METADATA][Experiment.EXCEPTION], basestring))
+        self.assertTrue(isinstance(rc2[Experiment.METADATA][Experiment.EXCEPTION], six.string_types))

@@ -7,6 +7,7 @@
 
 from epyc import *
 
+import six
 import unittest
 import numpy
 import numpy.random
@@ -150,11 +151,11 @@ class SummaryExperimentTests(unittest.TestCase):
         res = (self._lab.results())[0]
 
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
-        self.assertItemsEqual(res[Experiment.RESULTS].keys(), [ 'dummy_mean',
-                                                                'dummy_median',
-                                                                'dummy_variance',
-                                                                'dummy_min',
-                                                                'dummy_max' ])
+        six.assertCountEqual(self, res[Experiment.RESULTS].keys(), [ 'dummy_mean',
+                                                                     'dummy_median',
+                                                                     'dummy_variance',
+                                                                     'dummy_min',
+                                                                     'dummy_max' ])
         self.assertEqual(res[Experiment.RESULTS]['dummy_mean'], 1)
         self.assertEqual(res[Experiment.RESULTS]['dummy_median'], 1)
         self.assertEqual(res[Experiment.RESULTS]['dummy_variance'], 0)

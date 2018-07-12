@@ -9,7 +9,7 @@ import numpy
 
 
 class SummaryExperiment(ExperimentCombinator):
-    '''An experiment combinator that takes an underlying experiment and 
+    """An experiment combinator that takes an underlying experiment and
     returns summary statistics for some of its results. This only really makes
     sense for experiments that return lists of results, such as those conducted
     using :class:`RepeatedExperiment`, but it works with any experiment.
@@ -27,7 +27,7 @@ class SummaryExperiment(ExperimentCombinator):
     constructor in the summarised_results keyword argument.
 
     The summary calculations only include those experimental runs that succeeded,
-    that is that have their status set to True. Failed runs are ignored.'''
+    that is that have their status set to True. Failed runs are ignored."""
 
     # Additional metadata
     UNDERLYING_RESULTS = 'repetitions'                         #: Metadata relement for the number of results that were obtained
@@ -38,51 +38,50 @@ class SummaryExperiment(ExperimentCombinator):
     MEAN_SUFFIX = '_mean'              #: Suffix for the mean of the underlying values
     MEDIAN_SUFFIX = '_median'          #: Suffix for the median of the underlying values
     VARIANCE_SUFFIX = '_variance'      #: Suffix for the variance of the underlying values
-    VARIANCE_SUFFIX = '_variance'      #: Suffix for the variance of the underlying values
     MIN_SUFFIX = '_min'                #: Suffix for the minimum of the underlying values
     MAX_SUFFIX = '_max'                #: Suffix for the maximum of the underlying values
     
     
     def __init__( self, ex, summarised_results = None ):
-        '''Create a summarised version of the given experiment. The given
+        """Create a summarised version of the given experiment. The given
         fields in the experimental results will be summarised, defaulting to all.
         If there are fields that can't be summarised (because they're not
-        numbers), remove them here. 
+        numbers), remove them here.
 
         :param ex: the underlying experiment
-        :param summarised_results: list of result values to summarise (defaults to all)'''
+        :param summarised_results: list of result values to summarise (defaults to all)"""
         super(SummaryExperiment, self).__init__(ex)
         self._summarised_results = summarised_results
 
     def _mean( self, k ):
-        '''Return the tag associated with the mean of k.'''
+        """Return the tag associated with the mean of k."""
         return k + self.MEAN_SUFFIX
 
     def _median( self, k ):
-        '''Return the tag associated with the median of k.'''
+        """Return the tag associated with the median of k."""
         return k + self.MEDIAN_SUFFIX
 
     def _variance( self, k ):
-        '''Return the tag associated with the variance of k.'''
+        """Return the tag associated with the variance of k."""
         return k + self.VARIANCE_SUFFIX
     
     def _min( self, k ):
-        '''Return the tag associated with the minimum of k.'''
+        """Return the tag associated with the minimum of k."""
         return k + self.MIN_SUFFIX
     
     def _max( self, k ):
-        '''Return the tag associated with the maximum of k.'''
+        """Return the tag associated with the maximum of k."""
         return k + self.MAX_SUFFIX
     
     def summarise( self, results ):
-        '''Generate a summary of results from a list of result dicts
+        """Generate a summary of results from a list of result dicts
         returned by running the underlying experiment. By default we generate
         mean, median, variance, and extrema for each value recorded.
 
         Override this method to create different or extra summary statistics.
 
         :param results: an array of result dicts
-        :returns: a dict of summary statistics'''
+        :returns: a dict of summary statistics"""
         if len(results) == 0:
             return dict()
         else:
@@ -111,7 +110,7 @@ class SummaryExperiment(ExperimentCombinator):
             return summary   
 
     def do( self, params ):
-        '''Perform the underlying experiment and summarise its results.
+        """Perform the underlying experiment and summarise its results.
         Our results are the summary statistics extracted from the results of
         the instances of the underlying experiment that we performed.
 
@@ -124,7 +123,7 @@ class SummaryExperiment(ExperimentCombinator):
         the metadata key :attr:`SummaryExperiment.UNDERLYING_EXCEPTIONS`
 
         :param params: the parameters to the underlying experiment
-        :returns: the summary statistics of the underlying results'''
+        :returns: the summary statistics of the underlying results"""
 
         # perform the underlying experiment
         rc = self.experiment().run()

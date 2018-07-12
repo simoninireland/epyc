@@ -7,7 +7,9 @@
 
 from epyc import *
 
+import six
 import unittest
+from builtins import range
 import numpy
 import numpy.random
 
@@ -43,7 +45,7 @@ class RepeatedExperimentTests(unittest.TestCase):
             self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
             self.assertFalse(res[Experiment.METADATA][RepeatedExperiment.I] in indices)
             indices.add(res[Experiment.METADATA][RepeatedExperiment.I])
-        self.assertItemsEqual(indices, range(N))
+        six.assertCountEqual(self, indices, range(N))
         
     def testRepetitionsMultiplePoint( self ):
         '''Test we can repeat an experiment across a parameter space'''
@@ -58,7 +60,7 @@ class RepeatedExperimentTests(unittest.TestCase):
         self.assertTrue(er.success())
         self.assertEqual(len(self._lab.notebook()), N * len(self._lab['x']))
 
-        for i in xrange(3):
+        for i in range(3):
             x = self._lab['x'][i]
             results = self._lab.notebook().resultsFor(dict(x = x))
             self.assertEqual(len(results), N)
@@ -69,6 +71,6 @@ class RepeatedExperimentTests(unittest.TestCase):
                 self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
                 self.assertFalse(res[Experiment.METADATA][RepeatedExperiment.I] in indices)
                 indices.add(res[Experiment.METADATA][RepeatedExperiment.I])
-            self.assertItemsEqual(indices, range(N))
+            six.assertCountEqual(self, indices, range(N))
 
 

@@ -7,6 +7,7 @@
 
 from epyc import *
 
+import six
 import unittest
 import os
 
@@ -68,7 +69,7 @@ class LabNotebookTests(unittest.TestCase):
         params1 = dict(a  = 1, b = 2)
         rc = e.set(params1).run()
 
-        self.assertEqual(nb.resultsFor(params1), [])
+        six.assertCountEqual(self, nb.resultsFor(params1), [])
         self.assertEqual(nb.latestResultsFor(params1), None)
 
         nb.addResult(rc)
@@ -84,9 +85,9 @@ class LabNotebookTests(unittest.TestCase):
         rc = e.set(params).run()
         
         nb.addPendingResult(params, 1)
-        self.assertEqual(nb.resultsFor(params), [])
+        six.assertCountEqual(self, nb.resultsFor(params), [])
         self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(nb.pendingResults(), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
 
         nb.addResult(rc, 1)
         self.assertEqual(len(nb.resultsFor(params)), 1)
@@ -100,12 +101,12 @@ class LabNotebookTests(unittest.TestCase):
 
         params = dict(a  = 1, b = 2)
         nb.addPendingResult(params, 1)
-        self.assertEqual(nb.resultsFor(params), [])
+        six.assertCountEqual(self, nb.resultsFor(params), [])
         self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(nb.pendingResults(), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
 
         nb.cancelPendingResult(1)
-        self.assertEqual(nb.resultsFor(params), [])
+        six.assertCountEqual(self, nb.resultsFor(params), [])
         self.assertEqual(len(nb.results()), 0)
         self.assertEqual(len(nb.pendingResults()), 0)
 
@@ -124,7 +125,7 @@ class LabNotebookTests(unittest.TestCase):
         self.assertIn(2, nb.pendingResults())
 
         nb.cancelAllPendingResults()
-        self.assertEqual(nb.resultsFor(params1), [])
+        six.assertCountEqual(self, nb.resultsFor(params1), [])
         self.assertEqual(len(nb.results()), 0)
         self.assertEqual(len(nb.pendingResults()), 0)
     
@@ -143,50 +144,50 @@ class LabNotebookTests(unittest.TestCase):
 
         nb.addResult(rc1)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual(nb.resultsFor(params2), [])
+        six.assertCountEqual(self, nb.resultsFor(params2), [])
         self.assertEqual(len(nb.results()), 1)
-        self.assertEqual(nb.pendingResults(), [])
+        six.assertCountEqual(self, nb.pendingResults(), [])
         
         nb.addPendingResult(params2, 2)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual(nb.resultsFor(params2), [])
+        six.assertCountEqual(self, nb.resultsFor(params2), [])
         self.assertEqual(len(nb.results()), 1)
-        self.assertEqual(nb.pendingResults(), [ 2 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 2 ])
         
         nb.addPendingResult(params3, 3)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual(nb.resultsFor(params2), [])
-        self.assertEqual(nb.resultsFor(params3), [])
+        six.assertCountEqual(self, nb.resultsFor(params2), [])
+        six.assertCountEqual(self, nb.resultsFor(params3), [])
         self.assertEqual(len(nb.results()), 1)
-        self.assertItemsEqual(nb.pendingResults(), [ 2, 3 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 2, 3 ])
 
         nb.addResult(rc2, 2)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
         self.assertEqual((nb.resultsFor(params2))[0], rc2)
         self.assertEqual(nb.resultsFor(params3), [])
         self.assertEqual(len(nb.results()), 2)
-        self.assertEqual(nb.pendingResults(), [ 3 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 3 ])
 
         nb.cancelPendingResult(3)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
         self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        self.assertEqual(nb.resultsFor(params3), [])
+        six.assertCountEqual(self, nb.resultsFor(params3), [])
         self.assertEqual(len(nb.results()), 2)
-        self.assertEqual(nb.pendingResults(), [])
+        six.assertCountEqual(self, nb.pendingResults(), [])
 
         nb.addPendingResult(params3, 3)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
         self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        self.assertEqual(nb.resultsFor(params3), [])
+        six.assertCountEqual(self, nb.resultsFor(params3), [])
         self.assertEqual(len(nb.results()), 2)
-        self.assertEqual(nb.pendingResults(), [ 3 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 3 ])
 
         nb.cancelPendingResult(3)
         self.assertEqual((nb.resultsFor(params1))[0], rc1)
         self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        self.assertEqual(nb.resultsFor(params3), [])
+        six.assertCountEqual(self, nb.resultsFor(params3), [])
         self.assertEqual(len(nb.results()), 2)
-        self.assertEqual(nb.pendingResults(), [])
+        six.assertCountEqual(self, nb.pendingResults(), [])
 
     def testCancellingAllPendingResults( self ):
         '''Test all results get cancelled properly.'''
@@ -203,20 +204,20 @@ class LabNotebookTests(unittest.TestCase):
         nb.addPendingResult(params1, 1)
         nb.addPendingResult(params2, 2)
         nb.addPendingResult(params2, 3)
-        self.assertItemsEqual(nb.pendingResultsFor(params1), [ 1 ])
-        self.assertItemsEqual(nb.pendingResultsFor(params2), [ 2, 3 ])
-        self.assertItemsEqual(nb.pendingResults(), [ 1, 2, 3 ])
+        six.assertCountEqual(self, nb.pendingResultsFor(params1), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResultsFor(params2), [ 2, 3 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 1, 2, 3 ])
 
         nb.cancelPendingResultsFor(params2)
-        self.assertItemsEqual(nb.pendingResultsFor(params1), [ 1 ])
-        self.assertEqual(nb.pendingResultsFor(params2), [])
-        self.assertItemsEqual(nb.pendingResults(), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResultsFor(params1), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResultsFor(params2), [])
+        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
 
         nb.cancelAllPendingResults()
-        self.assertEqual(nb.pendingResultsFor(params1), [])
-        self.assertEqual(nb.pendingResultsFor(params2), [])
-        self.assertEqual(nb.pendingResults(), [])
-        self.assertEqual(nb.results(), [])
+        six.assertCountEqual(self, nb.pendingResultsFor(params1), [])
+        six.assertCountEqual(self, nb.pendingResultsFor(params2), [])
+        six.assertCountEqual(self, nb.pendingResults(), [])
+        six.assertCountEqual(self, nb.results(), [])
 
     def testAddResultList( self ):
         '''Test adding several results at once.'''
@@ -232,7 +233,7 @@ class LabNotebookTests(unittest.TestCase):
 
         nb.addResult([ rc1, rc2, rc3 ])
         self.assertEqual(nb.latestResultsFor(params1), rc1)
-        self.assertItemsEqual(nb.resultsFor(params2), [ rc2, rc3 ])
+        six.assertCountEqual(self, nb.resultsFor(params2), [ rc2, rc3 ])
         self.assertEqual(nb.latestResultsFor(params2), rc3)
         
         
@@ -268,9 +269,9 @@ class LabNotebookTests(unittest.TestCase):
 
         params = dict(a  = 1, b = 2)
         nb.addPendingResult(params, 1)
-        self.assertEqual(nb.resultsFor(params), [])
+        six.assertCountEqual(self, nb.resultsFor(params), [])
         self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(nb.pendingResults(), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
 
         with self.assertRaises(KeyError):
             nb.cancelPendingResult(2)
@@ -281,13 +282,13 @@ class LabNotebookTests(unittest.TestCase):
 
         params = dict(a  = 1, b = 2)
         nb.addPendingResult(params, 1)
-        self.assertEqual(nb.resultsFor(params), [])
+        six.assertCountEqual(self, nb.resultsFor(params), [])
         self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(nb.pendingResults(), [ 1 ])
+        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
         
         nb.cancelPendingResult(1)
         self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(nb.pendingResults(), [])
+        six.assertCountEqual(self, nb.pendingResults(), [])
 
         with self.assertRaises(KeyError):
             nb.cancelPendingResult(1)

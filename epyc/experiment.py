@@ -5,12 +5,13 @@
 # Licensed under the GNU General Public Licence v.2.0
 #
 
+from __future__ import print_function
 from datetime import datetime, timedelta
 import sys
 import traceback
 
 class Experiment(object):
-    '''Base class for experiments conducted in a lab.
+    """Base class for experiments conducted in a lab.
 
     An :class:`Experiment` defines a computational experiment that can be run
     independently or (more usually) within a :class:`Lab`. Experiments should
@@ -47,7 +48,7 @@ class Experiment(object):
     Experimental results, parameters, and metadata can be access directly
     from the :class:`Experiment` object. The class also exposes
     an indexing interface to access experimental results by name.
-    '''
+    """
 
     # Top-level structure for results
     METADATA = 'metadata'                 #: Results dict key for metadata values, mainly timing
@@ -67,66 +68,66 @@ class Experiment(object):
 
     
     def __init__( self ):
-        '''Create a new experiment.'''
+        """Create a new experiment."""
         self._metadata = dict()
         self._parameters = None
         self._results = None
 
     def setUp( self, params ):
-        '''Set up the experiment. Default does nothing.
+        """Set up the experiment. Default does nothing.
 
-        params: the parameters of the experiment'''
+        params: the parameters of the experiment"""
         pass
 
     def tearDown( self ):
-        '''Tear down the experiment. Default does nothing.'''
+        """Tear down the experiment. Default does nothing."""
         pass
 
     def configure( self, params ):
-        '''Configure the experiment for the given parameters.
+        """Configure the experiment for the given parameters.
         The default stores the parameters for later use. Be sure
         to call this base method when overriding.
 
         :param params: the parameters
-        :type params: hash of paramater names to values'''
+        :type params: hash of paramater names to values"""
         self._parameters = params
 
     def deconfigure( self ):
-        '''De-configure the experiment prior to setting new parameters.
+        """De-configure the experiment prior to setting new parameters.
         Default removes the parameters.  Be sure
-        to call this base method when overriding.'''
+        to call this base method when overriding."""
         self._parameters = None
 
     def set( self, params ):
-        '''Set the parameters for the experiment, returning the
+        """Set the parameters for the experiment, returning the
         now-configured experiment.  Be sure to call this base method when overriding.
 
         :param params: the parameters
-        :returns: The experiment'''
+        :returns: The experiment"""
         if self._parameters is not None:
             self.deconfigure()
         self.configure(params)
         return self
 
     def do( self, params ):
-        '''Do the body of the experiment. This should be overridden
+        """Do the body of the experiment. This should be overridden
         by sub-classes.
 
         params: a dict of parameters for the experiment
-        returns: a dict of experimental results'''
+        returns: a dict of experimental results"""
         raise NotYetImplementedError('do()')
 
     def report( self, params, meta, res ):
-        '''Return a properly-structured dict of results. The default returns a dict with
+        """Return a properly-structured dict of results. The default returns a dict with
         results keyed by :attr:`Experiment.RESULTS`, the data point in the parameter space
         keyed by :attr:`Experiment.PARAMETERS`, and timing and other metadata keyed
         by :attr:`Experiment.METADATA`. Overriding this method can be used to record extra
         values, but be sure to call the base method as well.
- 
+
         :param params: the parameters we ran under
         :param meta: the metadata for this run
         :param res: the direct experimental results from do()
-        :returns: a :term:`results dict`'''
+        :returns: a :term:`results dict`"""
         rc = dict()
         rc[self.PARAMETERS] = params.copy()
         rc[self.METADATA] = meta.copy()
@@ -134,14 +135,14 @@ class Experiment(object):
         return rc
 
     def run( self ):
-        '''Run the experiment, using the parameters set using :meth:`set`.
+        """Run the experiment, using the parameters set using :meth:`set`.
         A "run" consists of calling :meth:`setUp`, :meth:`do`, and :meth:`tearDown`,
         followed by collecting and storing (and returning) the
         experiment's results. If running the experiment raises an
         exception, that will be returned in the metadata along with
         its traceback to help with experiment debugging.
 
-        :returns: a :term:`results dict`'''
+        :returns: a :term:`results dict`"""
         
         # perform the experiment protocol
         params = self.parameters()
@@ -170,7 +171,7 @@ class Experiment(object):
             # set the success flag
             self._metadata[self.STATUS] = True
         except Exception as e:
-            print "Caught exception in experiment: {e}".format(e = e)
+            print("Caught exception in experiment: {e}".format(e = e))
 
             # grab the traceback before we do anything else
             #_, _, tb = sys.exc_info()
@@ -198,59 +199,59 @@ class Experiment(object):
                            res)
     
     def __getitem__( self, k ):
-        '''Return the given element of the experimental results. This only
+        """Return the given element of the experimental results. This only
         gives access to direct experimental results, not to parameters
         or metadata.
 
         :param k: the result key
         :returns: the value
-        :raises: KeyError'''
+        :raises: KeyError"""
         if self._results is None:
             raise KeyError(k)
         else:
             return (self.experimentalResults())[k]
     
     def success( self ):
-        '''Test whether the experiment has been run successfully. This will
+        """Test whether the experiment has been run successfully. This will
         be False if the experiment hasn't been run, or if it's been run and
         failed (in which case the exception will be stored in the metadata).
 
-        :returns: ``True`` if the experiment has been run successfully'''
+        :returns: ``True`` if the experiment has been run successfully"""
         if self.STATUS in self.metadata().keys():
             return (self.metadata())[self.STATUS]
         else:
             return False
 
     def results( self ):
-        '''Return a complete results dict. Only really makes sense for
+        """Return a complete results dict. Only really makes sense for
         recently-executed experimental runs.
 
-        :returns: the results dict'''
+        :returns: the results dict"""
         return self.report(self.parameters(),
                            self.metadata(),
                            self.experimentalResults())
 
     def experimentalResults( self ):
-        '''Return the experimental results from our last run. This will
+        """Return the experimental results from our last run. This will
         be None if we haven't been run, or if we ran and failed.
 
-        :returns: the experimental results or ``None``'''
+        :returns: the experimental results or ``None``"""
         return self._results
     
     def parameters( self ):
-        '''Return the current experimental parameters, which will
+        """Return the current experimental parameters, which will
         be None if none have been given by a call to set()
 
-        :returns: the parameters,'''
+        :returns: the parameters,"""
         return self._parameters
 
     def metadata( self ):
-        '''Return the metadata we collected at out last execution, which
+        """Return the metadata we collected at out last execution, which
         will be None if we've not been executed and an empty dict if
         we're mid-run (i.e., if this method is called from do() for
         whatever reason).
 
-        :returns: the metadata'''
+        :returns: the metadata"""
         return self._metadata
     
     

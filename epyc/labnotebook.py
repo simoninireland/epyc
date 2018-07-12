@@ -10,7 +10,7 @@ from pandas import DataFrame
 
 
 class LabNotebook(object):
-    '''A "laboratory notebook" recording the results of a set of
+    """A "laboratory notebook" recording the results of a set of
     experiments conducted across a parameter space. The intention is
     to record both results and all the metadata necessary to
     re-conduct the experiment.
@@ -28,50 +28,50 @@ class LabNotebook(object):
     value, or can be deleted.
 
     Notebooks support both len() and iterator access, both referring to their
-    complete results.'''
+    complete results."""
 
     def __init__( self, name = None, description = None ):
-        '''Create an empty notebook.
+        """Create an empty notebook.
 
         :param name: the notebook's name
-        :param description: a free text description'''
+        :param description: a free text description"""
         self._name = name
         self._description = description
         self._results = dict()
         self._pending = dict()
 
     def name( self ):
-        '''Return the name of the notebook. If the notebook is persistent,
+        """Return the name of the notebook. If the notebook is persistent,
         this likely relates to its storage in some way (for example a
         file name).
 
-        :returns: the notebook name'''
+        :returns: the notebook name"""
         return self._name
 
     def description( self ):
-        '''Return the free text description of the notebook.
+        """Return the free text description of the notebook.
 
-        :returns: the notebook description'''
+        :returns: the notebook description"""
         return self._description
 
     def isPersistent( self ):
-        '''By default notebooks are not persistent.
+        """By default notebooks are not persistent.
 
-        :returns: False'''
+        :returns: False"""
         return False
 
     def commit( self ):
-        '''Commit to persistent form. By default does nothing. This should
+        """Commit to persistent form. By default does nothing. This should
         be called periodically to save intermediate results: it may happen
-        automatically in some sub-classes, depending on their implementation.'''
+        automatically in some sub-classes, depending on their implementation."""
         pass
     
     def _parametersAsIndex( self, ps ):
-        '''Private method to turn a parameter dict into a string suitable for
+        """Private method to turn a parameter dict into a string suitable for
         keying a dict.
 
         ps: the parameters as a hash
-        returns: a string key'''
+        returns: a string key"""
         k = ""
         for p in sorted(ps.keys()):       # normalise the parameters
             v = ps[p]
@@ -79,7 +79,7 @@ class LabNotebook(object):
         return k
 
     def addResult( self, result, jobids = None ):
-        '''Add a result. This should be :term:`results dict` as returned from
+        """Add a result. This should be :term:`results dict` as returned from
         an instance of :class:`Experiment`, that contains metadata,
         parameters, and result. Results cannot be overridden, as
         notebooks are immutable: adding more results simply adds
@@ -98,8 +98,8 @@ class LabNotebook(object):
         length, to allow for experiments that return lists of result dicts.)
 
         :param result: a results dict
-        :param jobid: the pending result job id(s) (defaults to no jobs)
-        '''
+        :param jobids: the pending result job id(s) (defaults to no jobs)
+        """
 
         # deal with the dufferent ways of presenting results to be added
         if isinstance(result, list):
@@ -150,14 +150,13 @@ class LabNotebook(object):
                                                                                              ps = k))
                 else:
                     # we've screwed-up the internal data structures
-                    raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
-                                                                                         ps = k))
+                    raise RuntimeError('Internal structure error for {j}'.format(j = jobid))
         
     def addPendingResult( self, ps, jobid ):
-        '''Add a "pending" result that we expect to get results for.
+        """Add a "pending" result that we expect to get results for.
 
         :param ps: the parameters for the result
-        :param jobid: an identifier for the pending result'''
+        :param jobid: an identifier for the pending result"""
         k = self._parametersAsIndex(ps)
 
         # retrieve or create the result list
@@ -174,10 +173,10 @@ class LabNotebook(object):
         self._pending[jobid] = k
 
     def cancelPendingResult( self, jobid ):
-        '''Cancel a particular pending result. Note that this only affects the
+        """Cancel a particular pending result. Note that this only affects the
         notebook's record, not any job running in a lab.
 
-        :param jobid: job id for pending result'''
+        :param jobid: job id for pending result"""
         if jobid in self._pending.keys():
             k = self._pending[jobid]
             del self._pending[jobid]
@@ -195,10 +194,10 @@ class LabNotebook(object):
             raise KeyError('No pending result with id {j}'.format(j = jobid))
         
     def pendingResultsFor( self, ps ):
-        '''Retrieve a list of all pending results associated with the given parameters.
+        """Retrieve a list of all pending results associated with the given parameters.
 
         :param ps: the parameters
-        :returns: a list of pending result job ids, which may be empty'''
+        :returns: a list of pending result job ids, which may be empty"""
         k = self._parametersAsIndex(ps)
         if k in self._results.keys():
             # filter out pending job ids, which can be anything except dicts
@@ -207,10 +206,10 @@ class LabNotebook(object):
             return []
                 
     def cancelPendingResultsFor( self, ps ):
-        '''Cancel all pending results for the given parameters. Note that
+        """Cancel all pending results for the given parameters. Note that
         this only affects the notebook's record, not any job running in a lab.
 
-        :param ps: the parameters'''
+        :param ps: the parameters"""
         k = self._parametersAsIndex(ps)
 
         if k in self._results.keys():
@@ -224,24 +223,24 @@ class LabNotebook(object):
                 del self._pending[j]
 
     def cancelAllPendingResults( self ):
-        '''Cancel all pending results. Note that this only affects the
-        notebook's record, not any job running in a lab.'''
+        """Cancel all pending results. Note that this only affects the
+        notebook's record, not any job running in a lab."""
         for k in self._results.keys():
             rs = self._results[k]
             self._results[k] = [ j for j in rs if isinstance(j, dict) ]
         self._pending = dict()
 
     def pendingResults( self ):
-        '''Return the job ids of all pending results.
+        """Return the job ids of all pending results.
 
-        returns: a list of job ids, which may be empty'''
+        returns: a list of job ids, which may be empty"""
         return self._pending.keys()
         
     def resultsFor( self, ps ):
-        '''Retrieve a list of all results associated with the given parameters.
+        """Retrieve a list of all results associated with the given parameters.
 
         :param ps: the parameters
-        :returns: a list of results, which may be empty'''
+        :returns: a list of results, which may be empty"""
         k = self._parametersAsIndex(ps)
         if k in self._results.keys():
             # filter out pending job ids, which can be anything except dicts
@@ -250,10 +249,10 @@ class LabNotebook(object):
             return []
 
     def latestResultsFor( self, ps ):
-        '''Retrieve only the latest result for the given parameters.
+        """Retrieve only the latest result for the given parameters.
 
         :param ps: the parameters
-        :returns: a single result, or None if there are none'''
+        :returns: a single result, or None if there are none"""
         rs = self.resultsFor(ps)
         if rs is None:
             return None
@@ -264,11 +263,11 @@ class LabNotebook(object):
                 return rs[0]
         
     def results( self ):
-        '''Return a list of all the results currently available. This
+        """Return a list of all the results currently available. This
         excludes pending results. Results are returned as a single flat
         list, so any repetition structure is lost.
 
-        :returns: a list of results'''
+        :returns: a list of results"""
         rs = []
         for k in self._results.keys():
             # filter out pending job ids, which can be anything except dicts
@@ -277,43 +276,43 @@ class LabNotebook(object):
         return rs
 
     def numberOfResults( self ):
-        '''Return the number of results we have.
+        """Return the number of results we have.
 
-        returns: number of results available'''
+        returns: number of results available"""
         return len(self.results())
 
     def numberOfPendingResults( self ):
-        '''Return ther number of addiitonal results we expect.
+        """Return ther number of addiitonal results we expect.
 
-        returns: number of pending results'''
+        returns: number of pending results"""
         return len(self.pendingResults())
     
     def __len__( self ):
-        '''The length of a notebook is the number of results it currently
+        """The length of a notebook is the number of results it currently
         has available. A synonym for numberOfResults().
 
-        :returns: the number of results available'''
+        :returns: the number of results available"""
         return self.numberOfResults()
     
     def __iter__( self ):
-        '''Return an iterator over the results available.
+        """Return an iterator over the results available.
 
-        :returns: an iteration over the results'''
+        :returns: an iteration over the results"""
         return self.results().__iter__()
     
     def dataframe( self, only_successful = True ):
-        '''Return the results as a pandas DataFrame. Note that there is a danger
+        """Return the results as a pandas DataFrame. Note that there is a danger
         of duplicate labels here, for example if the results contain a value
         with the same name as one of the parameters. To resolve this, parameter names
         take precedence over metadata values, and result names take precedence over
         parameter names.
- 
+
         If the only_successful flag is set (the default), then the DataFrame will
         only include results that completed without an exception; if it is set to
         False, the DataFrame will include all results and also the exception details.
 
         :param only_successful: include only successful experiments (defaults to True)
-        :returns: the parameters, results, and metadata in a DataFrame'''
+        :returns: the parameters, results, and metadata in a DataFrame"""
 
         def extract( r ):
             if r[Experiment.METADATA][Experiment.STATUS]:

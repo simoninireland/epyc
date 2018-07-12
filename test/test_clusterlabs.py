@@ -14,8 +14,7 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
-# set limits low for testing purposes
-ClusterLab.PendingJobsChunkSize = 5
+# set limit low for testing purposes
 ClusterLab.WaitingTime = 10
 
 
@@ -42,10 +41,10 @@ class SampleExperiment2(Experiment):
 # use the existence of an ipcontroller-client.json file in the IPython
 # default profile's directory as a proxy for there being a cluster running
 # that we can use for our tests
-default_profile_dir = subprocess.check_output('ipython locate profile default'.split()).strip('\n')
-connection_file = default_profile_dir + '/security/ipcontroller-client.json'
-@unittest.skipUnless(os.path.isfile(connection_file),
-                     "No default cluster running (no {fn})".format(fn = connection_file))
+default_profile_dir = str(subprocess.check_output('ipython locate profile default', shell = True)).strip('\n')
+connection_file = os.path.join(default_profile_dir, 'security/ipcontroller-client.json')
+#@unittest.skipUnless(os.path.isfile(connection_file),
+#                     "No default cluster running (no {fn})".format(fn = connection_file))
 class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):
@@ -166,7 +165,7 @@ class ClusterLabTests(unittest.TestCase):
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment2())
 
-        params = dict(a = n / 2)
+        params = dict(a = int(n / 2))
         self._lab.cancelPendingResultsFor(params)
         self._lab.wait()
         self.assertEqual(self._lab.numberOfResults(), n - 1)

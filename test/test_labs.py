@@ -26,7 +26,7 @@ class NullExperiment(Experiment):
     parameter as its result.'''
 
     def do( self, param ):
-        k = (param.keys())[0]
+        k = list(param.keys())[0]
         return dict(result = param[k])
     
         
@@ -118,12 +118,13 @@ class LabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'] + p[Experiment.PARAMETERS]['b'], p[Experiment.RESULTS]['total'])
 
-    def testNull( self ):
-        '''Test we don't unpack strings'''
+    def testStringsNotUnpacked( self ):
+        '''Test we don't unpack strings, even though they're iterable'''
         v = 'A string'
 
         self._lab['s'] = v
         self._lab.runExperiment(NullExperiment())
         res = self._lab.results()
         self.assertEqual(len(res), 1)
+        print("res ", res)
         self.assertEqual(res[0][Experiment.RESULTS]['result'], v)
