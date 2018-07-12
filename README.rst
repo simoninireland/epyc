@@ -34,7 +34,7 @@ example.
 Installation
 ------------
 
-You can install ``epyc`` directly from PyPi using ``pip``:
+``epyc`` works with both Python 2.7 and Python 3. You can install it directly from PyPi using ``pip``:
 
 ::
 
