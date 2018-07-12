@@ -157,7 +157,7 @@ cluster: env
 # Build the API documentation using Sphinx
 .PHONY: doc
 doc: $(SOURCES_DOCUMENTATION) $(SOURCES_DOC_CONF)
-	(ACTIVATE) && $(CHDIR) doc && $(RUN_SPHINX_HTML)
+	$(ACTIVATE) && $(CHDIR) doc && $(RUN_SPHINX_HTML)
 
 .PHONY: docserver
 docserver:
