@@ -1,5 +1,5 @@
 :class:`JSONLabNotebook`: A persistent store for results
-====================================================
+========================================================
 
 .. currentmodule:: epyc
    
