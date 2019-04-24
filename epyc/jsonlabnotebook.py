@@ -52,9 +52,9 @@ class JSONLabNotebook(epyc.LabNotebook):
     Using JSON presents some disadvantages, as not all types can be
     represented. Specifically, exceptions from the metadata of failed
     experiments (with the :attr:`Experiment.EXCEPTION`)
-    will be saved as strings (for the exception). (Traceback objects,
-    with the :attr:`Experiment.TRACEBACK` key, are stringified anyway.)
-    We also need to convert `datetime` objects to ISO-format strings.
+    will be saved as strings (for the exception).
+    We also need to convert `datetime` objects to ISO-format strings
+    when saving.
     """
 
     def __init__( self, name, create = False, description = None ):
@@ -138,10 +138,6 @@ class JSONLabNotebook(epyc.LabNotebook):
                     # a successful, non-pending result, patch its timing metadata
                     self._patchDatetimeMetadata(res, epyc.Experiment.START_TIME)
                     self._patchDatetimeMetadata(res, epyc.Experiment.END_TIME)
-        ps = dict()
-        for k in self._pending.keys():
-            ps[int(k)] = self._pending[k]
-        self._pending = ps
 
     def _save( self, fn ):
         """Persist the notebook to the given file.
