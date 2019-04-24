@@ -1,9 +1,21 @@
 # Simulation "lab notebook" for collecting results, in-memory version
 #
-# Copyright (C) 2016 Simon Dobson
-# 
-# Licensed under the GNU General Public Licence v.2.0
+# Copyright (C) 2016--2019 Simon Dobson
 #
+# This file is part of epyc, experiment management in Python.
+#
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
 from pandas import DataFrame
@@ -17,18 +29,17 @@ class LabNotebook(object):
 
     A notebook maps points in a parameter space to a set of results. There
     may be multiple results mapped to the same point, to allow for
-    repetition of experiments: the notbook can re-cquire all, or only the
+    repetition of experiments: the notebook can re-acquire all, or only the
     most recent, results for a given parameter point.
 
     Notebooks are immutable: once entered, a result can't be deleted
     or changed.
 
-    Notebooks support "pending" results, llowing us to record experiments
+    Notebooks support "pending" results, allowing us to record experiments
     in progress. A pending result can be finalised by providing it with a
-    value, or can be deleted.
-
-    Notebooks support both len() and iterator access, both referring to their
-    complete results."""
+    value, or can be deleted. This is mainly used with the
+    :class:`ClusterLab` class for allowing asynchronous control of a
+    compute cluster."""
 
     def __init__( self, name = None, description = None ):
         """Create an empty notebook.
@@ -54,6 +65,9 @@ class LabNotebook(object):
         :returns: the notebook description"""
         return self._description
 
+
+    # ---------- Persistence ----------
+
     def isPersistent( self ):
         """By default notebooks are not persistent.
 
@@ -65,7 +79,10 @@ class LabNotebook(object):
         be called periodically to save intermediate results: it may happen
         automatically in some sub-classes, depending on their implementation."""
         pass
-    
+
+
+    # ---------- Adding results ----------
+
     def _parametersAsIndex( self, ps ):
         """Private method to turn a parameter dict into a string suitable for
         keying a dict.
@@ -86,8 +103,8 @@ class LabNotebook(object):
         another result set.
 
         The results may include one or more nested results dicts, for example as
-        returned by :meth:`RepeatedExperiment`, whose results are a list of results
-        at the same point in the parameter space. In this case the emebedded
+        returned by :class:`RepeatedExperiment`, whose results are a list of results
+        at the same point in the parameter space. In this case the embedded
         results will themselves be unpacked and added.
 
         One may also add a list of results dicts directly, in which case they will
@@ -101,7 +118,7 @@ class LabNotebook(object):
         :param jobids: the pending result job id(s) (defaults to no jobs)
         """
 
-        # deal with the dufferent ways of presenting results to be added
+        # deal with the different ways of presenting results to be added
         if isinstance(result, list):
             # a list, recursively add
             for res in result:
@@ -151,7 +168,10 @@ class LabNotebook(object):
                 else:
                     # we've screwed-up the internal data structures
                     raise RuntimeError('Internal structure error for {j}'.format(j = jobid))
-        
+
+
+    # ---------- Adding pending results ----------
+
     def addPendingResult( self, ps, jobid ):
         """Add a "pending" result that we expect to get results for.
 
@@ -235,7 +255,10 @@ class LabNotebook(object):
 
         returns: a list of job ids, which may be empty"""
         return self._pending.keys()
-        
+
+
+    # --------- Accessing results ----------
+
     def resultsFor( self, ps ):
         """Retrieve a list of all results associated with the given parameters.
 
@@ -289,7 +312,7 @@ class LabNotebook(object):
     
     def __len__( self ):
         """The length of a notebook is the number of results it currently
-        has available. A synonym for numberOfResults().
+        has available (not including pending). A synonym for :meth:`numberOfResults`.
 
         :returns: the number of results available"""
         return self.numberOfResults()
@@ -301,7 +324,7 @@ class LabNotebook(object):
         return self.results().__iter__()
     
     def dataframe( self, only_successful = True ):
-        """Return the results as a pandas DataFrame. Note that there is a danger
+        """Return the results as a ``pandas.DataFrame``. Note that there is a danger
         of duplicate labels here, for example if the results contain a value
         with the same name as one of the parameters. To resolve this, parameter names
         take precedence over metadata values, and result names take precedence over

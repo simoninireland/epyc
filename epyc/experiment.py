@@ -11,35 +11,15 @@ import sys
 import traceback
 
 class Experiment(object):
-    """Base class for experiments conducted in a lab.
+    """Base class for an :term:`experiment` conducted in a :term:`lab`.
 
     An :class:`Experiment` defines a computational experiment that can be run
-    independently or (more usually) within a :class:`Lab`. Experiments should
-    be long-lasting, able to conduct repeated runs at several
-    different parameter points.
-
-    The usual lifecycle of an :class:`Experiment` is:
-
-    1. Define a sub-class of :class:`Experiment`, overriding the :meth:`Experiment.do` method
-       to provide the actual experimental behaviour and possibly the
-       :meth:`Experiment.configure`, :meth:`Experiment.deconfigure`, :meth:`Experiment.setUp` and
-       :meth:`Experiment.tearDown` methods to control the computational environment
-
-    2. Create an instance of the experiment
-
-    3. Set the experiment's parameters using :meth:`Experiment.set`
-
-    4. Call :meth:`Experiment.run` to run the experiment and to collect its
-       :term:`results dict`
-
-    5. (Optionally) call :meth:`Experiment.run` repeatedly to re-run the experiment
-       at the same point, useful for stochastic experiments
-
-    6. (Optionally) call :meth:`Experiment.set` again to configure the experiment
-       to run at a different point in the parameter space
+    independently or (more usually) controlled from an instamnce of the
+    :class:`Lab` class. Experiments should be long-lasting, able to conduct
+    repeated runs at several different parameter points.
 
     From an experimenter's (or a lab's) perspective, an experiment
-    has public methods set() and run(). The former sets the parameters
+    has public methods :meth:`set` and :meth:`run`. The former sets the parameters
     for the experiment; the latter runs the experiment. producing a set
     of results that include direct experimental results and metadata on
     how the experiment ran. A single run may produce a list of result
@@ -64,7 +44,7 @@ class Experiment(object):
     TEARDOWN_TIME = 'teardown_time'       #: Metadata element for the time spent on teardown in seconds
     STATUS = 'status'                     #: Metadata element that will be True if experiment completed successfully, False otherwise
     EXCEPTION = 'exception'               #: Metadata element containing the exception thrown if experiment failed
-    TRACEBACK = 'traceback'               #: Metadata element containing the traceback from the exception
+    TRACEBACK = 'traceback'               #: Metadata element containing the traceback from the exception (as a string)
 
     
     def __init__( self ):
@@ -76,7 +56,7 @@ class Experiment(object):
     def setUp( self, params ):
         """Set up the experiment. Default does nothing.
 
-        params: the parameters of the experiment"""
+        :param params: the parameters of the experiment"""
         pass
 
     def tearDown( self ):
@@ -88,22 +68,20 @@ class Experiment(object):
         The default stores the parameters for later use. Be sure
         to call this base method when overriding.
 
-        :param params: the parameters
-        :type params: hash of paramater names to values"""
+        :param params: the parameters"""
         self._parameters = params
 
     def deconfigure( self ):
         """De-configure the experiment prior to setting new parameters.
-        Default removes the parameters.  Be sure
-        to call this base method when overriding."""
+        Default removes the parameters. Default does nothing."""
         self._parameters = None
 
     def set( self, params ):
         """Set the parameters for the experiment, returning the
-        now-configured experiment.  Be sure to call this base method when overriding.
+        now-configured experiment. Be sure to call this base method when overriding.
 
         :param params: the parameters
-        :returns: The experiment"""
+        :returns: the experiment"""
         if self._parameters is not None:
             self.deconfigure()
         self.configure(params)
@@ -115,14 +93,14 @@ class Experiment(object):
 
         params: a dict of parameters for the experiment
         returns: a dict of experimental results"""
-        raise NotYetImplementedError('do()')
+        raise NotImplementedError('do()')
 
     def report( self, params, meta, res ):
         """Return a properly-structured dict of results. The default returns a dict with
         results keyed by :attr:`Experiment.RESULTS`, the data point in the parameter space
         keyed by :attr:`Experiment.PARAMETERS`, and timing and other metadata keyed
         by :attr:`Experiment.METADATA`. Overriding this method can be used to record extra
-        values, but be sure to call the base method as well.
+        metadata values, but be sure to call the base method as well.
 
         :param params: the parameters we ran under
         :param meta: the metadata for this run
@@ -200,12 +178,12 @@ class Experiment(object):
     
     def __getitem__( self, k ):
         """Return the given element of the experimental results. This only
-        gives access to direct experimental results, not to parameters
+        gives access to the experimental results, *not* to the parameters
         or metadata.
 
         :param k: the result key
         :returns: the value
-        :raises: KeyError"""
+        :raises: KeyError if there is no such result"""
         if self._results is None:
             raise KeyError(k)
         else:

@@ -1,9 +1,21 @@
 # Simulation "lab" experiment management, sequential version
 #
-# Copyright (C) 2016--2018 Simon Dobson
+# Copyright (C) 2016--2019 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from __future__ import print_function
 import epyc
@@ -35,6 +47,15 @@ class Lab(object):
             self._notebook = notebook
         self._parameters = dict()
 
+    def notebook(self):
+        """Return the notebook being used by this lab.
+
+        :returns: the notebook"""
+        return self._notebook
+
+
+    # ---------- Protocol ----------
+
     def open( self ):
         """Open a lab for business. Sub-classes might insist the they are
         opened and closed explicitly when experiments are being performed.
@@ -52,7 +73,10 @@ class Lab(object):
         that return results in some sense, and may be overridden to let the results
         "catch up" with external processing. The default does nothing."""
         pass
-    
+
+
+    # ---------- Managing experimental parameters ----------
+
     def addParameter( self, k, r ):
         """Add a parameter to the experiment's parameter space. k is the
         parameter name, and r is its range.
@@ -137,7 +161,10 @@ class Lab(object):
             return []
         else:
             return self._crossProduct(ps)
-    
+
+
+    # ---------- Running experiments ----------
+
     def runExperiment( self, e ):
         """Run an experiment over all the points in the parameter space.
         The results will be stored in the notebook.
@@ -157,16 +184,12 @@ class Lab(object):
         # commit the results
         nb.commit()
 
-    def notebook( self ):
-        """Return the notebook being used by this lab.
 
-        :returns: the notebook"""
-        return self._notebook
-    
+    # ---------- Accessing results ----------
+
     def results( self ):
         """Retrieve the list of :term:`results dict` hashes (each of which contains the
-        point at which the experiment was evaluated to get this
-        result).
+        point at which the experiment was evaluated to get this result).
 
         :returns: a list of results dicts"""
         self.updateResults()
@@ -186,5 +209,5 @@ class Lab(object):
         :returns: True if the results are in"""
         self.updateResults()
         return (len(self.notebook().pendingResults()) == 0)
-    
+
 

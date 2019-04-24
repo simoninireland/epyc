@@ -65,7 +65,7 @@ class JSONLabNotebookTests(unittest.TestCase):
         
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(jsr.description(), "A test notebook")
-        six.assertCountEqual(self, jsr.pendingResults(), js.pendingResults())
+        six.assertCountEqual(self, map(int, jsr.pendingResults()), js.pendingResults())
         six.assertCountEqual(self, jsr.results(), js.results())
  
     def testCreateAndUpdate( self ):

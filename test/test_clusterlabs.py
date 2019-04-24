@@ -43,8 +43,8 @@ class SampleExperiment2(Experiment):
 # that we can use for our tests
 default_profile_dir = str(subprocess.check_output('ipython locate profile default', shell = True)).strip('\n')
 connection_file = os.path.join(default_profile_dir, 'security/ipcontroller-client.json')
-#@unittest.skipUnless(os.path.isfile(connection_file),
-#                     "No default cluster running (no {fn})".format(fn = connection_file))
+@unittest.skipUnless(os.path.isfile(connection_file),
+                     "No default cluster running (no {fn})".format(fn = connection_file))
 class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):

@@ -1,11 +1,24 @@
 # Simulation "lab" experiment management, parallel cluster version
 #
-# Copyright (C) 2016--2018 Simon Dobson
+# Copyright (C) 2016--2019 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from __future__ import print_function
+import future
 from builtins import range
 
 import epyc
@@ -19,7 +32,7 @@ from ipyparallel import Client, RemoteError
 
 
 class ClusterLab(epyc.Lab):
-    """A :class:`Lab` running on an ``ipyparallel`` compute
+    """A :class:`Lab` running on an ``pyparallel`` compute
     cluster.
 
     Experiments are submitted to engines in the cluster for
@@ -40,7 +53,7 @@ class ClusterLab(epyc.Lab):
     
     def __init__( self, notebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, use_dill = False, **extra_args ):
         """Create an empty lab attached to the given cluster. Most of the arguments
-        are as expected by the ``ipyparallel.Client`` class, and are used to create the
+        are as expected by the ``pyparallel.Client`` class, and are used to create the
         underlying connection to the cluster. The connection is opened immediately,
         meaning the cluster must be up and accessible when creating a lab to use it.
 
@@ -82,7 +95,10 @@ class ClusterLab(epyc.Lab):
         # use Dill if requested
         if use_dill:
             self.use_dill()
-        
+
+
+    # ---------- Protocol ----------
+
     def open( self ):
         """Connect to the cluster."""
         if self._client is None:
@@ -93,7 +109,9 @@ class ClusterLab(epyc.Lab):
         if self._client is not None:
             self._client.close()
             self._client = None
-        
+
+    # ---------- Remote control of the compute engines ----------
+
     def numberOfEngines( self ):
         """Return the number of engines available to this lab.
 
@@ -131,7 +149,10 @@ class ClusterLab(epyc.Lab):
         :returns: a context manager"""
         self.open()
         return self._client[:].sync_imports(quiet = quiet)
-    
+
+
+    # ---------- Running experiments ----------
+
     def _mixup( self, ps ):
         """Private method to mix up a list of values in-place using a Fisher-Yates
         shuffle (see https://en.wikipedia.org/wiki/Fisher-Yates_shuffle).
@@ -232,6 +253,9 @@ class ClusterLab(epyc.Lab):
                     n = n + 1
         return n
 
+
+    # ---------- Accessing results ----------
+
     def numberOfResults( self ):
         """Return the number of results we have available at the moment.
 
@@ -279,7 +303,7 @@ class ClusterLab(epyc.Lab):
         :param timeout: timeout period in seconds (defaults to forever)
         :returns: True if all the results completed"""
 
-        # we can't use ipyparallel.Client.wait() for this, because that
+        # we can't use pyparallel.Client.wait() for this, because that
         # method only works for cases where the Client object is the one that
         # submitted the jobs to the cluster hub -- and therefore has the
         # necessary data structures to perform synchronisation. This isn't the
@@ -287,7 +311,7 @@ class ClusterLab(epyc.Lab):
         # operation, which implies a different Client object retrieving results
         # than the one that submitted the jobs in the first place. This is
         # unfortunate, but understandable given the typical use cases for
-        # Client objects.
+        # Client objects in pyparallel.
         #
         # Instead. we have to code around a little busily. The ClusterLab.WaitingTime
         # global sets the latency for waiting, and we repeatedly wait for this amount
@@ -325,7 +349,10 @@ class ClusterLab(epyc.Lab):
         else:
             # no results, so we got them all
             return True
-        
+
+
+    # ---------- Managing pending results ----------
+
     def pendingResults( self ):
         """Return the list of job iods for any pending results.
 
