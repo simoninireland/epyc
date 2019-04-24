@@ -9,7 +9,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.15.1
+VERSION = 0.16.1
 
 # ----- Sources -----
 
@@ -45,6 +45,17 @@ SOURCES_DOC_BUILD_HTML_DIR = $(SOURCES_DOC_BUILD_DIR)/html
 SOURCES_DOC_ZIP = epyc-doc-$(VERSION).zip
 SOURCES_DOCUMENTATION = \
 	doc/index.rst \
+	doc/install.rst \
+	doc/start.rst \
+	doc/lifecycle.rst \
+	doc/concepts.rst \
+	doc/cookbook.rst \
+	doc/cookbook/epyc-venv.rst \
+	doc/cookbook/ipython-multicore.rst \
+	doc/cookbook/ipython-distributed.rst \
+	doc/cookbook/ipython-distributed-shared-fs.rst \
+	doc/cookbook/disconnected-usage.rst \
+	doc/reference.rst \
 	doc/experiment.rst \
 	doc/lab.rst \
 	doc/experimentcombinator.rst \
@@ -52,8 +63,8 @@ SOURCES_DOCUMENTATION = \
 	doc/summaryexperiment.rst \
 	doc/jsonlabnotebook.rst \
 	doc/clusterlab.rst \
-	doc/glossary.rst \
-	doc/index.rst
+	doc/gotchas.rst \
+	doc/glossary.rst
 
 SOURCES_EXTRA = \
 	README.rst \
@@ -67,6 +78,7 @@ SOURCES_GENERATED = \
 # Python packages needed
 # For the system to install and run
 PY_REQUIREMENTS = \
+    six \
     future \
 	ipython \
 	pyzmq \
@@ -75,17 +87,19 @@ PY_REQUIREMENTS = \
 	pandas
 # For the documentation and development venv
 PY_DEV_REQUIREMENTS = \
-    six \
 	numpy \
 	jupyter \
 	matplotlib \
 	seaborn \
+	nose \
+	tox \
+	coverage \
 	sphinx \
 	twine
 
 # Packages that shouldn't be saved as requirements (because they're
 # OS-specific, in this case OS X, and screw up Linux compute servers,
-# or because of Pytnon 2.7 vs 3.7 incompatibilities)
+# or because of Python 2.7 vs 3.7 incompatibilities)
 PY_NON_REQUIREMENTS = \
 	appnope \
 	functools32 \
@@ -106,6 +120,8 @@ PYTHON = python
 IPYTHON = ipython
 JUPYTER = jupyter
 IPCLUSTER = ipcluster
+TOX = tox
+COVERAGE = coverage
 PIP = pip
 TWINE = twine
 GPG = gpg
@@ -123,21 +139,14 @@ ZIP = zip -r
 ROOT = $(shell pwd)
 
 # Constructed commands
-RUN_TESTS = $(PYTHON) -m unittest discover -s test
+RUN_TESTS = $(TOX)
+RUN_COVERAGE = $(COVERAGE) erase && $(COVERAGE) run -a setup.py test && $(COVERAGE) report -m --include '$(PACKAGENAME)*'
 RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
 RUN_CLUSTER = PYTHONPATH=.:test $(IPCLUSTER) start --profile=default --n=2
 RUN_NOTEBOOK = PYTHONPATH=$(ROOT) $(JUPYTER) notebook
-
-# Python3 compatibility testing
-VENV3 = venv3
-PYTHON3 = python3
-VIRTUALENV3 = $(PYTHON3) -m venv
-ACTIVATE3 = . $(VENV3)/bin/activate
-PIP3 = pip3
-RUN_TESTS3 = $(PYTHON3) -m unittest discover -s test
 
 
 # ----- Top-level targets -----
@@ -149,6 +158,10 @@ help:
 # Run the test suite in a suitable (predictable) virtualenv
 test: env
 	$(ACTIVATE) && $(RUN_TESTS)
+
+# Run coverage checks over the test suite
+coverage: env
+	$(ACTIVATE) && $(RUN_COVERAGE)
 
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env
@@ -203,22 +216,6 @@ reallyclean: clean
 	$(RM) $(VENV)
 
 
-# ----- Python3 compatibility -----
-
-# Build a Python3 compatibility venv
-.PHONY: env3
-env3: $(VENV3)
-
-$(VENV3):
-	$(VIRTUALENV3) $(VENV3)
-	$(CP) $(DEV_REQUIREMENTS) $(VENV3)/requirements.txt
-	$(ACTIVATE3) && $(CHDIR) $(VENV3) && $(PIP3) install -r requirements.txt
-
-# Run the test suite in a Python3 environment
-compat: env3
-	$(ACTIVATE3) && $(RUN_TESTS3)
-
-
 # ----- Generated files -----
 
 # Manifest for the package
@@ -238,7 +235,8 @@ $(SOURCES_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
 
 define HELP_MESSAGE
 Available targets:
-   make test         run the test suite in a suitable virtualenv
+   make test         run the test suite for all Python versions we support
+   make coverage     run coverage checks of the test suite
    make doc          build the API documentation using Sphinx
    make cluster      run a small compute cluster for use by the tests
    make docserver    run a Jupyter notebook to edit the tutorial
@@ -247,9 +245,6 @@ Available targets:
    make sdist        create a source distribution
    make clean        clean-up the build
    make reallyclean  clean up the virtualenv as well
-
-Python3 compatibility:
-   make compat       run test suite in Python3 virtualenv
 
 endef
 export HELP_MESSAGE
