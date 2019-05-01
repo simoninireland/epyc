@@ -46,7 +46,6 @@ SOURCES_DOC_ZIP = epyc-doc-$(VERSION).zip
 SOURCES_DOCUMENTATION = \
 	doc/index.rst \
 	doc/install.rst \
-	doc/start.rst \
 	doc/lifecycle.rst \
 	doc/concepts.rst \
 	doc/cookbook.rst \
@@ -55,6 +54,14 @@ SOURCES_DOCUMENTATION = \
 	doc/cookbook/ipython-distributed.rst \
 	doc/cookbook/ipython-distributed-shared-fs.rst \
 	doc/cookbook/disconnected-usage.rst \
+	doc/tutorial.rst \
+    doc/tutorial/simple-experiment.rst \
+    doc/tutorial/defining.rst \
+    doc/tutorial/testing.rst \
+    doc/tutorial/lab.rst \
+    doc/tutorial/parameters.rst \
+    doc/tutorial/running.rst \
+    doc/tutorial/results.rst \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/lab.rst \
@@ -64,7 +71,11 @@ SOURCES_DOCUMENTATION = \
 	doc/jsonlabnotebook.rst \
 	doc/clusterlab.rst \
 	doc/gotchas.rst \
+    doc/gotchas/jupyter-class-names.rst \
 	doc/glossary.rst
+
+SOURCES_UTILS = \
+    utils/make-pointcloud.py
 
 SOURCES_EXTRA = \
 	README.rst \
