@@ -35,9 +35,7 @@ class CurveExperiment(epyc.Experiment):
         r = numpy.sin(numpy.sqrt(x ** 2 + y ** 2))
         return dict(result=r)
 
-lab = epyc.Lab(notebook=epyc.JSONLabNotebook("sin.json",
-                                             create=True,
-                                             description="A point cloud of $sin \sqrt{x^2 + y^2}$"))
+lab = epyc.Lab(notebook=epyc.LabNotebook(description="A point cloud of $sin \sqrt{x^2 + y^2}$"))
 lab['x'] = numpy.linspace(-2 * numpy.pi, 2 * numpy.pi)
 lab['y'] = numpy.linspace(-2 * numpy.pi, 2 * numpy.pi)
 lab.runExperiment(CurveExperiment())
