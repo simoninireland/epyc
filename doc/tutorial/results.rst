@@ -3,7 +3,7 @@
 .. currentmodule:: epyc
 
 Accessing the results
-=====================
+---------------------
 
 There are several ways to get at the results. The simplest is that we can simply get back
 a list of dicts:
@@ -17,10 +17,10 @@ dict is a Python dict that's structured in a particular way. It contains three t
 keys:
 
 - :attr:`Experiment.PARAMETERS`, which maps to a dict of the parameters that were used
-  for this particular run of the experiment (`x` and `y` in our case, each mapped to
+  for this particular run of the experiment (``x`` and ``y`` in our case, each mapped to
   a value taken from the parameter space);
 - :attr:`Experiment.RESULTS`, which maps to a dict of the experimental results generated
-  by the :meth:`Experiment.do` method (`result` in our case); and
+  by the :meth:`Experiment.do` method (``result`` in our case); and
 - :attr:`Experiment.METADATA`, which contains some metadata about this particular experimental
   run including the time taken for it to execute, any exceptions raised, and so forth. The
   standard metedata elements are described in :class:`Experiment`: sub-classes can add extra
@@ -61,7 +61,7 @@ use ``matplotlib`` to draw the results as a point cloud:
 
     plt.show()
 
-.. figure:: pointcloud.png
+.. figure:: tutorial/pointcloud.png
     :alt: A plot of the results pointcloud
     :align: center
 

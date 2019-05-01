@@ -2,8 +2,8 @@
 
 .. currentmodule:: epyc
 
-Defining an experimental lab
-============================
+A lab for the experiment
+------------------------
 
 To perform our experiment properly, we need to run the experiment at a *lot* of points,
 to give use a "point cloud" dataset that we can then plot to see the shape of the function.

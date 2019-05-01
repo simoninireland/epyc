@@ -3,7 +3,7 @@
 .. currentmodule:: epyc
 
 Specifying the experimental parameters
-======================================
+--------------------------------------
 
 We next need to specify the parameter space over which we want the lab to run the experiment. This
 is done by mapping variables to values in a dict. The keys of the dict match the parameter values

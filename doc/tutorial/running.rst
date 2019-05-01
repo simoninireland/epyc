@@ -3,7 +3,7 @@
 .. currentmodule:: epyc
 
 Running the experiment
-======================
+----------------------
 
 We can now run the entire experiment with one command:
 

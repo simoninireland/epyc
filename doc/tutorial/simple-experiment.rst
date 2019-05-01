@@ -3,7 +3,7 @@
 .. currentmodule:: epyc
 
 A simple experiment
-===================
+-------------------
 
 Computational experiments that justify using infrastructure like ``epyc`` are by definition
 usually large and complicated -- and not suitable for a tutorial. So we'll start with a

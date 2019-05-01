@@ -1,9 +1,21 @@
 # Makefile for epyc
 #
-# Copyright (C) 2016--2018 Simon Dobson
-# 
-# Licensed under the GNU General Public Licence v.2.0
-# 
+# Copyright (C) 2016--2019 Simon Dobson
+#
+# This file is part of epyc, experiment management in Python.
+#
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 # The name of our package on PyPi
 PACKAGENAME = epyc
@@ -47,7 +59,6 @@ SOURCES_DOCUMENTATION = \
 	doc/index.rst \
 	doc/install.rst \
 	doc/lifecycle.rst \
-	doc/concepts.rst \
 	doc/cookbook.rst \
 	doc/cookbook/epyc-venv.rst \
 	doc/cookbook/ipython-multicore.rst \
@@ -55,6 +66,8 @@ SOURCES_DOCUMENTATION = \
 	doc/cookbook/ipython-distributed-shared-fs.rst \
 	doc/cookbook/disconnected-usage.rst \
 	doc/tutorial.rst \
+    doc/tutorial/concepts.rst \
+    doc/tutorial/first.rst \
     doc/tutorial/simple-experiment.rst \
     doc/tutorial/defining.rst \
     doc/tutorial/testing.rst \

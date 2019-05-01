@@ -3,7 +3,7 @@
 .. currentmodule:: epyc
 
 Testing the experiment
-======================
+----------------------
 
 Good development practice demands that we now test the experiment before running it in anger.
 Usually this would involve writing unit tests within a framework provided by Python's ``unittest``

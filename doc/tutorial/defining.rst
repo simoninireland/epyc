@@ -3,7 +3,7 @@
 .. currentmodule:: epyc
 
 Defining the experiment
-=======================
+-----------------------
 
 We first create a class describing our experiment. We do this by extending
 :class:`Experiment` and overriding :meth:`Experiment.do` to provide the code actually executed:
