@@ -1,0 +1,67 @@
+.. _results-experiment:
+
+.. currentmodule:: epyc
+
+Accessing the results
+=====================
+
+There are several ways to get at the results. The simplest is that we can simply get back
+a list of dicts:
+
+.. code-block:: python
+
+    results = lab.results()
+
+`results` now contains a list, each element of which is a :term:`results dict`. A results
+dict is a Python dict that's structured in a particular way. It contains three top-level
+keys:
+
+- :attr:`Experiment.PARAMETERS`, which maps to a dict of the parameters that were used
+  for this particular run of the experiment (`x` and `y` in our case, each mapped to
+  a value taken from the parameter space);
+- :attr:`Experiment.RESULTS`, which maps to a dict of the experimental results generated
+  by the :meth:`Experiment.do` method (`result` in our case); and
+- :attr:`Experiment.METADATA`, which contains some metadata about this particular experimental
+  run including the time taken for it to execute, any exceptions raised, and so forth. The
+  standard metedata elements are described in :class:`Experiment`: sub-classes can add extra
+  metadata.
+
+A list isn't a very convenient way to get at results, and analysing an experiment typically
+requires some more machinery. Many experiments will use ``pandas`` to perform analysis,
+and the lab can generate a ``pandas.DataFrame`` structure directly:
+
+.. code-block:: python
+
+    import pandas
+
+    df = lab.dataframe()
+
+The dataframe contains all the information from the runs: each row holds a single run, with columns for
+each result, parameters, and metadata element. We can now do anaysis in ``pandas`` as appropriate: for example we can
+use ``matplotlib`` to draw the results as a point cloud:
+
+.. code-block:: python
+
+    import matplotlib
+    from mpl_toolkits.mplot3d import Axes3D
+    from matplotlib import cm
+    import matplotlib.pyplot as plt
+
+    fig = plt.figure(figsize = (8, 8))
+    ax = fig.gca(projection = '3d')
+
+    ax.scatter(df['x'], df['y'], df['result'], c = df['result'], depthshade = False, cmap = cm.coolwarm)
+    ax.set_xlim(numpy.floor(df['x'].min()), numpy.ceil(df['x'].max()))
+    ax.set_ylim(numpy.floor(df['y'].min()), numpy.ceil(df['y'].max()))
+    ax.set_zlim(numpy.floor(df['result'].min()), numpy.ceil(df['result'].max()))
+
+    plt.title(lab.notebook().description())
+    ax.set_xlabel('$x$')
+    ax.set_ylabel('$y$')
+
+    plt.show()
+
+.. figure:: pointcloud.png
+    :alt: A plot of the results pointcloud
+    :align: center
+

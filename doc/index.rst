@@ -56,10 +56,10 @@ Current features
    :hidden:
 
    install
-   start
+   tutorial
    reference
-   gotchas
    cookbook
+   gotchas
    glossary
 
 
