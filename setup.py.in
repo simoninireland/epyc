@@ -2,10 +2,22 @@
 
 # Setup for epyc
 #
-# Copyright (C) 2016--2018 Simon Dobson
-# 
-# Licensed under GPL 2.0
+# Copyright (C) 2016--2019 Simon Dobson
 #
+# This file is part of epyc, experiment management in Python.
+#
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from setuptools import setup
 
@@ -27,6 +39,7 @@ setup(name = 'epyc',
                       'Programming Language :: Python :: 3.7',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
+      scripts = [ SCRIPTS ],
       zip_safe = True,
       install_requires = [ REQUIREMENTS ])
 

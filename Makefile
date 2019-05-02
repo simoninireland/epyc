@@ -75,6 +75,12 @@ SOURCES_DOCUMENTATION = \
     doc/tutorial/parameters.rst \
     doc/tutorial/running.rst \
     doc/tutorial/results.rst \
+    doc/tutorial/pointcloud.png\
+    doc/tutorial/second.rst \
+    doc/tutorial/parallel-concepts.rst \
+    doc/tutorial/unicore-parallel.rst \
+    doc/tutorial/multicore-parallel.rst \
+    doc/tutorial/sharedfs-parallel.rst \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/lab.rst \
@@ -98,6 +104,11 @@ SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py \
 	$(SOURCES_DOC_CONF)
+
+# Binaries
+SCRIPTS = \
+	bin/epyc-cluster.sh \
+	bin/epyc-engine.sh
 
 # Python packages needed
 # For the system to install and run
@@ -248,7 +259,7 @@ MANIFEST: Makefile
 
 # The setup.py script
 setup.py: $(SOURCES_SETUP_IN) Makefile
-	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's/VERSION/$(VERSION)/g' -e 's/REQUIREMENTS/$(PY_REQUIREMENTS:%="%",)/g' >$@
+	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's|VERSION|$(VERSION)|g' -e 's|REQUIREMENTS|$(PY_REQUIREMENTS:%="%",)|g' -e 's|SCRIPTS|$(SCRIPTS:%="%",)|g' >$@
 
 # The source distribution tarball
 $(SOURCES_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
