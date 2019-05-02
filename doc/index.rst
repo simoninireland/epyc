@@ -59,6 +59,7 @@ Current features
    tutorial
    reference
    cookbook
+   epycluster
    gotchas
    glossary
 

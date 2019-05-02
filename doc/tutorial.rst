@@ -7,3 +7,4 @@ This page is a tutorial introduction to ``epyc``.
     :maxdepth: 2
 
     tutorial/first.rst
+    tutorial/second.rst

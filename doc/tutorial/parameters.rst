@@ -22,5 +22,16 @@ How many points are created in these ranges? We've simply let ``numpy`` use its 
 we could have specified a number if we wanted to , to get finer or coarser resolution for the point cloud.
 Notice that the *lab itself* behaves as a dict for the parameters.
 
+What experiments will the lab now run? We can check by retrieving the entire parameter space for the lab:
 
+.. code-block:: python
+
+    print lab.parameterSpace()
+
+This returns a list of the combinations of parameters that the lab will use for running experiments. If you're only
+interested in how many experiments will run, you can get this with:
+
+.. code-block:: python
+
+    print print len(lab)
 

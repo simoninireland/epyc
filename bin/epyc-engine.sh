@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-# Script to fire-up an engiones as part of a compute cluster
+# Script to fire-up an engines as part of an ipyparallel compute cluster
 #
 # Copyright (C) 2016--2019 Simon Dobson
 #
@@ -20,11 +20,15 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 hostname=`hostname`
-machines="$hostname"
 profile="default"
 verbose=""
 venv=""
-engines=1   # $(grep -c processor /proc/cpuinfo)
+if [[ -e /proc/cpuinfo ]]; then
+    # we're on Linux, so we can query for the number of cores as a default
+    engines=$(grep -c processor /proc/cpuinfo)
+else
+    engines=1
+fi
 
 # make sure we've got a working getopt
 ! getopt --test >/dev/null
@@ -41,8 +45,8 @@ usage () {
 Usage: $0 [options] command
 
 Commands:
-   start                                 start the cluster
-   stop                                  stop the cluster
+   start                                 start the engines
+   stop                                  stop the engines
 
 Options:
    -V, --verbose                         verbose output
@@ -101,7 +105,7 @@ fi
 
 # acquire profile directory and create pid filename
 profile_dir=$(ipython locate profile $profile)
-engines_pidfile="$profile_dir/epyc-engines.pid"
+engines_pidfile="$profile_dir/epyc-engines-$hostname.pid"
 
 # execute command
 if [[ "$command" == "start" ]]; then

@@ -107,7 +107,7 @@ SOURCES_GENERATED = \
 
 # Binaries
 SCRIPTS = \
-	bin/epyc-cluster.sh \
+	bin/epycluster.sh \
 	bin/epyc-engine.sh
 
 # Python packages needed
