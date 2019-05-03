@@ -1,6 +1,5 @@
 .. _epycluster:
 
-
 Managing clusters
 -----------------
 
@@ -8,7 +7,7 @@ Managing clusters
 clusters on a range of different common topologies. Using ``epycluster`` it's not necessary to understand
 the underlying machinery needed to manage distributed computing.
 
-Usage: ``epycluster`` [options] command
+Usage: ``epycluster.sh`` [options] command
 
 In common with many modern tools, ``epycluster`` provides a range of sub-commands:
 

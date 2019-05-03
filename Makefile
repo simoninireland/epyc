@@ -99,9 +99,7 @@ SOURCES_EXTRA = \
 	HISTORY
 SOURCES_GENERATED = \
 	MANIFEST \
-	setup.py \
-	$(SOURCES_DOC_CONF)
-
+	setup.py
 # Binaries
 SCRIPTS = \
 	bin/epycluster.sh \

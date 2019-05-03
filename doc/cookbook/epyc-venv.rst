@@ -5,13 +5,13 @@
 Reproducing experiments reliably
 --------------------------------
 
-*Problem*: Over time the versions numbers of different packages you use change as the code is developed. You're
+**Problem**: Over time the versions numbers of different packages you use change as the code is developed. You're
 worried this might affect your code, either by breaking it or by changing its results somehow.
 
-*Solution*: This is a real problem with computational science. Fortunately it's fairly easy to address, at least
+**Solution**: This is a real problem with computational science. Fortunately it's fairly easy to address, at least
 at a simple level.
 
-The solution is Python's *virtual environments* or *venvs*. A venv is an installation of Python and its libraries
+Pythonincludes a feature called **virtual environments** or **venvs**. A venv is an installation of Python and its libraries
 that's closed-off from any other installations you may have on your machine. Essentially it takes the global
 installation of Python and  throws away anything that's not part of the core distribution. You can "enter" the
 venv and install exactly those packages you want -- and *only* those packages, and with specific version numbers
@@ -25,20 +25,20 @@ Creating this venv initially depends on whether you're running Python 2.7 or Pyt
 
 For Python 2.7 you use the ``virtualenv`` tool from the command line:
 
-.. code-block:: shell
+.. code-block:: sh
 
     virtualenv venv
 
 For Python 3 you use:
 
-.. code-block:: shell
+.. code-block:: sh
 
     python3 -m venv ./venv
 
 We next need to *activate* the environment, making it the "current" one that Python will use. This is again done from the
 command line:
 
-.. code-block:: shell
+.. code-block:: sh
 
     . venv/bin/activate
 
@@ -47,7 +47,7 @@ Python interpreter or any of the related tools, it runs the ones in the venv and
 
 We next need to *populate* the venv, that is, add the packages we want. We do this using ``pip`` as normal:
 
-.. code-block:: shell
+.. code-block:: sh
 
     pip install ipython ipyparallel
 
@@ -69,7 +69,7 @@ other) venv, it will run in the packages installed globally: *what happens in th
 Suppose we now want to be able to reproduce this venv for later use. We can use ``pip`` to *freeze* the state of the
 venv for us:
 
-.. code-block::shell
+.. code-block:: sh
 
     pip freeze >requirements.txt
 
@@ -85,6 +85,19 @@ the package versions our code will use, we can create another venv that uses thi
 
 (That was the Python 2,7 commands, of course.) This new venv now has exactly the structure of the old one, meaning
 we can move the computational environment across machines.
+
+.. warning::
+
+    This sometimes doesn't work as well as it might: Python's requirements files aren't very well structured,
+    not all packages (or all package versions) are available on all operating systems, Python on OS X has some
+    unique packages, `Anaconda <https://www.anaconda.com/>`_ includes a huge set by default, and so forth. But at
+    least you get start from a place where the environment is well-known.
+
+    A handy debugging strategy is
+    to run ``pip install -r requirements.txt`` and, if it fails, delete the offending line from ``requirements.txt``
+    and try again. If you remove a package that's needed by another, then a compatible version should be
+    found by ``pip`` -- but possibly not the one you were using originally. This doesn't often cause problems in real life.
+
 
 
 

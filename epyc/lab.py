@@ -74,6 +74,19 @@ class Lab(object):
         "catch up" with external processing. The default does nothing."""
         pass
 
+    def recreate(self):
+        '''Return a structure describing this lab in enough detail to reconstruct it,
+        consisting of the name of the class and a dict of any arguments that it needs.
+        Sub-classes should call the base method to fill in any defaults and then add
+        any arguments they need to the dict.
+
+        :returns: a (classname, args) pair
+        '''
+        n = '{modulename}.{classname}'.format(modulename = self.__class__.__module__,
+                                              classname = self.__class__.__name__)
+        args = dict()
+        return (n, args)
+
 
     # ---------- Managing experimental parameters ----------
 

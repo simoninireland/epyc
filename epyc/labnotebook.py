@@ -46,10 +46,11 @@ class LabNotebook(object):
 
         :param name: the notebook's name
         :param description: a free text description"""
-        self._name = name
-        self._description = description
-        self._results = dict()
-        self._pending = dict()
+        self._name = name                        # name
+        self._description = description          # description string
+        self._experiments = dict()               # metadata for each run
+        self._results = dict()                   # results, keyed by parameters
+        self._pending = dict()                   # pending results, mapping job id to parameters
 
     def name( self ):
         """Return the name of the notebook. If the notebook is persistent,

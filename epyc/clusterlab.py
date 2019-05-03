@@ -86,6 +86,7 @@ class ClusterLab(epyc.Lab):
                                paramiko = paramiko,
                                timeout = timeout,
                                cluster_id = cluster_id,
+                               use_dill = use_dill,
                                **extra_args)
         self._client = None
 
@@ -109,6 +110,16 @@ class ClusterLab(epyc.Lab):
         if self._client is not None:
             self._client.close()
             self._client = None
+
+    def recreate(self):
+        '''Save the arguments needed to re-connect to the cluster we use.
+
+        :returns: a (classname, args) pair'''
+        (cn, args) = super(ClusterLab, self).recreate()
+        nargs = args.copy()
+        nargs.update(self._arguments)
+        return  (classname, nargs)
+
 
     # ---------- Remote control of the compute engines ----------
 

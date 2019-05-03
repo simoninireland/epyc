@@ -11,7 +11,7 @@ be making use of several independent machines.
 
 .. warning::
 
-    We'll assume that all ther machines in your cluster is running Linux or some other Unix variant.
+    We'll assume that all the machines in your cluster is running Linux or some other Unix variant.
 
 The type of cluster we'll set up is common in university environments, and consists of several
 machines that share a common file system. By this we mean that, whichever machine you log-on to, you're
