@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.16.1
+VERSION = 0.99.1
 
 # ----- Sources -----
 
@@ -100,6 +100,7 @@ SOURCES_EXTRA = \
 SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py
+
 # Binaries
 SCRIPTS = \
 	bin/epycluster.sh \
@@ -148,8 +149,6 @@ PROFILE = $(PACKAGENAME)
 # Base commands
 PYTHON = python
 IPYTHON = ipython
-JUPYTER = jupyter
-IPCLUSTER = ipcluster
 TOX = tox
 COVERAGE = coverage
 PIP = pip
@@ -175,8 +174,7 @@ RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
-RUN_CLUSTER = PYTHONPATH=.:test $(IPCLUSTER) start --profile=default --n=2
-RUN_NOTEBOOK = PYTHONPATH=$(ROOT) $(JUPYTER) notebook
+RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH epycluster.sh init --profile epyctest ; epycluster.sh start --profile epyctest --n 2
 
 
 # ----- Top-level targets -----
@@ -186,11 +184,11 @@ help:
 	@make usage
 
 # Run the test suite in a suitable (predictable) virtualenv
-test: env
+test: env Makefile setup.py
 	$(ACTIVATE) && $(RUN_TESTS)
 
 # Run coverage checks over the test suite
-coverage: env
+coverage: env Makefile setup.py
 	$(ACTIVATE) && $(RUN_COVERAGE)
 
 # Run a small local compute cluster (in the foreground) for testing
@@ -201,10 +199,6 @@ cluster: env
 .PHONY: doc
 doc: $(SOURCES_DOCUMENTATION) $(SOURCES_DOC_CONF)
 	$(ACTIVATE) && $(CHDIR) doc && $(RUN_SPHINX_HTML)
-
-.PHONY: docserver
-docserver:
-	$(ACTIVATE) && $(CHDIR) doc && $(RUN_NOTEBOOK))
 
 # Build a development venv from the known-good requirements in the repo
 .PHONY: env
@@ -269,7 +263,6 @@ Available targets:
    make coverage     run coverage checks of the test suite
    make doc          build the API documentation using Sphinx
    make cluster      run a small compute cluster for use by the tests
-   make docserver    run a Jupyter notebook to edit the tutorial
    make env          create a known-good development virtual environment
    make newenv       update the development venv's requirements
    make sdist        create a source distribution

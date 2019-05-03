@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -o errexit -o pipefail -o noclobber -o nounset
 
 # Script to fire-up an engines as part of an ipyparallel compute cluster
 #
