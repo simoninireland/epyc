@@ -61,9 +61,6 @@ SOURCES_DOCUMENTATION = \
 	doc/lifecycle.rst \
 	doc/cookbook.rst \
 	doc/cookbook/epyc-venv.rst \
-	doc/cookbook/ipython-multicore.rst \
-	doc/cookbook/ipython-distributed.rst \
-	doc/cookbook/ipython-distributed-shared-fs.rst \
 	doc/cookbook/disconnected-usage.rst \
 	doc/tutorial.rst \
     doc/tutorial/concepts.rst \
