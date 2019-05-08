@@ -33,7 +33,7 @@ class Lab(object):
 
     A :class:`Lab` stores its result in a notebook, an instance of :class:`LabNotebook`.
     By default the base :class:`Lab` class uses an in-memory notebook, essentially
-    just a dict; sub-clasess use persistent notebooks to manage larger
+    just a dict; sub-classes use persistent notebooks to manage larger
     sets of experiments.
     """
 
