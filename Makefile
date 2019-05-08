@@ -173,7 +173,7 @@ RUN_COVERAGE = $(COVERAGE) erase && $(COVERAGE) run -a setup.py test && $(COVERA
 RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
-NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%*/d', $(PY_NON_REQUIREMENTS))
+NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%==*/d', $(PY_NON_REQUIREMENTS))
 RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH epycluster.sh init --profile epyctest ; epycluster.sh start --profile epyctest --n 2
 
 

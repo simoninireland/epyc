@@ -3,6 +3,7 @@ backports.shutil-get-terminal-size==1.0.0
 decorator==4.4.0
 dill==0.2.9
 enum34==1.1.6
+future==0.17.1
 ipykernel==4.10.0
 ipyparallel==6.2.3
 ipython==5.8.0
