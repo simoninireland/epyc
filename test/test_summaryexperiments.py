@@ -93,6 +93,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = (self._lab.results())[0]
         
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
@@ -108,6 +109,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = self._lab.results()
         self.assertEqual(len(res), len(self._lab['x']))
 
@@ -129,6 +131,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = (self._lab.results())[0]
 
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
@@ -148,6 +151,7 @@ class SummaryExperimentTests(unittest.TestCase):
                                summarised_results = [ 'dummy' ])
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = (self._lab.results())[0]
 
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
@@ -172,6 +176,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = (self._lab.results())[0]
         
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
@@ -191,6 +196,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(e)
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         self.assertEqual(len(self._lab.results()), 1)
         res = (self._lab.results())[0]
         
@@ -209,10 +215,12 @@ class SummaryExperimentTests(unittest.TestCase):
         repetitions = 5
         self._lab['a'] = [ 1, 2, 3 ]
         try:
-            self._lab.runExperiment(SummaryExperiment(RepeatedExperiment(SampleExperiment4(),
-                                                                         repetitions),
+            re = RepeatedExperiment(SampleExperiment4(),
+                                    repetitions)
+            self._lab.runExperiment(SummaryExperiment(re,
                                                       summarised_results = [ 'total', 'nestedArray' ]))
-                                    
+
+            self.assertTrue(re.success())
             res = self._lab.results()
 
             # getting here is enough to exercise the persistence regime
@@ -232,6 +240,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.failed())
         res = (self._lab.results())[0]
         
         self.assertFalse(res[Experiment.METADATA][Experiment.STATUS])
@@ -246,6 +255,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = (self._lab.results())[0]
         
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
@@ -267,6 +277,7 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
+        self.assertTrue(es.success())
         res = (self._lab.results())[0]
 
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_SUCCESSFUL_RESULTS], 10)
