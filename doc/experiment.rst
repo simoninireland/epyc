@@ -127,6 +127,8 @@ operations only make sense on a newly-run :class:`Experiment`.
 
 .. automethod:: Experiment.success
 
+.. automethod:: Experiment.failed
+
 .. automethod:: Experiment.results
 
 .. automethod:: Experiment.experimentalResults

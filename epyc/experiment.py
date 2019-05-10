@@ -2,8 +2,20 @@
 #
 # Copyright (C) 2016--2018 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from __future__ import print_function
 from datetime import datetime, timedelta
@@ -53,15 +65,19 @@ class Experiment(object):
         self._parameters = None
         self._results = None
 
-    def setUp( self, params ):
-        """Set up the experiment. Default does nothing.
 
-        :param params: the parameters of the experiment"""
-        pass
+    # ---------- Configuration ----------
 
-    def tearDown( self ):
-        """Tear down the experiment. Default does nothing."""
-        pass
+    def set(self, params):
+        """Set the parameters for the experiment, returning the
+        now-configured experiment. Be sure to call this base method when overriding.
+
+        :param params: the parameters
+        :returns: the experiment"""
+        if self._parameters is not None:
+            self.deconfigure()
+        self.configure(params)
+        return self
 
     def configure( self, params ):
         """Configure the experiment for the given parameters.
@@ -76,16 +92,18 @@ class Experiment(object):
         Default removes the parameters. Default does nothing."""
         self._parameters = None
 
-    def set( self, params ):
-        """Set the parameters for the experiment, returning the
-        now-configured experiment. Be sure to call this base method when overriding.
 
-        :param params: the parameters
-        :returns: the experiment"""
-        if self._parameters is not None:
-            self.deconfigure()
-        self.configure(params)
-        return self
+    # ---------- Running the experiment ----------
+
+    def setUp( self, params ):
+        """Set up the experiment. Default does nothing.
+
+        :param params: the parameters of the experiment"""
+        pass
+
+    def tearDown( self ):
+        """Tear down the experiment. Default does nothing."""
+        pass
 
     def do( self, params ):
         """Do the body of the experiment. This should be overridden
@@ -175,7 +193,10 @@ class Experiment(object):
         return self.report(params,
                            self._metadata,
                            res)
-    
+
+
+    # ---------- Accessing results ----------
+
     def __getitem__( self, k ):
         """Return the given element of the experimental results. This only
         gives access to the experimental results, *not* to the parameters
@@ -192,13 +213,24 @@ class Experiment(object):
     def success( self ):
         """Test whether the experiment has been run successfully. This will
         be False if the experiment hasn't been run, or if it's been run and
-        failed (in which case the exception will be stored in the metadata).
+        failed.
 
         :returns: ``True`` if the experiment has been run successfully"""
         if self.STATUS in self.metadata().keys():
             return (self.metadata())[self.STATUS]
         else:
             return False
+
+    def failed(self):
+        '''Test whether an experiment failed. This will be True if the experiment has
+        been run and has failed, which means that there will be an exception and traceback
+        information stored in the metadata.
+
+        :returns: ``True`` if the experiment has failed'''
+        if self.STATUS not in self.metadata().keys():
+            return False
+        else:
+            return not (self.metadata())[self.STATUS]
 
     def results( self ):
         """Return a complete results dict. Only really makes sense for
