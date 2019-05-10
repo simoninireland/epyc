@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -o errexit -o pipefail -o noclobber -o nounset
 
 # Script to fire-up an ipyparellel compute cluster
 #
@@ -20,6 +19,7 @@ set -o errexit -o pipefail -o noclobber -o nounset
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
+cmd_dir=$(cd $(dirname $0); pwd)
 hostname=`hostname`
 machines=""
 dbclass="IPython.parallel.controller.sqlitedb.SQLiteDB"
@@ -105,13 +105,11 @@ if [[ "$verbose" = "true" ]]; then
     engineopts="$engineopts --verbose"
 fi
 if [[ ! "$venv" = "" ]]; then
-    engineopts="$engineopts --venv $venv"
+    venvpath=$(cd $venv; pwd)
+    engineopts="$engineopts --venv $venvpath"
 fi
 if [[ ! "$engines" = "" ]]; then
     engineopts="$engineopts -n $engines"
-fi
-if [[ "$verbose" = "true" ]]; then
-    echo "Started $engines engines on $hostname"
 fi
 
 # get command
@@ -128,19 +126,19 @@ if [[ ! "$venv" = "" ]]; then
     . $venv/bin/activate
 fi
 
-# acquire profile directory and create pid filename and config filenames
-profile_dir=$(ipython locate profile $profile)
-ipcontroller_config="$profile_dir/ipcontroller_config.py"
-tasksdb="$profile_dir/tasks.db"
-controller_pidfile="$profile_dir/epyc-controller.pid"
-machinenames="$profile_dir/epyc-machinenames.pid"
-
 # execute command
 if [[ "$command" == "init" ]]; then
-    rm -fr $profile_dir
+    profile_dir=$(ipython locate profile $profile) && rm -fr $profile_dir
     ipython profile create $profile --parallel
+
+    profile_dir=$(ipython locate profile $profile)
+    ipcontroller_config="$profile_dir/ipcontroller_config.py"
     cat >>$ipcontroller_config <<EOF
 # BEGIN epyc-cluster
+
+# connection management
+c.IPControllerApp.reuse_files = True
+c.HubFactory.ip = u'*'
 
 # persistent store for jobs
 c.HubFactory.db_class ="$dbclass"
@@ -152,6 +150,11 @@ EOF
     fi
 
 elif [[ "$command" == "start" ]]; then
+    profile_dir=$(ipython locate profile $profile)
+    controller_pidfile="$profile_dir/epyc-controller.pid"
+    tasksdb="$profile_dir/tasks.db"
+    machinenames="$profile_dir/epyc-machinenames.pid"
+
     if [[ -e $controller_pidfile ]]; then
         echo "$0: controller already running ($controller_pidfile)"
         exit 1
@@ -167,19 +170,23 @@ elif [[ "$command" == "start" ]]; then
     if [[ "$machines" = "" ]]; then
         epyc-engine.sh $engineopts start
     else
-        for m in "$machines"; do
-            ssh $m epyc-engine.sh $engineopts start
+        for m in $machines; do
+            ssh -n -f $m $cmd_dir/epyc-engine.sh $engineopts start
         done
     fi
     echo $machines >$machinenames
 
 elif [[ "$command" == "stop" ]]; then
+    profile_dir=$(ipython locate profile $profile)
+    controller_pidfile="$profile_dir/epyc-controller.pid"
+    machinenames="$profile_dir/epyc-machinenames.pid"
+
     machines=$(cat $machinenames)
     if [[ "$machines" = "" ]]; then
         epyc-engine.sh $engineopts stop
     else
-        for m in "$machines"; do
-            ssh $m epyc-engine.sh $engineopts stop
+        for m in $machines; do
+            ssh -n $m $cmd_dir/epyc-engine.sh $engineopts stop
         done
     fi
     rm $machinenames

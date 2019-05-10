@@ -1,5 +1,4 @@
 #!/usr/bin/env bash
-set -o errexit -o pipefail -o noclobber -o nounset
 
 # Script to fire-up an engines as part of an ipyparallel compute cluster
 #
@@ -111,7 +110,6 @@ engines_pidfile="$profile_dir/epyc-engines-$hostname.pid"
 # execute command
 if [[ "$command" == "start" ]]; then
     for i in `seq 1 $engines`; do
-        ipengine --profile=$profile 2>&1 >>/dev/null &
         echo -n "$! " >>$engines_pidfile
     done
     if [[ "$verbose" = "true" ]]; then
