@@ -51,3 +51,14 @@ $RECYCLE.BIN/
 
 # Emacs backups
 *~
+
+# Tox and venv
+.tox
+venv3
+
+# Sphinx build docs
+doc/_build
+
+# Package builds
+dist
+build
