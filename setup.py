@@ -39,8 +39,7 @@ setup(name = 'epyc',
                       'Programming Language :: Python :: 3.7',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
-      scripts = [ "bin/epycluster.sh", "bin/epyc-engine.sh", ],
       zip_safe = True,
-      install_requires = [ "six", "future", "ipython", "pyzmq", "ipyparallel", "dill", "pandas", ])
+      install_requires = [ "six", "future", "numpy", "pyzmq", "ipyparallel >= 6.2.4", "dill", "pandas",  ])
 
 

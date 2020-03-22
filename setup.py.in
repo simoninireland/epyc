@@ -39,7 +39,6 @@ setup(name = 'epyc',
                       'Programming Language :: Python :: 3.7',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
-      scripts = [ SCRIPTS ],
       zip_safe = True,
       install_requires = [ REQUIREMENTS ])
 

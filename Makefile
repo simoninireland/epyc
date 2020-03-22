@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.99.2
+VERSION = 0.99.3
 
 
 # ----- Sources -----
@@ -137,6 +137,7 @@ REQUIREMENTS = requirements.txt
 DEV_REQUIREMENTS = dev-requirements.txt
 
 # Constructed commands
+PY_REQUIREMENTS = $(shell $(SED) -e 's/^\(.*\)/"\1",/g' $(REQUIREMENTS) | $(TR) '\n' ' ')
 RUN_TESTS = $(TOX)
 RUN_COVERAGE = $(COVERAGE) erase && $(COVERAGE) run -a setup.py test && $(COVERAGE) report -m --include '$(PACKAGENAME)*'
 RUN_NOTEBOOK = $(JUPYTER) notebook
@@ -206,7 +207,7 @@ MANIFEST: Makefile
 
 # The setup.py script
 setup.py: $(SOURCES_SETUP_IN) Makefile
-	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's|VERSION|$(VERSION)|g' -e 's|REQUIREMENTS|$(PY_REQUIREMENTS:%="%",)|g' -e 's|SCRIPTS|$(SCRIPTS:%="%",)|g' >$@
+	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's|VERSION|$(VERSION)|g' -e 's|REQUIREMENTS|$(PY_REQUIREMENTS)|g' >$@
 
 # The source distribution tarball
 $(SOURCES_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
