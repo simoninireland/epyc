@@ -1,6 +1,6 @@
 # Base class for experiments
 #
-# Copyright (C) 2016--2018 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
