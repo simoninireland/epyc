@@ -13,7 +13,5 @@ This section is a work-in-progress cookbook of using ``epyc`` in practice.
     :maxdepth: 2
 
     cookbook/epyc-venv.rst
-    cookbook/ipython-multicore.rst
-    cookbook/ipython-distributed.rst
     cookbook/disconnected-usage.rst
 

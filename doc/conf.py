@@ -15,12 +15,15 @@
 # import os
 # import sys
 # sys.path.insert(0, os.path.abspath('.'))
+import os
+import sys
+sys.path.insert(0, os.path.abspath('..'))
 
 
 # -- Project information -----------------------------------------------------
 
 project = u'epyc'
-copyright = u'2018, Simon Dobson'
+copyright = u'2016--2020, Simon Dobson'
 author = u'Simon Dobson'
 
 # The short X.Y version

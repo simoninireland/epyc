@@ -5,10 +5,10 @@
 Using a cluster without staying connected to it
 -----------------------------------------------
 
-*Problem*: You're using a remote machine to run your simulations on, and don't want your local machine to have
+**Problem**: You're using a remote machine to run your simulations on, and don't want your local machine to have
 to stay connected while they're running because you're doing a lot of computation.
 
-*Solution*: ``epyc``'s cluster labs can work asynchronously, so you submit the experiments you want to do
+**Solution**: ``epyc``'s cluster labs can work asynchronously, so you submit the experiments you want to do
 and then come back to collect them later. This is good for long-running sets of experiments, and especially
 good when your front-end machine is a laptop that you want to be able to take off the network when you go home.
 

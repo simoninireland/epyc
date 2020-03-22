@@ -61,7 +61,7 @@ use ``matplotlib`` to draw the results as a point cloud:
 
     plt.show()
 
-.. figure:: tutorial/pointcloud.png
+.. figure:: pointcloud.png
     :alt: A plot of the results pointcloud
     :align: center
 

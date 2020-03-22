@@ -13,5 +13,4 @@ should first read the :ref:`parallel processing concepts <concepts-parallel>`.)
 
 .. include:: setup.rst
 
-.. include:: clusterlab.rst
-
+.. include:: cluster.rst
