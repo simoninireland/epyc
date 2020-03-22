@@ -1,3 +1,13 @@
+Version 0.99.2
+
+   - Removed scripts as they've been built into ipyparallel
+   - Improved tutorial for miltucore and clusters, reflecting new ipyparallel
+   - Updated requirements to make sure we use latest ipyparallel
+
+Version 0.99.1 2019-05-03
+
+   - Added scripts to simplify creation of clusters
+
 Version 0.15.1 2018-07-12
 
    - Made compatible with Python 3 as well as Python 2.7

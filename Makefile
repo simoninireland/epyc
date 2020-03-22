@@ -1,6 +1,6 @@
 # Makefile for epyc
 #
-# Copyright (C) 2016--2019 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -21,13 +21,15 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.99.3
+VERSION = 0.99.2
+
 
 # ----- Sources -----
 
 # Source code
 SOURCES_SETUP_IN = setup.py.in
 SOURCES_SDIST = dist/$(PACKAGENAME)-$(VERSION).tar.gz
+SOURCES_WHEEL = dist/$(PACKAGENAME)-$(VERSION)-py2-py3-none-any.whl
 SOURCES_CODE = \
 	epyc/__init__.py \
 	epyc/experiment.py \
@@ -54,7 +56,7 @@ SOURCES_TUTORIAL = doc/epyc.ipynb
 SOURCES_DOC_CONF = doc/conf.py
 SOURCES_DOC_BUILD_DIR = doc/_build
 SOURCES_DOC_BUILD_HTML_DIR = $(SOURCES_DOC_BUILD_DIR)/html
-SOURCES_DOC_ZIP = epyc-doc-$(VERSION).zip
+SOURCES_DOC_ZIP = $(PACKAGENAME)-doc-$(VERSION).zip
 SOURCES_DOCUMENTATION = \
 	doc/index.rst \
 	doc/install.rst \
@@ -78,6 +80,7 @@ SOURCES_DOCUMENTATION = \
     doc/tutorial/unicore-parallel.rst \
     doc/tutorial/multicore-parallel.rst \
     doc/tutorial/sharedfs-parallel.rst \
+	doc/tutorial/jupyter.rst \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/lab.rst \
@@ -101,45 +104,6 @@ SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py
 
-# Binaries
-SCRIPTS = \
-	bin/epycluster.sh \
-	bin/epyc-engine.sh
-
-# Python packages needed
-# For the system to install and run
-PY_REQUIREMENTS = \
-    six \
-    future \
-	ipython \
-	pyzmq \
-	ipyparallel \
-	dill \
-	pandas
-# For the documentation and development venv
-PY_DEV_REQUIREMENTS = \
-	numpy \
-	jupyter \
-	matplotlib \
-	seaborn \
-	nose \
-	tox \
-	coverage \
-	sphinx \
-	twine
-
-# Packages that shouldn't be saved as requirements (because they're
-# OS-specific, in this case OS X, and screw up Linux compute servers,
-# or because of Python 2.7 vs 3.7 incompatibilities)
-PY_NON_REQUIREMENTS = \
-	appnope \
-	functools32 \
-	subprocess32 \
-	futures
-VENV = venv
-REQUIREMENTS = requirements.txt
-DEV_REQUIREMENTS = dev-requirements.txt
-
 # Name for the IPython parallel cluster we use for testing
 PROFILE = $(PACKAGENAME)
 
@@ -147,14 +111,14 @@ PROFILE = $(PACKAGENAME)
 # ----- Tools -----
 
 # Base commands
-PYTHON = python
-IPYTHON = ipython
+PYTHON = python3
+JUPYTER = jupyter
 TOX = tox
 COVERAGE = coverage
 PIP = pip
 TWINE = twine
 GPG = gpg
-VIRTUALENV = virtualenv
+VIRTUALENV = $(PYTHON) -m venv
 ACTIVATE = . $(VENV)/bin/activate
 TR = tr
 CAT = cat
@@ -167,13 +131,18 @@ ZIP = zip -r
 # Root directory
 ROOT = $(shell pwd)
 
+# Requirements for running the library and for the development venv needed to build it
+VENV = venv3
+REQUIREMENTS = requirements.txt
+DEV_REQUIREMENTS = dev-requirements.txt
+
 # Constructed commands
 RUN_TESTS = $(TOX)
 RUN_COVERAGE = $(COVERAGE) erase && $(COVERAGE) run -a setup.py test && $(COVERAGE) report -m --include '$(PACKAGENAME)*'
+RUN_NOTEBOOK = $(JUPYTER) notebook
 RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
-NON_REQUIREMENTS = $(SED) $(patsubst %, -e '/^%==*/d', $(PY_NON_REQUIREMENTS))
 RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH epycluster.sh init --profile epyctest ; epycluster.sh start --profile epyctest --n 2
 
 
@@ -206,34 +175,23 @@ env: $(VENV)
 
 $(VENV):
 	$(VIRTUALENV) $(VENV)
-	$(CP) $(DEV_REQUIREMENTS) $(VENV)/requirements.txt
+	$(CAT) $(REQUIREMENTS) $(DEV_REQUIREMENTS) >$(VENV)/requirements.txt
 	$(ACTIVATE) && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt
-
-# Build a development venv from the latest versions of the required packages,
-# creating a new requirements.txt ready for committing to the repo. Make sure
-# things actually work in this venv before committing!
-.PHONY: newenv
-newenv:
-	$(RM) $(VENV)
-	$(VIRTUALENV) $(VENV)
-	echo $(PY_REQUIREMENTS) | $(TR) ' ' '\n' >$(VENV)/$(REQUIREMENTS)
-	$(ACTIVATE) && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
-	$(NON_REQUIREMENTS) $(VENV)/requirements.txt >$(REQUIREMENTS)
-	echo $(PY_DEV_REQUIREMENTS) | $(TR) ' ' '\n' >$(VENV)/$(REQUIREMENTS)
-	$(ACTIVATE) && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt && $(PIP) freeze >requirements.txt
-	$(NON_REQUIREMENTS) $(VENV)/requirements.txt >$(DEV_REQUIREMENTS)
 
 # Build a source distribution
 sdist: $(SOURCES_SDIST)
 
+# Build a wheel distribution
+wheel: $(SOURCES_WHEEL)
+
 # Upload a source distribution to PyPi
-upload: $(SOURCES_SDIST)
+upload: sdist wheel
 	$(GPG) --detach-sign -a dist/$(PACKAGENAME)-$(VERSION).tar.gz
 	$(ACTIVATE) && $(RUN_TWINE)
 
 # Clean up the distribution build 
 clean:
-	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist $(SOURCES_DOC_BUILD_DIR) $(SOURCES_DOC_ZIP)
+	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist $(SOURCES_DOC_BUILD_DIR) $(SOURCES_DOC_ZIP) dist build
 
 # Clean up everything, including the computational environment (which is expensive to rebuild)
 reallyclean: clean
@@ -254,6 +212,10 @@ setup.py: $(SOURCES_SETUP_IN) Makefile
 $(SOURCES_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
 	$(ACTIVATE) && $(RUN_SETUP) sdist
 
+# The binary (wheel) distribution
+$(SOURCES_WHEEL): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
+	$(ACTIVATE) && $(RUN_SETUP) bdist_wheel
+
 
 # ----- Usage -----
 
@@ -264,8 +226,9 @@ Available targets:
    make doc          build the API documentation using Sphinx
    make cluster      run a small compute cluster for use by the tests
    make env          create a known-good development virtual environment
-   make newenv       update the development venv's requirements
    make sdist        create a source distribution
+   make wheel	     create binary (wheel) distribution
+   make upload       upload distribution to PyPi
    make clean        clean-up the build
    make reallyclean  clean up the virtualenv as well
 
