@@ -1,4 +1,4 @@
-Version 0.99.2
+Version 0.99.2 2020-03-22
 
    - Removed scripts as they've been built into ipyparallel
    - Improved tutorial for miltucore and clusters, reflecting new ipyparallel
