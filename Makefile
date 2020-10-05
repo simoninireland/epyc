@@ -21,15 +21,12 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 0.99.3
+VERSION = 1.0.1
 
 
 # ----- Sources -----
 
 # Source code
-SOURCES_SETUP_IN = setup.py.in
-SOURCES_SDIST = dist/$(PACKAGENAME)-$(VERSION).tar.gz
-SOURCES_WHEEL = dist/$(PACKAGENAME)-$(VERSION)-py2-py3-none-any.whl
 SOURCES_CODE = \
 	epyc/__init__.py \
 	epyc/experiment.py \
@@ -93,9 +90,11 @@ SOURCES_DOCUMENTATION = \
     doc/gotchas/jupyter-class-names.rst \
 	doc/glossary.rst
 
+# Extras for building diagrams etc
 SOURCES_UTILS = \
     utils/make-pointcloud.py
 
+# Extras for the build and packaging system
 SOURCES_EXTRA = \
 	README.rst \
 	LICENSE \
@@ -103,6 +102,10 @@ SOURCES_EXTRA = \
 SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py
+
+# Distribution files
+DIST_SDIST = dist/$(PACKAGENAME)-$(VERSION).tar.gz
+DIST_WHEEL = dist/$(PACKAGENAME)-$(VERSION)-py3-none-any.whl
 
 # Name for the IPython parallel cluster we use for testing
 PROFILE = $(PACKAGENAME)
@@ -132,7 +135,7 @@ ZIP = zip -r
 ROOT = $(shell pwd)
 
 # Requirements for running the library and for the development venv needed to build it
-VENV = venv3
+VENV = .venv
 REQUIREMENTS = requirements.txt
 DEV_REQUIREMENTS = dev-requirements.txt
 
@@ -189,6 +192,10 @@ wheel: $(SOURCES_WHEEL)
 upload: sdist wheel
 	$(GPG) --detach-sign -a dist/$(PACKAGENAME)-$(VERSION).tar.gz
 	$(ACTIVATE) && $(RUN_TWINE)
+
+# Build the diagrams for the documentation
+diagrams:
+	$(ACTIVATE) && PYTHONPATH=$(ROOT) $(PYTHON) utils/make-pointcloud.py
 
 # Clean up the distribution build 
 clean:
