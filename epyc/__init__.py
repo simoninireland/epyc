@@ -1,9 +1,21 @@
 # Initialisation for epyc package
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 #
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 """`epyc` is a Python module for controlling a long-running series of
 computational experiments, as is often found when writing simulations
@@ -41,8 +53,10 @@ from .summaryexperiment import SummaryExperiment
 from .lab import Lab
 from .clusterlab import ClusterLab
 
+from .resultset import ResultSet
 from .labnotebook import LabNotebook
 from .jsonlabnotebook import JSONLabNotebook
+from .hdf5labnotebook import HDF5LabNotebook
 #from .sqlitelabnotebook import SqliteLabNotebook
 
 
