@@ -1,6 +1,7 @@
 jupyter
 matplotlib
 seaborn
+mypy
 nose
 tox
 coverage

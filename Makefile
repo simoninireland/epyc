@@ -28,6 +28,7 @@ VERSION = 1.0.1
 
 # Source code
 SOURCES_CODE = \
+	epyc/py.typed \
 	epyc/__init__.py \
 	epyc/experiment.py \
 	epyc/experimentcombinator.py \
@@ -36,17 +37,19 @@ SOURCES_CODE = \
 	epyc/lab.py \
 	epyc/clusterlab.py \
 	epyc/labnotebook.py \
-	epyc/jsonlabnotebook.py
+	epyc/jsonlabnotebook.py \
+	epyc/hdf5labnotebook.py
 SOURCES_TESTS = \
 	test/__init__.py \
-	test/__main__.py \
 	test/test_experiments.py \
 	test/test_repeatedexperiments.py \
 	test/test_summaryexperiments.py \
 	test/test_labs.py \
 	test/test_clusterlabs.py \
+	test/test_resultsets.py \
 	test/test_notebooks.py \
-	test/test_jsonnotebooks.py
+	test/test_jsonnotebooks.py \
+	test/test_hdf5notebooks.py
 TESTSUITE = test
 
 SOURCES_TUTORIAL = doc/epyc.ipynb
@@ -77,14 +80,17 @@ SOURCES_DOCUMENTATION = \
     doc/tutorial/unicore-parallel.rst \
     doc/tutorial/multicore-parallel.rst \
     doc/tutorial/sharedfs-parallel.rst \
+	doc/tutorial/third.rst \
 	doc/tutorial/jupyter.rst \
 	doc/reference.rst \
 	doc/experiment.rst \
+	doc/resultset.rst \
 	doc/lab.rst \
 	doc/experimentcombinator.rst \
 	doc/repeatedexperiment.rst \
 	doc/summaryexperiment.rst \
 	doc/jsonlabnotebook.rst \
+	doc/hdf5labnotebook.rst \
 	doc/clusterlab.rst \
 	doc/gotchas.rst \
     doc/gotchas/jupyter-class-names.rst \
@@ -102,19 +108,24 @@ SOURCES_EXTRA = \
 SOURCES_GENERATED = \
 	MANIFEST \
 	setup.py
+SOURCES_SETUP_IN = setup.py.in
 
 # Distribution files
 DIST_SDIST = dist/$(PACKAGENAME)-$(VERSION).tar.gz
 DIST_WHEEL = dist/$(PACKAGENAME)-$(VERSION)-py3-none-any.whl
 
-# Name for the IPython parallel cluster we use for testing
-PROFILE = $(PACKAGENAME)
-
+# ipyparallel testing cluster
+CLUSTER_PROFILE = $(PACKAGENAME)test
+CLUSTER_TOKEN = ipcontroller-client.json
+CLUSTER_PROFILE_DIR = `$(IPYTHON) locate profile $(CLUSTER_PROFILE)`
+CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/security/$(CLUSTER_TOKEN) 
 
 # ----- Tools -----
 
 # Base commands
 PYTHON = python3
+IPYTHON = ipython
+IPCLUSTER = ipcluster
 JUPYTER = jupyter
 TOX = tox
 COVERAGE = coverage
@@ -147,7 +158,9 @@ RUN_NOTEBOOK = $(JUPYTER) notebook
 RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
-RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH epycluster.sh init --profile epyctest ; epycluster.sh start --profile epyctest --n 2
+RUN_CREATE_PROFILE = $(IPYTHON) profile create --parallel $(CLUSTER_PROFILE)
+RUN_CREATE_TOKEN = $(CP) $(CLUSTER_TOKEN_FILE) ./$(CLUSTER_TOKEN)
+RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH $(IPCLUSTER) start --profile $(CLUSTER_PROFILE) --n 2
 
 
 # ----- Top-level targets -----
@@ -166,7 +179,12 @@ coverage: env Makefile setup.py
 
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env
+	$(ACTIVATE) && $(RUN_CREATE_PROFILE) 
 	$(ACTIVATE) && $(RUN_CLUSTER)
+
+# Just run the ClusterLab tests
+testclusterlab: env
+	PYTHONPATH=. $(PYTHON) test/test_clusterlabs.py
 
 # Build the API documentation using Sphinx
 .PHONY: doc
