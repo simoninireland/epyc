@@ -45,18 +45,20 @@ experiment can be repeated and statistically summarised, for example.
 
 """
 
-from .experiment import Experiment
+from .experiment import Experiment, ResultsDict
 from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
-
-from .lab import Lab
-from .clusterlab import ClusterLab
 
 from .resultset import ResultSet
 from .labnotebook import LabNotebook
 from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
-#from .sqlitelabnotebook import SqliteLabNotebook
+
+from .lab import Lab
+from .clusterlab import ClusterLab
+
+# Late and/or complex initialisation
+Experiment._init_statics()
 
 
