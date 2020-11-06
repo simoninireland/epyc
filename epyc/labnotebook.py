@@ -1,6 +1,6 @@
 # Simulation "lab notebook" for collecting results, in-memory version
 #
-# Copyright (C) 2016--2019 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,50 +17,50 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import *
-from pandas import DataFrame
+from epyc import Experiment, ResultSet, ResultsDict
+from pandas import DataFrame                               # type: ignore
+from typing import List, Set, Dict, Any, Optional, Final
 
-
+                    
 class LabNotebook(object):
-    """A "laboratory notebook" recording the results of a set of
-    experiments conducted across a parameter space. The intention is
-    to record both results and all the metadata necessary to
-    re-conduct the experiment.
+    '''A "laboratory notebook" collecting together the results obtained from
+    different sets of experiments. A notebook is composed of :class:`ResultSet`s,
+    which are homogeneous collections of results of experiments performed at different values
+    for the same set of parameters. Each result set is tagged for access,
+    with the notebook using one result set as "current" at any time.
 
-    A notebook maps points in a parameter space to a set of results. There
-    may be multiple results mapped to the same point, to allow for
-    repetition of experiments: the notebook can re-acquire all, or only the
-    most recent, results for a given parameter point.
+    The notebook collects together pending results from all result sets so that they
+    can be accessed uniformly. This is used by labs to resolve pending results if
+    there are multiple sets of experiments running simultaneously.
 
-    Notebooks are immutable: once entered, a result can't be deleted
-    or changed.
+    :param name: (optional) the notebook name (may be meaningful for sub-classes)
+    :param description: (optional)a free text description'''
+ 
+    # Defaults
+    DEFAULT_RESULTSET : Final[str] = 'epyc.resultset.default'  #: Tag for the default result set.
 
-    Notebooks support "pending" results, allowing us to record experiments
-    in progress. A pending result can be finalised by providing it with a
-    value, or can be deleted. This is mainly used with the
-    :class:`ClusterLab` class for allowing asynchronous control of a
-    compute cluster."""
+    def __init__(self, name : str =None, description : str =''):
+        self._name : Optional[str] = name                    # name
+        self._description : str = description                # description
+        self._resultSets: Dict[str, ResultSet] = dict()      # tag to result set
+        self._resultSetTags : Dict[ResultSet, str] = dict()  # result set to tag
+        self._pending : Dict[str, ResultSet] = dict()        # pending results job ids to result sets
 
-    def __init__( self, name = None, description = None ):
-        """Create an empty notebook.
+        # add a result set with the default tag, and make it current
+        self.addResultSet(self.DEFAULT_RESULTSET)
+        self._current : ResultSet = self._resultSets[self.DEFAULT_RESULTSET]
 
-        :param name: the notebook's name
-        :param description: a free text description"""
-        self._name = name                        # name
-        self._description = description          # description string
-        self._experiments = dict()               # metadata for each run
-        self._results = dict()                   # results, keyed by parameters
-        self._pending = dict()                   # pending results, mapping job id to parameters
+    # ---------- Access ----------
 
-    def name( self ):
+    def name(self) -> Optional[str]:
         """Return the name of the notebook. If the notebook is persistent,
         this likely relates to its storage in some way (for example a
         file name).
 
-        :returns: the notebook name"""
+        :returns: the notebook name or None"""
         return self._name
 
-    def description( self ):
+    def description(self) -> str:
         """Return the free text description of the notebook.
 
         :returns: the notebook description"""
@@ -69,293 +69,360 @@ class LabNotebook(object):
 
     # ---------- Persistence ----------
 
-    def isPersistent( self ):
+    def isPersistent(self) -> bool:
         """By default notebooks are not persistent.
 
         :returns: False"""
         return False
 
-    def commit( self ):
-        """Commit to persistent form. By default does nothing. This should
+    def commit(self):
+        """Commit to persistent storage. By default does nothing. This should
         be called periodically to save intermediate results: it may happen
         automatically in some sub-classes, depending on their implementation."""
         pass
 
 
-    # ---------- Adding results ----------
+    # ---------- Managing results sets ----------
 
-    def _parametersAsIndex( self, ps ):
-        """Private method to turn a parameter dict into a string suitable for
-        keying a dict.
+    def addResultSet(self, tag : str, title : str =None) -> str:
+        '''Start a new experiment. This creates a new result set to hold
+        the results, which will receive any results and notes.
 
-        ps: the parameters as a hash
-        returns: a string key"""
-        k = ""
-        for p in sorted(ps.keys()):       # normalise the parameters
-            v = ps[p]
-            k = k + "{p}=[[{v}]];".format(p = p, v = v)
-        return k
+        :param tag: unique tag for this result set
+        :param: (optional) title
+        :returns: the tag for the result set'''
+        rs = ResultSet(title)
+        self._resultSets[tag] = rs
+        self._resultSetTags[rs] = tag
+        self._current = rs
+        return tag
 
-    def addResult( self, result, jobids = None ):
-        """Add a result. This should be :term:`results dict` as returned from
+    def resultSets(self) -> List[str]:
+        '''Return the tags for all the result sets in this notebook.
+
+        :returns: a list of keys'''
+        return list(self._resultSets.keys())
+
+    def resultSet(self, tag : str) -> ResultSet:
+        '''Return the tagged result set.
+
+        :param tag: the tag
+        :returns: the result set'''
+        return self._resultSets[tag]
+
+    def resultSetTag(self, rs : ResultSet) -> str:
+        '''Return the tag associated with the given result set.
+
+        :param rs: the result set
+        :returns: the tag'''
+        return self._resultSetTags[rs] 
+
+    def select(self, tag: str):
+        '''Select the given result set as current. Sub-classes may use this
+        to manage memory, for example by swapping-out non-current result sets.
+
+        :param tag: the tag'''
+        self._current = self._resultSets[tag] 
+
+    def current(self) -> ResultSet:
+        '''Return the current result set.
+
+        :returns: the result set'''
+        return self._current
+
+    def currentTag(self) -> str:
+        '''Return the tag of the current result set.
+
+        :returns: the tag'''
+        return self._resultSetTags[self._current]
+
+    def numberOfResultSets(self) -> int:
+        '''Return the number of result sets in this notebook.
+
+        :returns: the numbernof result sets'''
+        return len(self._resultSets)
+
+    def __len__(self) -> int:
+        '''Return the number of result sets in this notebook.
+        Same as :meth:`numberOfResultSets`.
+
+        :returns: the numbernof result sets'''
+        return self.numberOfResultSets()
+
+
+    # ---------- Managing pending results in the current result set ----------
+
+    def addPendingResult(self, params : Dict[str, Any], jobid : str, tag : str =None):
+        '''Add a pending result for the given point in the parameter space
+        under the given job identifier to the current result set. The identifier
+        will generally be meaningful to the lab that submitted the request, and
+        must be unique.
+
+        :param params: the experimental parameters
+        :param jobid: the job id
+        :param tag: (optional) the tag of the result set receiving the pending result (defaults to the current result set)'''
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+
+        # add the pending job to the result set
+        rs.addSinglePendingResult(params, jobid)
+
+        # record the result set that holds the given job
+        self._pending[jobid] = rs
+
+    def cancelAllPendingResults(self):
+        '''Cancel all pending results in the current result set. Note that this is
+        slightly different semantics to :meth:`cancelPendingResult`, which will
+        cancel a result in *any* result set: this method has limited scope
+        to avoid accidental cancellation of too many pending results.'''
+        rsc = self.current()
+        for jobid in rsc.pendingResults():
+            self.cancelPendingResult(jobid)
+
+
+    # ---------- Resolving and cancelling results in any result set ----------
+
+    def resolvePendingResult(self, rc : ResultsDict, jobid : str):
+        '''Resolve the pending result with the given job id with the given
+        results dict. The experimental parameters of the result are sanity-checked
+        against what the result set expected for that job.
+
+        The result may not be pending within the current result set, but can
+        be within any result set in the notebook. This will not affect
+        the result set that is selected as current.
+
+        :param rc: the results dict
+        :param jobid: the job id'''
+        tag = self._resultSetTags[self._pending[jobid]]
+        self.addResult(rc, tag=tag)
+        self.cancelPendingResult(jobid)
+ 
+    def cancelPendingResult(self, jobid : str):
+        '''Cancel the given pending result.
+
+        The result may not be pending within the current result set, but can
+        be within any result set in the notebook. This will not affect
+        the result set that is selected as current.
+
+        :param jobid: the job id'''
+
+        # find the result set for the job
+        rs = self._pending[jobid]
+
+        # resolve this result
+        rs.cancelSinglePendingResult(jobid)
+
+        # mark the job as resolved with the notebook
+        del self._pending[jobid] 
+
+    def ready(self, tag : str =None) -> bool:
+        '''Test whether the result set has pending results. 
+
+        :params tag: (optional) the result set tag (defaults to the current set)
+        :returns: True if all pending results have been resolved (or cancelled)'''
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        return rs.ready()
+
+    def readyFraction(self, tag : str =None) -> float:
+        """Test what fraction of results are available in the tagged result set.
+        
+        :params tag: (optional) the result set tag (defaults to the current set)
+        :returns: the fraction of available results"""
+        if tag is None:
+            rsc = self._current
+        else:
+            rsc = self._resultSets[tag]
+        rsc = self.current()
+        nr = rsc.numberOfResults()
+        np = rsc.numberOfPendingResults()
+        tr = nr + np
+        if tr == 0:
+            return 1.0
+        else:
+            return nr / tr
+
+    def pendingResults(self, tag : str =None) -> List[str]:
+        '''Return the identifiers of the results pending in the tagged dataset.
+        
+        :params tag: (optional) the result set tag (defaults to the current set)
+        :returns: a set of job identifiers'''
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        return rs.pendingResults()
+
+    def numberOfPendingResults(self, tag : str =None) -> int:
+        '''Return the number of results pending in the tagged dataset.
+        
+        :params tag: (optional) the result set tag (defaults to the current set)
+        :returns: the number of results'''
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        return rs.numberOfPendingResults()
+
+
+    # ---------- Managing pending rresults in all result sets ----------
+
+    def stop(self):
+        '''Cancel all pending results in all result sets. This essentially shuts
+        down any further computation for this notebook.'''
+        for jobid in self._pending.keys():
+            self.cancelPendingResult(jobid)
+
+    def allPendingResults(self) -> Set[str]:
+        '''Return the identifiers for all pending results in all result sets.
+
+        :returns: a set of job identifiers'''
+        return set(self._pending.keys())
+
+    def numberOfAllPendingResults(self) -> int:
+        '''Return the number of results pending in all result sets.
+
+        :returns: the total number of pending results'''
+        return len(self._pending) 
+
+
+    # --------- Managing results ----------
+
+    def addResult(self, result : ResultsDict, tag : str =None):
+        '''Add a single result. Client code should use :meth:`addResults`
+        in preference to this method and work solely with the current result set.
+
+        :param tag: (optional) the result set to add to (defaults to the current result set)
+        :param result: the results dict'''
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        rs.addSingleResult(result)
+
+    def addResults(self, results : Any):
+        """Add one or more results dicts to the current result set. Each should
+        be a :term:`results dict` as returned from
         an instance of :class:`Experiment`, that contains metadata,
-        parameters, and result. Results cannot be overridden, as
-        notebooks are immutable: adding more results simply adds
-        another result set.
+        parameters, and result.
 
         The results may include one or more nested results dicts, for example as
         returned by :class:`RepeatedExperiment`, whose results are a list of results
         at the same point in the parameter space. In this case the embedded
         results will themselves be unpacked and added.
 
-        One may also add a list of results dicts directly, in which case they will
+        One may also add a list of results dicts, in which case they will
         be added individually.
 
-        If the jobid is present, this result resolves the corresponding pending result.
-        As with result, jobid can be a list. (The two lists need not be the same
-        length, to allow for experiments that return lists of result dicts.)
-
-        :param result: a results dict
-        :param jobids: the pending result job id(s) (defaults to no jobs)
+        :param result: a results dict or collection of them
         """
 
         # deal with the different ways of presenting results to be added
-        if isinstance(result, list):
-            # a list, recursively add
-            for res in result:
+        if isinstance(ResultSet, list):
+            # a list, recursively add all elements
+            for res in results:
                 self.addResult(res)
         else:
-            if isinstance(result, dict):
-                if isinstance(result[Experiment.RESULTS], list):
+            if isinstance(results, dict):
+                if isinstance(results[Experiment.RESULTS], list):
                     # a result with embedded results, unwrap and and add them
-                    for res in result[Experiment.RESULTS]:
+                    for res in results[Experiment.RESULTS]:
                         self.addResult(res)
                 else:
                     # a single results dict with a single set of experimental results
-                    k = self._parametersAsIndex(result[Experiment.PARAMETERS])
-            
-                    # retrieve or create the result list
-                    if k in self._results.keys():
-                        rs = self._results[k]
-                    else:
-                        rs = []
-                        self._results[k] = rs
+                    self.addResult(results)
 
-                    # store the result
-                    rs.insert(0, result)
             else:
-                raise Exception("Can't deal with results like this: {r}".format(r = result)) 
-                    
-        # if there is are job ids provided, cancel the corresponding pending jobs
-        if jobids is not None:
-            if not isinstance(jobids, list):
-                jobids = [ jobids ]
-            for jobid in jobids:
-                if jobid in self._pending.keys():
-                    # grab the results list for which this is a pending job
-                    k = self._pending[jobid]
-                    if k in self._results.keys():
-                        # delete job id from current results
-                        rs = self._results[k]
-                        j = rs.index(jobid)
-                        del rs[j]
-                    
-                        # ...and from the set of pending results
-                        del self._pending[jobid]
-                    else:
-                        # we've screwed-up the internal data structures
-                        raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
-                                                                                             ps = k))
-                else:
-                    # we've screwed-up the internal data structures
-                    raise RuntimeError('Internal structure error for {j}'.format(j = jobid))
-
-
-    # ---------- Adding pending results ----------
-
-    def addPendingResult( self, ps, jobid ):
-        """Add a "pending" result that we expect to get results for.
-
-        :param ps: the parameters for the result
-        :param jobid: an identifier for the pending result"""
-        k = self._parametersAsIndex(ps)
-
-        # retrieve or create the result list
-        if k in self._results.keys():
-            rs = self._results[k]
-        else:
-            rs = []
-            self._results[k] = rs
-
-        # append the pending result's jobid
-        rs.insert(0, jobid)
-
-        # map job id to parameters to which it refers
-        self._pending[jobid] = k
-
-    def cancelPendingResult( self, jobid ):
-        """Cancel a particular pending result. Note that this only affects the
-        notebook's record, not any job running in a lab.
-
-        :param jobid: job id for pending result"""
-        if jobid in self._pending.keys():
-            k = self._pending[jobid]
-            del self._pending[jobid]
-            if k in self._results.keys():
-                rs = self._results[k]
-                j = rs.index(jobid)
-                del rs[j]
-            else:
-                # we've screwed-up the internal data structures
-                raise RuntimeError('Internal structure error for {j} -> {ps}'.format(j = jobid,
-                                                                                     ps = k))
-        else:
-            # no such job
-            # sd: should this just fail silently?
-            raise KeyError('No pending result with id {j}'.format(j = jobid))
-        
-    def pendingResultsFor( self, ps ):
-        """Retrieve a list of all pending results associated with the given parameters.
-
-        :param ps: the parameters
-        :returns: a list of pending result job ids, which may be empty"""
-        k = self._parametersAsIndex(ps)
-        if k in self._results.keys():
-            # filter out pending job ids, which can be anything except dicts
-            return [ j for j in self._results[k] if not isinstance(j, dict) ]
-        else:
-            return []
-                
-    def cancelPendingResultsFor( self, ps ):
-        """Cancel all pending results for the given parameters. Note that
-        this only affects the notebook's record, not any job running in a lab.
-
-        :param ps: the parameters"""
-        k = self._parametersAsIndex(ps)
-
-        if k in self._results.keys():
-            # remove from results
-            rs = self._results[k]
-            js = [ j for j in rs if not isinstance(j, dict) ]
-            self._results[k] = [ rc for rc in rs if isinstance(rc, dict) ]
-
-            # ...and from pending jobs list
-            for j in js:
-                del self._pending[j]
-
-    def cancelAllPendingResults( self ):
-        """Cancel all pending results. Note that this only affects the
-        notebook's record, not any job running in a lab."""
-        for k in self._results.keys():
-            rs = self._results[k]
-            self._results[k] = [ j for j in rs if isinstance(j, dict) ]
-        self._pending = dict()
-
-    def pendingResults( self ):
-        """Return the job ids of all pending results.
-
-        returns: a list of job ids, which may be empty"""
-        return self._pending.keys()
-
-
-    # --------- Accessing results ----------
-
-    def resultsFor( self, ps ):
-        """Retrieve a list of all results associated with the given parameters.
-
-        :param ps: the parameters
-        :returns: a list of results, which may be empty"""
-        k = self._parametersAsIndex(ps)
-        if k in self._results.keys():
-            # filter out pending job ids, which can be anything except dicts
-            return [ res for res in self._results[k] if isinstance(res, dict) ]
-        else:
-            return []
-
-    def latestResultsFor( self, ps ):
-        """Retrieve only the latest result for the given parameters.
-
-        :param ps: the parameters
-        :returns: a single result, or None if there are none"""
-        rs = self.resultsFor(ps)
-        if rs is None:
-            return None
-        else:
-            if len(rs) == 0:
-                return None
-            else:
-                return rs[0]
-        
-    def results( self ):
-        """Return a list of all the results currently available. This
-        excludes pending results. Results are returned as a single flat
-        list, so any repetition structure is lost.
-
-        :returns: a list of results"""
-        rs = []
-        for k in self._results.keys():
-            # filter out pending job ids, which can be anything except dicts
-            ars = [ res for res in self._results[k] if isinstance(res, dict) ]
-            rs.extend(ars)
-        return rs
-
-    def numberOfResults( self ):
-        """Return the number of results we have.
-
-        returns: number of results available"""
-        return len(self.results())
-
-    def numberOfPendingResults( self ):
-        """Return ther number of addiitonal results we expect.
-
-        returns: number of pending results"""
-        return len(self.pendingResults())
+                raise Exception("Can't deal with results like this: {r}".format(r = results)) 
     
-    def __len__( self ):
-        """The length of a notebook is the number of results it currently
-        has available (not including pending). A synonym for :meth:`numberOfResults`.
-
-        :returns: the number of results available"""
-        return self.numberOfResults()
-    
-    def __iter__( self ):
-        """Return an iterator over the results available.
-
-        :returns: an iteration over the results"""
-        return self.results().__iter__()
-    
-    def dataframe( self, only_successful = True ):
-        """Return the results as a ``pandas.DataFrame``. Note that there is a danger
-        of duplicate labels here, for example if the results contain a value
-        with the same name as one of the parameters. To resolve this, parameter names
-        take precedence over metadata values, and result names take precedence over
-        parameter names.
+    def dataframe(self, tag : str =None, only_successful : bool =True) -> DataFrame:
+        """Return results as a ``pandas.DataFrame``. If no tag is provided,
+        use the current result set. 
 
         If the only_successful flag is set (the default), then the DataFrame will
         only include results that completed without an exception; if it is set to
         False, the DataFrame will include all results and also the exception details.
 
+        If you are only interested in results corresponding to some sets of parameters
+        you can pre-filter the dataframe using :meth:`dataframeFor`. 
+
+        :params tag: (optional) the tag of the result set (defaults to the currently select result set)
         :param only_successful: include only successful experiments (defaults to True)
         :returns: the parameters, results, and metadata in a DataFrame"""
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        df = rs.dataframe()
+        if len(df) > 0 and only_successful:
+            # filter out only the successful runs (if there are any to start with)
+            df = df[df[Experiment.STATUS] == True]
+        return df
 
-        def extract( r ):
-            if r[Experiment.METADATA][Experiment.STATUS]:
-                # experiment was a success, include it
-                rd = r[Experiment.METADATA].copy()
-                rd.update(r[Experiment.PARAMETERS])
-                rd.update(r[Experiment.RESULTS])
-            else:
-                # experiment returned an exception
-                if not only_successful:
-                    # ...but we want it anyway
-                    rd = r[Experiment.METADATA].copy()
-                    rd.update(r[Experiment.PARAMETERS])
-            
-                    # ...and there are no results to add
-                else:
-                    rd = None
-            return rd
+    def dataframeFor(self, params : Dict[str, Any], tag : str =None, only_successful : bool =True) -> DataFrame:
+        """Return results for the goven parameter values as a ``pandas.DataFrame``.
+        If no tag is provided, the current result set is queried. 
+        If the only_successful flag is set (the default), then the DataFrame will
+        only include results that completed without an exception; if it is set to
+        False, the DataFrame will include all results and also the exception details.
 
-        records = [ r for r in map(extract, self.results()) if r is not None ]
-        return DataFrame.from_records(records)
-    
+        :param params: the experimental parameters
+        :params tag: (optional) the tag of the result set (defaults to the currently select result set)
+        :param only_successful: include only successful experiments (defaults to True)
+        :returns: the parameters, results, and metadata in a DataFrame"""
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        df = rs.dataframeFor(params)
+        if len(df) > 0 and only_successful:
+            # filter out only the successful runs (if there are any to start with)
+            df = df[df[Experiment.STATUS] == True]
+        return df
+
+    def results(self, tag : str =None) -> List[ResultsDict]:
+        """Return results as a list of results dicts. If no tag is provided,
+        use the current result set. This is a lot slower and more memory-hungry
+        than using :meth:`dataframe` (which is therefore to be preferred),
+        but may be useful for small sets of results that need a more Pythonic
+        interface than that provided by DataFrames. You can pre-filter the
+        results dicts to those matching only some parameters combinations
+        using :meth:`resultsFor`.
+
+        :params tag: (optional) the tag of the result set (defaults to the currently select result set)
+        :returns: the results dicts"""
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        return rs.results()
+
+    def resultsFor(self, params, tag : str =None) -> List[ResultsDict]:
+        """Return results for the given parameter values a list of results dicts. If no tag is provided,
+        use the current result set. This is a lot slower and more memory-hungry
+        than using :meth:`dataframeFor` (which is therefore to be preferred),
+        but may be useful for small sets of results that need a more Pythonic
+        interface than that provided by DataFrames.
+
+        :param params: the experimental parameters
+        :returns: results dicts"""
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        return rs.resultsFor(params)
+
+    def numberOfResults(self, tag : str =None) -> int:
+        '''Return the number of results in the tagged dataset.
+        
+        :params tag: (optional) the result set tag (defaults to the current set)
+        :returns: the number of results'''
+        if tag is None:
+            rs = self._current
+        else:
+            rs = self._resultSets[tag]
+        return rs.numberOfResults()

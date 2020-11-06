@@ -17,10 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from __future__ import print_function
-from datetime import datetime, timedelta
-import sys
+from __future__ import annotations               # so we can type instances of Experiment returned from its methods
+from datetime import datetime
 import traceback
+from typing import Set, Dict, Any, Final
+
+# The type of results dicts
+ResultsDict = Dict[str, Dict[str, Any]]     #: Type of results dicts.
 
 class Experiment(object):
     """Base class for an :term:`experiment` conducted in a :term:`lab`.
@@ -42,35 +45,77 @@ class Experiment(object):
     an indexing interface to access experimental results by name.
     """
 
-    # Top-level structure for results
-    METADATA = 'metadata'                 #: Results dict key for metadata values, mainly timing
-    PARAMETERS = 'parameters'             #: Results dict key for describing the point in the parameter space the experiment ran on
-    RESULTS = 'results'                   #: Results dict key for the experimental results generated at the experiment's parameter point
+    # Top-level structure for results dicts
+    METADATA : Final[str] = 'metadata'                 #: Results dict key for metadata values, mainly timing.
+    PARAMETERS : Final[str] = 'parameters'             #: Results dict key for describing the point in the parameter space the experiment ran on.
+    RESULTS : Final[str] = 'results'                   #: Results dict key for the experimental results generated at the experiment's parameter point.
 
-    # Common metadata elements reported
-    START_TIME = 'start_time'             #: Metadata element for the datetime experiment started
-    END_TIME = 'end_time'                 #: Metadata element for the datetime experiment ended
-    ELAPSED_TIME = 'elapsed_time'         #: Metadata element for the time experiment took overall in seconds
-    SETUP_TIME = 'setup_time'             #: Metadata element for the time spent on setup in seconds
-    EXPERIMENT_TIME = 'experiment_time'   #: Metadata element for the time spent on experiment itself in seconds
-    TEARDOWN_TIME = 'teardown_time'       #: Metadata element for the time spent on teardown in seconds
-    STATUS = 'status'                     #: Metadata element that will be True if experiment completed successfully, False otherwise
-    EXCEPTION = 'exception'               #: Metadata element containing the exception thrown if experiment failed
-    TRACEBACK = 'traceback'               #: Metadata element containing the traceback from the exception (as a string)
+    # Standard metadata elements reported
+    EXPERIMENT : Final[str] = 'epyc.experiment.classname'              #: Metadata elements astoring the class name of the experiment.
+    START_TIME : Final[str] = 'epyc.experiment.start_time'             #: Metadata element for the datetime experiment started.
+    END_TIME : Final[str] = 'epyc.experiment.end_time'                 #: Metadata element for the datetime experiment ended.
+    ELAPSED_TIME : Final[str] = 'epyc.experiment.elapsed_time'         #: Metadata element for the time experiment took overall in seconds.
+    SETUP_TIME : Final[str] = 'epyc.experiment.setup_time'             #: Metadata element for the time spent on setup in seconds.
+    EXPERIMENT_TIME : Final[str] = 'epyc.experiment.experiment_time'   #: Metadata element for the time spent on experiment itself in seconds.
+    TEARDOWN_TIME : Final[str] = 'epyc.experiment.teardown_time'       #: Metadata element for the time spent on teardown in seconds.
+    STATUS : Final[str] = 'epyc.experiment.status'                     #: Metadata element that will be True if experiment completed successfully, False otherwise.
+    EXCEPTION : Final[str] = 'epyc.experiment.exception'               #: Metadata element containing the exception thrown if experiment failed.
+    TRACEBACK : Final[str] = 'epyc.experiment.traceback'               #: Metadata element containing the traceback from the exception (as a string).
 
-    
-    def __init__( self ):
-        """Create a new experiment."""
-        self._metadata = dict()
-        self._parameters = None
-        self._results = None
+    # The above, collected together
+    StandardMetadata : Set[str]                        #: The standard metadata elements to always capture.  
+    StandardMetadataTypes : Dict[str, type]            #: Type mapping for standard metadata.
+
+    def __init__(self):
+        self._metadata : Dict[str, Any] = dict()
+        self._parameters : Dict[str, Any] = dict()
+        self._results : Dict[str, Any] = dict()
+
+    @classmethod
+    def _init_statics(cls):
+        '''Initialise the static members that need complex constructors.'''
+        cls.StandardMetadata = set([ cls.EXPERIMENT,
+                                     cls.START_TIME,
+                                     cls.END_TIME,
+                                     cls.ELAPSED_TIME,
+                                     cls.EXPERIMENT_TIME,
+                                     cls.SETUP_TIME,
+                                     cls.TEARDOWN_TIME,
+                                     cls.STATUS,
+                                     cls.EXCEPTION,
+                                     cls.TRACEBACK
+                                   ]) 
+        cls.StandardMetadataTypes = { cls.EXPERIMENT: str,
+                                      cls.START_TIME: datetime,
+                                      cls.END_TIME: datetime,
+                                      cls.ELAPSED_TIME: float,
+                                      cls.SETUP_TIME: float,
+                                      cls.EXPERIMENT_TIME: float,
+                                      cls.TEARDOWN_TIME: float,
+                                      cls.STATUS: bool,
+                                      cls.EXCEPTION: str,
+                                      cls.TRACEBACK: str,
+                                    }
+
+    # ---------- Results dicts ----------
+
+    @staticmethod
+    def resultsdict() -> ResultsDict:
+        '''Create an empty results dict, structured correctly.
+
+        :returns: an empty results dict'''
+        rc : ResultsDict = dict()
+        rc[Experiment.PARAMETERS] = dict()
+        rc[Experiment.METADATA] = dict()
+        rc[Experiment.RESULTS] = dict()
+        return rc
 
 
     # ---------- Configuration ----------
 
-    def set(self, params):
+    def set(self, params: Dict[str, Any]) -> Experiment:
         """Set the parameters for the experiment, returning the
-        now-configured experiment. Be sure to call this base method when overriding.
+        now-configured experiment.
 
         :param params: the parameters
         :returns: the experiment"""
@@ -79,7 +124,7 @@ class Experiment(object):
         self.configure(params)
         return self
 
-    def configure( self, params ):
+    def configure(self, params : Dict[str, Any]):
         """Configure the experiment for the given parameters.
         The default stores the parameters for later use. Be sure
         to call this base method when overriding.
@@ -87,33 +132,34 @@ class Experiment(object):
         :param params: the parameters"""
         self._parameters = params
 
-    def deconfigure( self ):
+    def deconfigure(self):
         """De-configure the experiment prior to setting new parameters.
-        Default removes the parameters. Default does nothing."""
-        self._parameters = None
+        The default removes the parameters. Be sure
+        to call this base method when overriding."""
+        self._parameters = dict()
 
 
     # ---------- Running the experiment ----------
 
-    def setUp( self, params ):
+    def setUp(self, params : Dict[str, Any]):
         """Set up the experiment. Default does nothing.
 
         :param params: the parameters of the experiment"""
         pass
 
-    def tearDown( self ):
+    def tearDown(self):
         """Tear down the experiment. Default does nothing."""
         pass
 
-    def do( self, params ):
+    def do(self, params : Dict[str, Any]) -> Dict[str, Any]:
         """Do the body of the experiment. This should be overridden
-        by sub-classes.
+        by sub-classes. Default does nothing.
 
         params: a dict of parameters for the experiment
-        returns: a dict of experimental results"""
-        raise NotImplementedError('do()')
+        returns: a dict of experimental results (empty by default)"""
+        return dict()
 
-    def report( self, params, meta, res ):
+    def report(self, params : Dict[str, Any], meta : Dict[str, Any], res : Dict[str, Any]) -> ResultsDict:
         """Return a properly-structured dict of results. The default returns a dict with
         results keyed by :attr:`Experiment.RESULTS`, the data point in the parameter space
         keyed by :attr:`Experiment.PARAMETERS`, and timing and other metadata keyed
@@ -124,13 +170,13 @@ class Experiment(object):
         :param meta: the metadata for this run
         :param res: the direct experimental results from do()
         :returns: a :term:`results dict`"""
-        rc = dict()
+        rc = Experiment.resultsdict()
         rc[self.PARAMETERS] = params.copy()
         rc[self.METADATA] = meta.copy()
         rc[self.RESULTS] = res
         return rc
 
-    def run( self ):
+    def run(self) -> ResultsDict:
         """Run the experiment, using the parameters set using :meth:`set`.
         A "run" consists of calling :meth:`setUp`, :meth:`do`, and :meth:`tearDown`,
         followed by collecting and storing (and returning) the
@@ -140,11 +186,16 @@ class Experiment(object):
 
         :returns: a :term:`results dict`"""
         
+        # record the experiment's class name
+        self._metadata = dict()
+        cn = '{modulename}.{classname}'.format(modulename = self.__class__.__module__,
+                                               classname = self.__class__.__name__)
+        self._metadata[self.EXPERIMENT] = cn
+
         # perform the experiment protocol
         params = self.parameters()
-        self._metadata = dict()
-        self._results = None
-        res = None
+        self._results = dict()
+        res = dict()
         doneSetupTime = doneExperimentTime = doneTeardownTime = None
         try:
             # do the phases in order, recording the wallclock times at each phase
@@ -167,7 +218,7 @@ class Experiment(object):
             # set the success flag
             self._metadata[self.STATUS] = True
         except Exception as e:
-            print("Caught exception in experiment: {e}".format(e = e))
+            print("Caught exception in experiment: {e}".format(e=e))
 
             # grab the traceback before we do anything else
             #_, _, tb = sys.exc_info()
@@ -179,8 +230,10 @@ class Experiment(object):
                 # we need to do the teardown
                 try:
                     self.tearDown()
-                except:
-                    pass
+                except Exception as f:
+                    # log, but otherwise ignore, any exceptions
+                    # that happen in the teardown
+                    print("Caught exception in teardown (ignored): {f}".format(f=f))
                 
             # set the failure flag and record the exception
             # (there will be no timing information recorded)
@@ -197,7 +250,7 @@ class Experiment(object):
 
     # ---------- Accessing results ----------
 
-    def __getitem__( self, k ):
+    def __getitem__(self, k : str) -> Any:
         """Return the given element of the experimental results. This only
         gives access to the experimental results, *not* to the parameters
         or metadata.
@@ -205,12 +258,9 @@ class Experiment(object):
         :param k: the result key
         :returns: the value
         :raises: KeyError if there is no such result"""
-        if self._results is None:
-            raise KeyError(k)
-        else:
-            return (self.experimentalResults())[k]
+        return (self.experimentalResults())[k]
     
-    def success( self ):
+    def success(self) -> bool:
         """Test whether the experiment has been run successfully. This will
         be False if the experiment hasn't been run, or if it's been run and
         failed.
@@ -221,10 +271,11 @@ class Experiment(object):
         else:
             return False
 
-    def failed(self):
+    def failed(self) -> bool:
         '''Test whether an experiment failed. This will be True if the experiment has
         been run and has failed, which means that there will be an exception and traceback
-        information stored in the metadata.
+        information stored in the metadata. It will be False if the experiment hasn't
+        been run.
 
         :returns: ``True`` if the experiment has failed'''
         if self.STATUS not in self.metadata().keys():
@@ -232,7 +283,7 @@ class Experiment(object):
         else:
             return not (self.metadata())[self.STATUS]
 
-    def results( self ):
+    def results(self) -> ResultsDict:
         """Return a complete results dict. Only really makes sense for
         recently-executed experimental runs.
 
@@ -241,27 +292,27 @@ class Experiment(object):
                            self.metadata(),
                            self.experimentalResults())
 
-    def experimentalResults( self ):
+    def experimentalResults(self) -> Dict[str, Any]:
         """Return the experimental results from our last run. This will
         be None if we haven't been run, or if we ran and failed.
 
-        :returns: the experimental results or ``None``"""
+        :returns: the experimental results, which may be empty"""
         return self._results
     
-    def parameters( self ):
+    def parameters(self) -> Dict[str, Any]:
         """Return the current experimental parameters, which will
         be None if none have been given by a call to set()
 
-        :returns: the parameters,"""
+        :returns: the parameters, which may be empty"""
         return self._parameters
 
-    def metadata( self ):
+    def metadata(self) -> Dict[str, Any]:
         """Return the metadata we collected at out last execution, which
         will be None if we've not been executed and an empty dict if
         we're mid-run (i.e., if this method is called from do() for
         whatever reason).
 
-        :returns: the metadata"""
+        :returns: the metadata, which may be empty"""
         return self._metadata
     
     

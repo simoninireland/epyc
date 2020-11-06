@@ -1,28 +1,46 @@
 # Tests of in-memory notebooks
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
 
-import six
 import unittest
-import os
-
-
-class SampleExperiment(Experiment):
-    '''A very simple experiment that adds up its parameters.'''
-
-    def do( self, param ):
-        total = 0
-        for k in param:
-            total = total + param[k]
-        return dict(total = total)
+from datetime import datetime
 
     
 class LabNotebookTests(unittest.TestCase):
+
+    def setUp(self):
+        '''Set up a notebook.'''
+        self._nb = LabNotebook()
+
+    def _resultsdict(self):
+        '''Set up a results dict populated with plausible metadata.'''
+        _rc = Experiment.resultsdict()
+        _rc[Experiment.METADATA][Experiment.EXPERIMENT] = str(self.__class__)
+        _rc[Experiment.METADATA][Experiment.START_TIME] = datetime.now()
+        _rc[Experiment.METADATA][Experiment.END_TIME] = datetime.now()
+        _rc[Experiment.METADATA][Experiment.SETUP_TIME] = 10
+        _rc[Experiment.METADATA][Experiment.EXPERIMENT_TIME] = 20
+        _rc[Experiment.METADATA][Experiment.TEARDOWN_TIME] = 10
+        _rc[Experiment.METADATA][Experiment.ELAPSED_TIME] = 40
+        _rc[Experiment.METADATA][Experiment.STATUS] = True
+        return _rc
 
     def testEmptyNotebook( self ):
         '''Test creating an empty notebook'''
@@ -30,266 +48,97 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(nb.name(), "test")
         self.assertFalse(nb.isPersistent())
         
-    def testAddingResult( self ):
-        '''Test adding and retrieving a result'''
-        nb = LabNotebook()
+    def testOneResultSet(self):
+        '''Test we can ignore result sets if we want to.'''
+        self.assertIsNotNone(self._nb.current())
+        self.assertCountEqual(self._nb.resultSets(), [ LabNotebook.DEFAULT_RESULTSET ])
 
-        e = SampleExperiment()
-        params = dict(a  = 1, b = 2)
-        rc = e.set(params).run()
+    def testAddingResultSets(self):
+        '''Test we can add result sets .'''
+        self._nb.addResultSet('second')
+        self.assertCountEqual(self._nb.resultSets(), [ LabNotebook.DEFAULT_RESULTSET, 'second' ])
 
-        nb.addResult(rc)
+    def _resultsEqual(self, df, rc):
+        '''Check that the dataframe contains a row with the given results.
 
-        self.assertNotEqual(nb.resultsFor(params), [])
-        res = nb.results()
-        self.assertEqual(len(res), 1)
-        self.assertEqual(res[0][Experiment.RESULTS]['total'], params['a'] + params['b'])
+        :param df: the dataframe
+        :param rc: the results dict
+        :returns: True if there's a corresponding row'''
+        for d in [ Experiment.PARAMETERS, Experiment.RESULTS ]:  # ignore metadata
+            for k in rc[d].keys():
+                df = df[df[k] == rc[d][k]]
+        return (len(df) > 0)
 
-    def testPermuteParameters( self ):
-        '''Test parameters are normalised properly.'''
-        nb = LabNotebook()
+    def testDifferentParameters(self):
+        '''Test different rule sets maintain different parameter sets.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 1
+        rc1[Experiment.PARAMETERS]['b'] = 2
+        rc1[Experiment.RESULTS]['first'] = 3
+        self._nb.addResult(rc1)
 
-        e = SampleExperiment()
-        params1 = dict(a  = 1, b = 2)
-        rc = e.set(params1).run()
+        self._nb.addResultSet('other')
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['c'] = 6
+        rc2[Experiment.PARAMETERS]['b'] = 1
+        rc2[Experiment.RESULTS]['second'] = 12
+        self._nb.addResult(rc2)
 
-        nb.addResult(rc)
-        self.assertNotEqual(nb.resultsFor(params1), [])
+        self._nb.select(LabNotebook.DEFAULT_RESULTSET)
+        self.assertTrue(self._resultsEqual(self._nb.current().dataframeFor(rc1[Experiment.PARAMETERS]), rc1))
+        with self.assertRaises(Exception):
+            self._nb.resultsFor(rc2[Experiment.PARAMETERS])
 
-        params2 = dict(b = 2, a  = 1)
-        self.assertNotEqual(nb.resultsFor(params2), [])
-
-        self.assertEqual(nb.resultsFor(params1), nb.resultsFor(params2))
-
-    def testLatestResults( self ):
-        '''Check that latest result works properly.'''
-        nb = LabNotebook()
-
-        e = SampleExperiment()
-        params1 = dict(a  = 1, b = 2)
-        rc = e.set(params1).run()
-
-        six.assertCountEqual(self, nb.resultsFor(params1), [])
-        self.assertEqual(nb.latestResultsFor(params1), None)
-
-        nb.addResult(rc)
-        self.assertEqual(len(nb.resultsFor(params1)), 1)
-        self.assertEqual(nb.latestResultsFor(params1), rc)
+        self._nb.select('other')
+        self.assertTrue(self._resultsEqual(self._nb.current().dataframeFor(rc2[Experiment.PARAMETERS]), rc2))
+        with self.assertRaises(Exception):
+            self._nb.resultsFor(rc1[Experiment.PARAMETERS])
         
-    def testAddingPendingResult( self ):
-        '''Test adding, finalising, and retrieving a pending result'''
-        nb = LabNotebook()
+    def testPendingResultsAreNotified(self):
+        '''Test the notebook records pending results correctly.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 1
+        rc1[Experiment.PARAMETERS]['b'] = 2
+        rc1[Experiment.RESULTS]['first'] = 3
 
-        e = SampleExperiment()
-        params = dict(a  = 1, b = 2)
-        rc = e.set(params).run()
-        
-        nb.addPendingResult(params, 1)
-        six.assertCountEqual(self, nb.resultsFor(params), [])
-        self.assertEqual(len(nb.results()), 0)
-        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
+        self._nb.addPendingResult(rc1[Experiment.PARAMETERS], '1234')
+        self.assertFalse(self._nb.ready())
 
-        nb.addResult(rc, 1)
-        self.assertEqual(len(nb.resultsFor(params)), 1)
-        self.assertEqual((nb.resultsFor(params))[0], rc)
-        self.assertEqual(len(nb.results()), 1)
-        self.assertEqual(len(nb.pendingResults()), 0)
+        self._nb.resolvePendingResult(rc1, '1234')
+        with self.assertRaises(Exception):
+            self._nb.resolvePendingResult(rc1, '1234')
+        self.assertTrue(self._nb.ready())
 
-    def testCancellingPendingResult( self ):
-        '''Test cancelling a pending result'''
-        nb = LabNotebook()
+        self._nb.addPendingResult(rc1[Experiment.PARAMETERS], '4567')
+        self._nb.cancelPendingResult('4567')
+        with self.assertRaises(Exception):
+            self._nb.resolvePendingResult(rc1, '4567')
+        self.assertTrue(self._nb.ready())
 
-        params = dict(a  = 1, b = 2)
-        nb.addPendingResult(params, 1)
-        six.assertCountEqual(self, nb.resultsFor(params), [])
-        self.assertEqual(len(nb.results()), 0)
-        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
+    def testDataframe(self):
+        '''Test dataframe access gets all results and respects success flag.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.METADATA][Experiment.STATUS] = True
+        rc1[Experiment.PARAMETERS]['a'] = 1
+        rc1[Experiment.PARAMETERS]['b'] = 2
+        rc1[Experiment.RESULTS]['first'] = 3
+        self._nb.addResult(rc1)
+        rc1[Experiment.PARAMETERS]['b'] = 6
+        rc1[Experiment.RESULTS]['first'] = 12
+        self._nb.addResult(rc1)
+        rc1[Experiment.METADATA][Experiment.STATUS] = False
+        rc1[Experiment.PARAMETERS]['b'] = 8
+        del rc1[Experiment.RESULTS]['first']
+        self._nb.addResult(rc1)
 
-        nb.cancelPendingResult(1)
-        six.assertCountEqual(self, nb.resultsFor(params), [])
-        self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(len(nb.pendingResults()), 0)
+        self.assertEqual(self._nb.numberOfResults(), 3)
+        self.assertEqual(len(self._nb.results()), 3)
+        self.assertEqual(len(self._nb.dataframe(only_successful=False)), 3)
+        self.assertEqual(len(self._nb.dataframe()), 2)
 
-    def testCancellingAllPendingResults( self ):
-        '''Test cancelling of all pending result'''
-        nb = LabNotebook()
+# Test we can add metadata
 
-        params1 = dict(a  = 1, b = 2)
-        params2 = dict(a  = 1, b = 3)
-        nb.addPendingResult(params1, 1)
-        nb.addPendingResult(params2, 2)
-        self.assertEqual(nb.resultsFor(params1), [])
-        self.assertEqual(nb.resultsFor(params2), [])
-        self.assertEqual(len(nb.results()), 0)
-        self.assertIn(1, nb.pendingResults())
-        self.assertIn(2, nb.pendingResults())
+if __name__ == '__main__':
+    unittest.main()
 
-        nb.cancelAllPendingResults()
-        six.assertCountEqual(self, nb.resultsFor(params1), [])
-        self.assertEqual(len(nb.results()), 0)
-        self.assertEqual(len(nb.pendingResults()), 0)
-    
-    def testRealAndPendingResults( self ):
-        '''Test a sequence of real and pending results'''
-        nb = LabNotebook()
-
-        e = SampleExperiment()
-        
-        params1 = dict(a  = 1, b = 2)
-        rc1 = e.set(params1).run()
-        params2 = dict(a  = 10, b = 12)
-        rc2 = e.set(params2).run()
-        params3 = dict(a  = 45, b = 11)
-        rc3 = e.set(params3).run()
-
-        nb.addResult(rc1)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        six.assertCountEqual(self, nb.resultsFor(params2), [])
-        self.assertEqual(len(nb.results()), 1)
-        six.assertCountEqual(self, nb.pendingResults(), [])
-        
-        nb.addPendingResult(params2, 2)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        six.assertCountEqual(self, nb.resultsFor(params2), [])
-        self.assertEqual(len(nb.results()), 1)
-        six.assertCountEqual(self, nb.pendingResults(), [ 2 ])
-        
-        nb.addPendingResult(params3, 3)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        six.assertCountEqual(self, nb.resultsFor(params2), [])
-        six.assertCountEqual(self, nb.resultsFor(params3), [])
-        self.assertEqual(len(nb.results()), 1)
-        six.assertCountEqual(self, nb.pendingResults(), [ 2, 3 ])
-
-        nb.addResult(rc2, 2)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        self.assertEqual(nb.resultsFor(params3), [])
-        self.assertEqual(len(nb.results()), 2)
-        six.assertCountEqual(self, nb.pendingResults(), [ 3 ])
-
-        nb.cancelPendingResult(3)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        six.assertCountEqual(self, nb.resultsFor(params3), [])
-        self.assertEqual(len(nb.results()), 2)
-        six.assertCountEqual(self, nb.pendingResults(), [])
-
-        nb.addPendingResult(params3, 3)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        six.assertCountEqual(self, nb.resultsFor(params3), [])
-        self.assertEqual(len(nb.results()), 2)
-        six.assertCountEqual(self, nb.pendingResults(), [ 3 ])
-
-        nb.cancelPendingResult(3)
-        self.assertEqual((nb.resultsFor(params1))[0], rc1)
-        self.assertEqual((nb.resultsFor(params2))[0], rc2)
-        six.assertCountEqual(self, nb.resultsFor(params3), [])
-        self.assertEqual(len(nb.results()), 2)
-        six.assertCountEqual(self, nb.pendingResults(), [])
-
-    def testCancellingAllPendingResults( self ):
-        '''Test all results get cancelled properly.'''
-        nb = LabNotebook()
-
-        e = SampleExperiment()
-        
-        params1 = dict(a  = 1, b = 2)
-        rc1 = e.set(params1).run()
-        params2 = dict(a  = 10, b = 12)
-        rc2 = e.set(params2).run()
-        rc3 = e.set(params2).run()
-
-        nb.addPendingResult(params1, 1)
-        nb.addPendingResult(params2, 2)
-        nb.addPendingResult(params2, 3)
-        six.assertCountEqual(self, nb.pendingResultsFor(params1), [ 1 ])
-        six.assertCountEqual(self, nb.pendingResultsFor(params2), [ 2, 3 ])
-        six.assertCountEqual(self, nb.pendingResults(), [ 1, 2, 3 ])
-
-        nb.cancelPendingResultsFor(params2)
-        six.assertCountEqual(self, nb.pendingResultsFor(params1), [ 1 ])
-        six.assertCountEqual(self, nb.pendingResultsFor(params2), [])
-        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
-
-        nb.cancelAllPendingResults()
-        six.assertCountEqual(self, nb.pendingResultsFor(params1), [])
-        six.assertCountEqual(self, nb.pendingResultsFor(params2), [])
-        six.assertCountEqual(self, nb.pendingResults(), [])
-        six.assertCountEqual(self, nb.results(), [])
-
-    def testAddResultList( self ):
-        '''Test adding several results at once.'''
-        nb = LabNotebook()
-
-        e = SampleExperiment()
-        
-        params1 = dict(a  = 1, b = 2)
-        rc1 = e.set(params1).run()
-        params2 = dict(a  = 10, b = 12)
-        rc2 = e.set(params2).run()
-        rc3 = e.set(params2).run()
-
-        nb.addResult([ rc1, rc2, rc3 ])
-        self.assertEqual(nb.latestResultsFor(params1), rc1)
-        six.assertCountEqual(self, nb.resultsFor(params2), [ rc2, rc3 ])
-        self.assertEqual(nb.latestResultsFor(params2), rc3)
-        
-        
-    def testDataFrame( self ):
-        '''Test creating a pandas DataFrame'''
-        nb = LabNotebook()
-
-        e = SampleExperiment()
-        params1 = dict(a  = 1, b = 2)
-        rc1 = e.set(params1).run()
-        params2 = dict(a  = 10, b = 12)
-        rc2 = e.set(params2).run()
-        params3 = dict(a  = 45, b = 11)
-        #rc4 = e.set(params2).run()
-
-        nb.addResult(rc1)
-        nb.addResult(rc2)
-        nb.addPendingResult(params3, 1)
-        #nb.addResult(rc4)
-
-        df = nb.dataframe()
-
-        self.assertTrue(len(df['a']), 2)
-        self.assertTrue(len(df['b']), 2)
-        self.assertTrue(len(df['total']), 2)
-        self.assertEqual(df[df['a'] == 1]['b'].iloc[0], 2)
-        self.assertEqual(df[df['b'] == 12]['a'].iloc[0], 10)
-        self.assertEqual(df[(df['a'] == 10) & (df['b'] == 12)]['total'].iloc[0], 10 + 12)
-        
-    def testNoJob( self ):
-        '''Test we can't remove a non-existent job.'''
-        nb = LabNotebook()
-
-        params = dict(a  = 1, b = 2)
-        nb.addPendingResult(params, 1)
-        six.assertCountEqual(self, nb.resultsFor(params), [])
-        self.assertEqual(len(nb.results()), 0)
-        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
-
-        with self.assertRaises(KeyError):
-            nb.cancelPendingResult(2)
-        
-    def testNoJobTwice( self ):
-        '''Test we can't remove the same job twice.'''
-        nb = LabNotebook()
-
-        params = dict(a  = 1, b = 2)
-        nb.addPendingResult(params, 1)
-        six.assertCountEqual(self, nb.resultsFor(params), [])
-        self.assertEqual(len(nb.results()), 0)
-        six.assertCountEqual(self, nb.pendingResults(), [ 1 ])
-        
-        nb.cancelPendingResult(1)
-        self.assertEqual(len(nb.results()), 0)
-        six.assertCountEqual(self, nb.pendingResults(), [])
-
-        with self.assertRaises(KeyError):
-            nb.cancelPendingResult(1)
-        
+ 

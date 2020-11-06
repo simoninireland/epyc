@@ -17,15 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import ResultSet, Experiment, LabNotebook
+from epyc import ResultSet, Experiment, LabNotebook, ResultsDict
 import os
-import sys
-import h5py
-import numpy
+import h5py                    # type: ignore
+import numpy                   # type: ignore
 from datetime import datetime
-from pandas import DataFrame
+from pandas import DataFrame   # type: ignore
 import dateutil.parser
-
+from typing import Dict, List, Set, Type, Final, Any, cast
 
 class HDF5LabNotebook(LabNotebook):
     '''A lab notebook that persists itself to an HDF5 file.
@@ -49,61 +48,48 @@ class HDF5LabNotebook(LabNotebook):
     '''
 
     # Tuning parameters
-    DefaultDatasetSize = 10             #: Default initial size for a new HDF5 dataset.
-    RetainResultSets = False            #: If True, retain in memory any result sets read; if False, only retain the current result set. 
-    TypeMapping = { int: numpy.int64, 
-                    float: numpy.float64,
-                    complex: numpy.complex128,
-                    bool: numpy.bool,
-                    str: h5py.string_dtype(),
-                    datetime: h5py.string_dtype(),
-                    Exception: h5py.string_dtype(),
-                  }                     #: Default type mapping from Python types to HDF5 types.
+    DefaultDatasetSize : int = 10                    #: Default initial size for a new HDF5 dataset.
 
     # Dataset structure
-    RESULTS_DATASET = 'results'         #: Name of results dataset within the HDF5 group for a result set.
-    PENDINGRESULTS_DATASET = 'pending'  #: Name of pending results dataset within the HDF5 group for a result set.
+    RESULTS_DATASET : Final[str] = 'results'         #: Name of results dataset within the HDF5 group for a result set.
+    PENDINGRESULTS_DATASET : Final[str] = 'pending'  #: Name of pending results dataset within the HDF5 group for a result set.
 
     # Metadata for the datasets
 
     # Metadata for the notebook
-    DESCRIPTION = 'description'         #: Attribute holding the notebook description.
-    CURRENT = 'current'                 #: Attribute holding the tag of the current result set.
+    DESCRIPTION : Final[str] = 'description'         #: Attribute holding the notebook description.
+    CURRENT : Final[str] = 'current'                 #: Attribute holding the tag of the current result set.
 
 
-    def __init__(self, name, create=False, description=''):
+    def __init__(self, name : str, create : bool =False, description : str = ''):
+        # create an empty file structure
+        self._file : h5py.File = None          # file handle for underlying HDF5 file
+        self._group : h5py.Group = None        # group associated with the current result set
+
+        # check for file needing creation
+        created = create or not os.path.isfile(name)
+        if created:
+            self._create(name, description)                
+
+        # perform the normal initialisation
         super(HDF5LabNotebook, self).__init__(name, description)
 
-        self._file = None             # file handle for underlying HDF5 file
-        self._group = None            # group associated with the current result set
-        self._dtype = dict()          # result set to dtype
-
-        # check for the file already existing
-        if os.path.isfile(name):
-            # file exists, do we load it or create into it?
-            if create:
-                # delete and re-create the file
-                self._create(name, description)
-                
-            else:
-                # load notebook from file
-                self._open()
-                self._load()
-                self._close()
-        else:
-            # no file, create it
-            self._create(name, description)
+        # load notebook from file if it wasn't newly created
+        if not created:
+            self._open()
+            self._load()
+            self._close()
 
 
     # ---------- Persistence ----------
 
-    def isPersistent( self ):
+    def isPersistent(self) -> bool:
         """Return True to indicate the notebook is persisted to an HDF5 file.
 
         :returns: True"""
         return True
 
-    def commit( self ):
+    def commit(self):
         """Persist any changes in the result sets in the notebook to disc."""
         self._open()
         self._save()
@@ -112,10 +98,28 @@ class HDF5LabNotebook(LabNotebook):
 
     # ---------- Managing result sets ----------
 
+    def addResultSet(self, tag : str, title : str =None) -> str:
+        '''Add the necessary structure to the underlying file when creating the
+        new result set. This ensures that, even if no results are added,
+        there will be structure in the persistent store to indicate that the result
+        set was created.
+
+        :param tag: the tag
+        :param title: (optional) the title
+        :returns: the tag'''
+        super(HDF5LabNotebook, self).addResultSet(tag, title)
+
+        # add the appropriate group to the HDF5 file
+        self._open()
+        if tag not in self._file:
+            self._file.create_group(tag)
+
+        return tag
+
 
     # ---------- Protocol for managing the HDF5 file----------
     
-    def _create(self, name, description):
+    def _create(self, name : str, description : str):
         '''Create the HDF5 file to back this notebook.
         
         :param name: the filename
@@ -124,7 +128,7 @@ class HDF5LabNotebook(LabNotebook):
         self._file.attrs[self.DESCRIPTION] = description
         self._description = description
         self._file.attrs[self.CURRENT] = self.DEFAULT_RESULTSET
-        self._current = self.resultSet(self.DEFAULT_RESULTSET)
+        #self._current = self.resultSet(self.DEFAULT_RESULTSET)
 
     def _open(self):
         '''Open the HDF5 file that backs this notebook.'''
@@ -137,7 +141,7 @@ class HDF5LabNotebook(LabNotebook):
             self._file.close()
             self._file = None
 
-    def _write(self, tag):
+    def _write(self, tag : str):
         '''Write the given result set to the file.
 
         :tag: the result set tag'''
@@ -145,15 +149,34 @@ class HDF5LabNotebook(LabNotebook):
         names = rs.names()
         g = self._file[tag]
 
-        if self.RESULTS_DATASET in g:
+        # if the result set's type has changed, delete any existing storage
+        if rs.isTypeChanged():
+            if self.RESULTS_DATASET in g:
+                del g[self.RESULTS_DATASET]
+            if self.PENDINGRESULTS_DATASET in g:
+                del g[self.PENDINGRESULTS_DATASET]
+            rs.typechanged(False)
+
+        if rs.numberOfResults() > 0:
             # ---- PART 1: write structure ---
+
+            # create results table if there isn't one
+            if self.RESULTS_DATASET not in g:
+                # get the dtype of the result set
+                dtype = rs.dtype()
+                hdf5dtype = self._HDF5dtype(dtype)
+
+                # create the results dataset
+                g.create_dataset(self.RESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=hdf5dtype)
 
             # get the HDF5 dataset associated with this result set
             ds = self._file[tag][self.RESULTS_DATASET]
 
             # write out the names of all the fields as attributes
             for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
-                ds.attrs.create(d, list(names[d]), (len(names[d]),), h5py.string_dtype())
+                ns = names[d]
+                if ns is not None:
+                    ds.attrs.create(d, ns, (len(ns),), h5py.string_dtype())
 
             # ---- PART 2: write results ---
 
@@ -162,15 +185,16 @@ class HDF5LabNotebook(LabNotebook):
             if len(ds) != len(rs):
                 ds.resize((len(rs),))
 
-            # convert each result in the result set to an entry in the dataset
+            # write out each result
             df = rs.dataframe()
-            dfnames = self._dtype[rs].names
+            dfnames = rs.dtype().names
             for i in range(len(df.index)):
+                # convert row in the results table to a line in the dataset
                 res = df.loc[df.index[i]]
                 entry = []
                 for k in dfnames:
-                    # patch known datestamps ISO-format strings in metadata
                     if k in [ Experiment.START_TIME, Experiment.END_TIME ] and isinstance(res[k], datetime):
+                        # patch known datestamps ISO-format strings in metadata
                         dt = res[k].isoformat()
                         entry.append(dt)
                     else:
@@ -179,13 +203,26 @@ class HDF5LabNotebook(LabNotebook):
                 # write out the row
                 ds[i] = tuple(entry)
 
-        if self.PENDINGRESULTS_DATASET in g:
-            # ---- PART 3: write pending results ---
+        # ---- PART 3: write pending results ---
+
+        if self.numberOfPendingResults() == 0:
+            if self.PENDINGRESULTS_DATASET in g:
+                # table isn't needed any more, so delete it to keep things tidy
+                del g[self.PENDINGRESULTS_DATASET]
+        else:
+            # create results table if there isn't one
+            if self.PENDINGRESULTS_DATASET not in g:        
+                # construct the HDF5 type of the pending results
+                pdtype = rs.pendingdtype() 
+                hdf5pdtype = self._HDF5dtype(pdtype)
+
+                # create the pending results dataset
+                g.create_dataset(self.PENDINGRESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=hdf5pdtype)
 
             # get the pending results dataset
-            pds = self._file[tag][self.PENDINGRESULTS_DATASET]
+            pds = g[self.PENDINGRESULTS_DATASET]
 
-            # size to the pending results
+            # match size to the pending results
             if len(pds) != rs.numberOfPendingResults():
                 pds.resize((rs.numberOfPendingResults(),))
 
@@ -203,12 +240,15 @@ class HDF5LabNotebook(LabNotebook):
                     # write out the row
                     pds[i] = tuple(entry)
 
-    def _read(self, tag):
+        # mark the result set as now clean
+        rs.dirty(False)
+
+    def _read(self, tag : str):
         '''Read the given result set into memory.
 
         :param tag: the result set tag'''
         rs = self.resultSet(tag)
-        names = rs.names()
+        names = dict()
         g = self._file[tag]
 
         if self.RESULTS_DATASET in g:   
@@ -221,27 +261,23 @@ class HDF5LabNotebook(LabNotebook):
             for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                 names[d] = list(ds.attrs[d])
 
-            # create the coresponding dtype
-            dtype = self._file[tag][self.RESULTS_DATASET].dtype
-            self._dtype[rs] = dtype
-
             # ---- PART 2: read results ---
 
             # read each line of the dataset into the result set
-            # sd: should use a private API for this
-            df = DataFrame()
-            dfnames = self._dtype[rs].names
+            # sd: this uses the results dict API and so is quite wasteful
             for i in range(len(ds)):
                 entry = list(ds[i])
-                res = dict()
-                for j in range(len(dfnames)):
-                    # patch known datestamps to datetime objects
-                    if dfnames[j] in [ Experiment.START_TIME, Experiment.END_TIME ]:
-                        dt = dateutil.parser.parse(entry[j])
-                        entry[j] = dt
-                    res[dfnames[j]] = entry[j]
-                df = df.append(res, ignore_index=True)
-            rs._results = df
+                rc = Experiment.resultsdict()
+                j = 0
+                for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+                    for k in names[d]:
+                        if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
+                            # patch known datestamps to datetime objects
+                            dt = dateutil.parser.parse(entry[j])
+                            entry[j] = dt
+                        rc[d][k] = entry[j]
+                        j += 1
+                self.addResult(rc, tag)
 
         if self.PENDINGRESULTS_DATASET in g:   
             # ---- PART 3: read pending results ---
@@ -254,16 +290,21 @@ class HDF5LabNotebook(LabNotebook):
             names[Experiment.PARAMETERS].remove(ResultSet.JOBID)
 
             # read in each pending result
+            # sd: this uses the results dict API and so is quite wasteful
             pdfnames = names[Experiment.PARAMETERS]
             for i in range(len(pds)):
                 elements = list(pds[i])
                 params = dict()
                 for j in range(len(pdfnames)):
                     params[pdfnames[j]] = elements[j]
-                jobid = elements[-1]
+                jobid = elements[-1]                      # job id must be the last column!
 
                 # record the pending result
-                self.addPendingResult(params, jobid)
+                self.addPendingResult(params, jobid, tag)
+
+        # mark the result set as clean
+        rs.dirty(False)
+        rs.typechanged(False)
 
     def _save(self):
         '''Save all dirty result sets. These are written out completely.'''
@@ -285,7 +326,6 @@ class HDF5LabNotebook(LabNotebook):
         for tag in tags:
             # create an empty result set to hold this dataset
             self.addResultSet(tag)
-            rs = self.current()
 
             # read the result set in
             self._read(tag)
@@ -297,149 +337,19 @@ class HDF5LabNotebook(LabNotebook):
         # read other attributes
         self._description = self._file.attrs[self.DESCRIPTION]
 
+    def _HDF5dtype(self, dtype : numpy.dtype) -> numpy.dtype:
+        '''Patch s numpy dtype into its HDF5 equivalent.
 
-    # ---------- Type management ----------
-
-    def setResultSetType(self, rs, dtype):
-        '''Use the given dtype to represent the results of the given result set
-        in HDF5. This allows precise control of the type mapping used: if none is
-        provided then one will be inferred using :meth:`inferType` when the first
-        results appear. The types can't be re-set once set or inferred.
-
-        :param rs: the result set
-        :param dtype: the dtype of results'''
-        if rs in self._dtype.keys():
-            raise Exception('Already have a dtype for result set {t}'.format(t=self.resultSetTag(rs)))
-        self._dtype[rs] = dtype
-
-    def inferType(self, rc):
-        '''Infer the HDF5 dataset element type (or dtype) of the given results dict.
-
-        This method will be called automatically if no explicit dtype has been provided 
-        for the result set by a call to :meth:`setResultSetType`.
-
-        :param rc: the results dict
-        :returns: the dtype'''
-
-        # construct the canonical list of element names
-        names = []
-        for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
-            ns = list(rc[d].keys())
-            ns.sort()
-            names.extend(ns)
-
-        # infer the types associated with each element using the type mapping
-        types = dict()
-        for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
-            for k in rc[d].keys():
-                try:
-                    t = type(rc[d][k])
-                    types[k] = self.TypeMapping[t]
-                except Exception:
-                    raise Exception('No HDF5 mapping for type {t}'.format(t=t))
-
-        # form the dtype
+        :param dtype: the numpy dtype
+        :returns: the HDF5 dtype'''
         elements = []
-        for k in names:
-            elements.append((k, types[k]))
-        dtype = numpy.dtype(elements)
-        return dtype
-
-    def inferPendingResultsType(self, params):
-        '''Infer the HDF5 dataset element type (or dtype) of the pending results of
-        given dict of experimental parameters. This is essentially the same operation as
-        :meth:`inferType` but restricted to experimental parameters and including
-        a string job identifier.
-
-        :param params: the experimental parameters
-        :returns: the pending results dtype'''
-
-        # construct the canonical list of element names
-        names = list(params.keys()).copy()
-        names.sort()
-
-        # infer the types associated with each element using the type mapping
-        types = dict()
-        for k in names:
-            try:
-                t = type(params[k])
-                types[k] = self.TypeMapping[t]
-            except Exception:
-                raise Exception('No HDF5 mapping for type {t}'.format(t=t))
-
-        # form the dtype
-        elements = []
-        for k in names:
-            elements.append((k, types[k]))
-        elements.append((ResultSet.JOBID, h5py.string_dtype()))
-        pdtype = numpy.dtype(elements)
-        return pdtype
-
-
-    # ---------- Adding results ----------
-
-    def addResult(self, rc):
-        '''Use the first-appearing results to add the necessary file
-        structure. Note that this doesn't write results to the file, it simply
-        makes sure we've set up the structure.
-
-        :param rc: the result dict'''
-        self._open()
-        rs = self.current()
-        tag = self.resultSetTag(rs)
-
-        # create group for this result set if its missing
-        if tag not in self._file:
-            g = self._file.create_group(tag)
-        else:
-            g = self._file[tag]
-
-        # create results table if there isn't one
-        if self.RESULTS_DATASET not in g:        
-            # construct the HDF5 type of the results dict if one hasn't been provided already
-            if rs not in self._dtype.keys():
-                # infer the dtype for results
-                dtype = self.inferType(rc)
-                self._dtype[rs] = dtype
-            else:
-                dtype = self._dtype[rs]
-
-            # create the results dataset
-            g.create_dataset(self.RESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=dtype)
-
-        # add the result
-        super(HDF5LabNotebook, self).addResult(rc)
-
-
-    # ---------- Managing pending results ----------
-
-    def addPendingResult(self, params, jobid):
-        '''Use the first-appearing pending results to add the necessary file
-        structure. Note that this doesn't write results to the file, it simply
-        makes sure we've set up the structure.
-
-        :param params: the experiment parameters
-        :param jobid: the job identifier'''
-        self._open()
-        rs = self.current()
-        tag = self.resultSetTag(rs)
-
-        # create group for this result set if its missing
-        if tag not in self._file:
-            g = self._file.create_group(tag)
-        else:
-            g = self._file[tag]
-
-        # create results table if there isn't one
-        if self.PENDINGRESULTS_DATASET not in g:        
-            # construct the HDF5 type of the pending results
-            pdtype = self.inferPendingResultsType(params)
-
-            # create the pending results dataset
-            g.create_dataset(self.PENDINGRESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=pdtype)
-
-        # add the result
-        super(HDF5LabNotebook, self).addPendingResult(params, jobid)
-
+        for k in dtype.names:
+            t = dtype.fields[k][0]
+            if t.kind in ['S', 'U']:
+                # h5py can't handle Python strings but has its own dtype for them
+                t = h5py.string_dtype()
+                #print('Patched string {k}'.format(k=k))
+            elements.append((k, t))
+        return numpy.dtype(elements)
 
 

@@ -1,9 +1,21 @@
 # Tests of sequential lab class
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
 
@@ -50,15 +62,9 @@ class LabTests(unittest.TestCase):
         self._lab['b'] = numpy.arange(0, 1000)
         self._lab['c'] = numpy.arange(10, 50, 10)
         
-        self.assertEqual(len(self._lab['a']), len(numpy.arange(0, 100)))
-        for i in numpy.arange(0, 100):
-            self.assertIn(i, self._lab['a'])
-        self.assertEqual(len(self._lab['b']), len(numpy.arange(0, 1000)))
-        for i in numpy.arange(0, 1000):
-            self.assertIn(i, self._lab['b'])
-        self.assertEqual(len(self._lab['c']), len(numpy.arange(10, 50, 10)))
-        for i in numpy.arange(10, 50, 10):
-            self.assertIn(i, self._lab['c'])
+        self.assertCountEqual(self._lab['a'], numpy.arange(0, 100))
+        self.assertCountEqual(self._lab['b'], numpy.arange(0, 1000))
+        self.assertCountEqual(self._lab['c'], numpy.arange(10, 50, 10))
 
     def testRunOne( self ):
         '''Test that a simple experiment runs against a 1D parameter space.'''
@@ -68,7 +74,7 @@ class LabTests(unittest.TestCase):
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment())
         res = self._lab.results()
-        
+
         # check that the whole parameter space has a result
         self.assertEqual(len(res), n)
         for p in res:
@@ -80,7 +86,7 @@ class LabTests(unittest.TestCase):
 
     def testRunTwo( self ):
         '''Test that a simple experiment runs against a 2D parameter space.'''
-        n = 100
+        n = 10
 
         r = numpy.arange(0, n)
         self._lab['a'] = r
@@ -126,5 +132,8 @@ class LabTests(unittest.TestCase):
         self._lab.runExperiment(NullExperiment())
         res = self._lab.results()
         self.assertEqual(len(res), 1)
-        print("res ", res)
         self.assertEqual(res[0][Experiment.RESULTS]['result'], v)
+
+
+if __name__ == '__main__':
+    unittest.main()

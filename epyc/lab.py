@@ -1,6 +1,6 @@
 # Simulation "lab" experiment management, sequential version
 #
-# Copyright (C) 2016--2019 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,10 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from __future__ import print_function
-import epyc
-import collections
-import six
+from epyc import LabNotebook, Experiment, ResultsDict
+from pandas import DataFrame                                   # type: ignore
+from typing import Dict, List, Any
 
 
 class Lab(object):
@@ -37,17 +36,17 @@ class Lab(object):
     sets of experiments.
     """
 
-    def __init__( self, notebook = None ):
+    def __init__( self, notebook : LabNotebook = None ):
         """Create an empty lab.
 
         :param notebook: the notebook used to store results (defaults to an empty :class:`LabNotebook`)"""
         if notebook is None:
-            self._notebook = epyc.LabNotebook()
+            self._notebook = LabNotebook()
         else:
             self._notebook = notebook
-        self._parameters = dict()
+        self._parameters : Dict[str, Any] = dict()
 
-    def notebook(self):
+    def notebook(self) -> LabNotebook:
         """Return the notebook being used by this lab.
 
         :returns: the notebook"""
@@ -90,30 +89,31 @@ class Lab(object):
 
     # ---------- Managing experimental parameters ----------
 
-    def addParameter( self, k, r ):
+    def addParameter(self, k : str, r : Any):
         """Add a parameter to the experiment's parameter space. k is the
-        parameter name, and r is its range.
+        parameter name, and r is its range. The range can be a single value
+        or a list, or any other iterable. (Strings are counted as single values.)
 
         :param k: parameter name
         :param r: parameter range"""
-
-        if isinstance(r, six.string_types) or not isinstance(r, collections.Iterable):
-            # range is a single value (where a string constitutes a single value), make it a list
-            r = [ r ]
+        if isinstance(r, str):
+            # strings are single values
+            self._parameters[k] = [ r ]
         else:
-            if isinstance(r, collections.Iterable):
-                # range is an iterable, make into a list
-                r = list(r)
+            try:
+                # try to unpack using iterator
+                self._parameters[k] = list(r)
+            except TypeError:
+                # not iterable, a single value
+                self._parameters[k] = [ r ]
 
-        self._parameters[k] = r
-
-    def parameters( self ):
+    def parameters(self) -> List[str]:
         """Return a list of parameter names.
 
         :returns: a list of parameter names"""
         return list(self._parameters.keys())
 
-    def __len__( self ):
+    def __len__(self) -> int:
         """The length of an experiment is the total number of data points
         that will be explored.
 
@@ -123,21 +123,21 @@ class Lab(object):
             n = n * len(self._parameters[p])
         return n
         
-    def __getitem__( self, k ):
+    def __getitem__(self, k : str) -> Any:
         """Access a parameter range using array notation.
 
         :param k: parameter name
         :returns: the parameter range"""
         return self._parameters[k]
 
-    def __setitem__( self, k, r ):
+    def __setitem__(self, k : str, r : Any) -> Any:
         """Add a parameter using array notation.
 
         :param k: the parameter name
         :param r: the parameter range"""
         return self.addParameter(k, r)
 
-    def _crossProduct( self, ls ):
+    def _crossProduct(self, ls : List[str]) -> List[Dict[str, Any]]:
         """Internal method to generate the cross product of all parameter
         values, creating the parameter space for the experiment.
 
@@ -164,7 +164,7 @@ class Lab(object):
         # return the complete parameter space
         return ds
            
-    def parameterSpace( self ):
+    def parameterSpace(self) -> List[Dict[str, Any]]:
         """Return the parameter space of the experiment as a list of dicts,
         with each dict mapping each parameter name to a value.
 
@@ -178,7 +178,7 @@ class Lab(object):
 
     # ---------- Running experiments ----------
 
-    def runExperiment( self, e ):
+    def runExperiment(self, e : Experiment):
         """Run an experiment over all the points in the parameter space.
         The results will be stored in the notebook.
 
@@ -200,27 +200,44 @@ class Lab(object):
 
     # ---------- Accessing results ----------
 
-    def results( self ):
-        """Retrieve the list of :term:`results dict` hashes (each of which contains the
-        point at which the experiment was evaluated to get this result).
+    def dataframe(self, only_successful : bool =True) -> DataFrame:
+        """Return the current results as a pandas DataFrame after resolving
+        any pending results that have completed. This makes
+        use of the underlying notebook's current result set. For finer control,
+        access the notebook's :meth:`LabNotebook.dataframe` or
+        :meth:LabNotebook.dataframeFor` methods directly. 
 
-        :returns: a list of results dicts"""
-        self.updateResults()
-        return self.notebook().results()
-
-    def dataframe( self ):
-        """Return the results as a pandas DataFrame.
-
+        :param only_successful: only return successful results
         :returns: the resulting dataset as a DataFrame"""
         self.updateResults()
-        return self.notebook().dataframe()
-    
-    def ready( self ):
-        """Test whether all the results are ready, that is none are
-        pending.
+        return self._notebook.dataframe(only_successful=only_successful)
+
+    def results(self) -> List[ResultsDict]:
+        '''Return the current results as a list of results dicts after resolving
+        any pending results that have completed. This makes
+        use of the underlying notebook's current result set. For finer control,
+        access the notebook's :meth:`LabNotebook.results` or
+        :meth:LabNotebook.resultsFor` methods directly.
+        
+        Note that this approach to acquiring results is a lot slower and more
+        memory-hungry than using :meth:`dataframe`, but may be useful for small
+        sets of results that benefit from a more Pythonic intertface.'''
+        self.updateResults()
+        return self._notebook.results()
+
+    def ready(self) -> bool:
+        """Test whether all the results are ready in the current result
+        set -- that is, none are pending.
 
         :returns: True if the results are in"""
         self.updateResults()
-        return (len(self.notebook().pendingResults()) == 0)
+        return self._notebook.ready()
 
+    def readyFraction(self) -> float:
+        '''Return the fraction of results available (not pending) in the
+        current result set after first updating the results.
+
+        :returns: the ready fraction'''
+        self.updateResults()
+        return self._notebook.readyFraction()
 
