@@ -42,16 +42,16 @@ class HDF5LabNotebookTests(unittest.TestCase):
 
     def setUp( self ):
         '''Set up with a temporary file.'''
-        #tf = NamedTemporaryFile()
-        #tf.close()
-        #self._fn = tf.name
-        self._fn = 'test.h5'
+        tf = NamedTemporaryFile()
+        tf.close()
+        self._fn = tf.name
+        #self._fn = 'test.h5'
 
     def tearDown( self ):
         '''Delete the temporary file.'''
         try:
-            #os.remove(self._fn)
-            pass
+            os.remove(self._fn)
+            #pass
         except OSError:
             pass
         
