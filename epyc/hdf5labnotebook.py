@@ -24,20 +24,18 @@ import numpy                   # type: ignore
 from datetime import datetime
 from pandas import DataFrame   # type: ignore
 import dateutil.parser
-from typing import Dict, List, Set, Type, Final, Any, cast
+from contextlib import contextmanager
+from typing import ContextManager, Dict, List, Set, Type, Final, Any, cast
 
 class HDF5LabNotebook(LabNotebook):
     '''A lab notebook that persists itself to an HDF5 file.
     `HDF5 <https://www.hdfgroup.org/>`_  is a very common format
     for sharing large scientific datasets, allowing ``epyc`` to interoperate
-    with a larger toolchain. This notebook also only loads
-    each :term:`result set` on demand, allowing ``epyc`` to handle
-    far larger datasets than can be held in memory (although each
-    individual result set is loaded in its entirety).
+    with a larger toolchain.
 
-    Python types have a fairly straightforward mapping to HDF5 types,
-    and ``epyc`` has a default type mapping for them. You can however take control
-    and specify the mapping for each element in a results dict. Note that
+    ``epyc`` is built on top of the ``h5py`` `Python binding to HDF5 <https://www.h5py.org/>`_,
+    which handles most of the heavy lifting using a lot of machinery for typing
+    and so on matched with ``numpy``. Note that
     the limitations of HDF5's types mean that some values may have
     different types when read than when acquired. (See :ref:`hdf5-type-management`
     for details.)
@@ -149,13 +147,23 @@ class HDF5LabNotebook(LabNotebook):
         names = rs.names()
         g = self._file[tag]
 
-        # if the result set's type has changed, delete any existing storage
+        # if the result set is dirty, delete any attributes
+        if rs.isDirty():
+            for k in g.attrs.keys():
+                del g.attrs[k]
+
+        # if the result set's type has changed, delete any existing datasets
         if rs.isTypeChanged():
             if self.RESULTS_DATASET in g:
                 del g[self.RESULTS_DATASET]
             if self.PENDINGRESULTS_DATASET in g:
                 del g[self.PENDINGRESULTS_DATASET]
-            rs.typechanged(False)
+            rs.typechanged(False)        
+
+        # write out all attributes (as strings)
+        for k in rs.keys():
+            v = rs[k]
+            g.attrs.create(k, v, (1,), h5py.string_dtype())
 
         if rs.numberOfResults() > 0:
             # ---- PART 1: write structure ---
@@ -210,7 +218,7 @@ class HDF5LabNotebook(LabNotebook):
                 # table isn't needed any more, so delete it to keep things tidy
                 del g[self.PENDINGRESULTS_DATASET]
         else:
-            # create results table if there isn't one
+            # create results dataset if there isn't one
             if self.PENDINGRESULTS_DATASET not in g:        
                 # construct the HDF5 type of the pending results
                 pdtype = rs.pendingdtype() 
@@ -251,15 +259,20 @@ class HDF5LabNotebook(LabNotebook):
         names = dict()
         g = self._file[tag]
 
+        # read the names of all the fields and all the attributes
+        for k in g.attrs.keys():
+            rs[k] = g.attrs[k]
+
+  
         if self.RESULTS_DATASET in g:   
             # ---- PART 1: read structure ---
 
             # get the HDF5 dataset associated with this result set
             ds = self._file[tag][self.RESULTS_DATASET]
 
-            # read the names of all the fields
-            for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
-                names[d] = list(ds.attrs[d])
+            # read the names of all the fields and all the attributes
+            for k in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+                names[k] = list(ds.attrs[k])
 
             # ---- PART 2: read results ---
 
@@ -338,7 +351,7 @@ class HDF5LabNotebook(LabNotebook):
         self._description = self._file.attrs[self.DESCRIPTION]
 
     def _HDF5dtype(self, dtype : numpy.dtype) -> numpy.dtype:
-        '''Patch s numpy dtype into its HDF5 equivalent.
+        '''Patch a `numpy` dtype into its HDF5 equivalent.
 
         :param dtype: the numpy dtype
         :returns: the HDF5 dtype'''
@@ -351,5 +364,21 @@ class HDF5LabNotebook(LabNotebook):
                 #print('Patched string {k}'.format(k=k))
             elements.append((k, t))
         return numpy.dtype(elements)
+
+
+    # ---------- Context manager protocol ----------
+
+    @contextmanager
+    def open(self):
+        '''Open and close the underlying file using a ``with`` block.'''
+        try:
+            # open the underlying file
+            # sd: strictly unnecessary as the operations all open as required
+            self._open()
+            yield self
+        finally:
+            # commit any changes and close the file
+            self.commit()
+
 
 

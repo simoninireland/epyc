@@ -42,16 +42,16 @@ class HDF5LabNotebookTests(unittest.TestCase):
 
     def setUp( self ):
         '''Set up with a temporary file.'''
-        tf = NamedTemporaryFile()
-        tf.close()
-        self._fn = tf.name
-        #self._fn = 'test.h5'
+        #tf = NamedTemporaryFile()
+        #tf.close()
+        #self._fn = tf.name
+        self._fn = 'test.h5'
 
     def tearDown( self ):
         '''Delete the temporary file.'''
         try:
-            os.remove(self._fn)
-            #pass
+            #os.remove(self._fn)
+            pass
         except OSError:
             pass
         
@@ -368,6 +368,90 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb = HDF5LabNotebook(self._fn)
         self.assertEqual(nb.currentTag(), LabNotebook.DEFAULT_RESULTSET)
        
+    def testContextManager(self):
+        '''Test that the conext manager works as inteneded.'''
+        nb = HDF5LabNotebook(self._fn, create=True) 
+        with nb.open():
+            # add two results, same type
+            params = dict()
+            params['k'] = 3
+            rc = SampleExperiment().set(params).run()
+            nb.addResult(rc)
+            params['k'] = 4
+            rc = SampleExperiment().set(params).run()
+            nb.addResult(rc)
+
+        # re-load and check we have the last result
+        nb = HDF5LabNotebook(self._fn)
+        self.assertEqual(nb.numberOfResults(), 2)
+        self.assertEqual(len(nb.dataframeFor(params)), 1)
+
+    def testContextManagerExceptions(self):
+        '''Test that the context manager is robust to exceptions.'''
+        nb = HDF5LabNotebook(self._fn, create=True)
+        try:
+            with nb.open():
+                # add two results, same type -- but jump out before the second one gets added
+                params = dict()
+                params['k'] = 3
+                rc = SampleExperiment().set(params).run()
+                nb.addResult(rc)
+                params['k'] = 4
+                raise Exception('second one is skipped')
+                rc = SampleExperiment().set(params).run()
+                nb.addResult(rc)
+        except:
+            pass
+
+        # re-load and check we have the first result (and not the second)
+        nb = HDF5LabNotebook(self._fn)
+        self.assertEqual(nb.numberOfResults(), 1)
+        params = dict()
+        params['k'] = 3
+        self.assertEqual(len(nb.dataframeFor(params)), 1)
+        params['k'] = 4
+        self.assertEqual(len(nb.dataframeFor(params)), 0)
+
+
+    def testAttributes(self):
+        '''Test we can read and write attributes.'''
+        nb = HDF5LabNotebook(self._fn, create=True)
+        
+        # attributes of a result set but no results dataset
+        rs = nb.current()
+        rs['number1'] = '1'
+        rs['number2'] = 2
+        nb.commit()
+        nb = HDF5LabNotebook(self._fn)
+        rs = nb.current()
+        self.assertEqual(rs['number1'], '1')
+        self.assertEqual(rs['number2'], '2')    # all attributes stored as strings at present
+
+        # add a new result set and some results, check attributes
+        nb.addResultSet('new')
+        rs = nb.current()
+        rs['number1'] = '4'
+        rs['number3'] = '3'
+        params = dict()
+        params['k'] = 3
+        rc = SampleExperiment().set(params).run()
+        nb.addResult(rc)
+        nb.commit()
+        nb = HDF5LabNotebook(self._fn)
+        rs = nb.current()
+        self.assertEqual(len(rs), 1)
+        self.assertEqual(rs['number3'], '3')
+        self.assertEqual(rs['number1'], '4')
+        rs = nb.select(LabNotebook.DEFAULT_RESULTSET)
+        self.assertEqual(rs['number1'], '1')
+        self.assertEqual(rs['number2'], '2')    # all attributes stored as strings at present
+
+        # test that deleting attributes from the result set deletes them from the file
+        del rs['number1']
+        nb.commit()
+        nb = HDF5LabNotebook(self._fn)
+        rs = nb.current()
+        self.assertCountEqual(rs.keys(), ['number2'])
 
 
 

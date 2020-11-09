@@ -18,11 +18,48 @@ changes to be saved.
 .. automethod :: HDF5LabNotebook.commit 
 
 
-.. _hdf5-type-management:
+File access
+-----------
+
+The notebook will open the underlying HDF5 file as required, and generally will leave
+it open. If you want more control, for example to make sure that the file is closed
+and finalised, :class:`HDF5LabNotebook` also behaves as a context manager and so can be
+used in code such as:
+
+.. code-block :: python
+
+    nb = HDF5LabNotebook(name='test.h5') 
+    with nb.open():
+        nb.addResult(rc1)
+        nb.addResult(rc2)
+
+After this the notebook's underlying file will be closed, with the new results
+having been saved.
+
+.. automethod :: HDF5LabNotebook.open
+
+Alternatively simply use :meth:`LabNotebook.commit` to flush any changes to the
+underlying file, for example:
+
+.. code-block :: python
+
+    nb = HDF5LabNotebook(name='test.h5') 
+    nb.addResult(rc1)
+    nb.addResult(rc2)
+    nb.commit()
+
+The ``with`` block approach is slightly more robust as the notebook will be
+committed even if exceptions are thrown while it is open, ensuring no changes
+are lost accidentally. However notebooks are oftwen held open for a long
+time while experiments are run and/or analysed, so the explicit commit
+can be more natural.
 
 
 Structure of the HDF5 file
 --------------------------
+
+The structure inside an HDF5 file is only really of interest if you're planning on
+using an ``epyc``-generated dataset with some other tools.
 
 HDF5 is a "container" file format, meaning that it behaves like an archive containing
 directory-like structure. ``epyc`` structures its storage by using a group for each
@@ -33,17 +70,36 @@ attributes that hold "housekeeping" information about the notebook.
 
 .. autoattribute :: HDF5LabNotebook.CURRENT
 
-A result set's group is named after the tag used to label the result set in the notebook.
-Within each group are two datasets: one holding the results of experiments, and one holding
+Any attributes of the notebook are written as top-level attributes in this grup.
+Then, for each :class:`ResultSet` in the notebook, there is a group whose name
+corresponds to the result set's tag. This group contains any attributes of the
+result set, always including three attributes storing the metadata, parameter,
+and experimental result field names. 
+
+.. note ::
+
+    Attributes are all held as strings at the moment. There's a case for giving
+    them richer types in the future.
+
+Within the group are two datasets: one holding the results of experiments, and one holding
 pending results yet to be resolved.
 
 .. autoattribute :: HDF5LabNotebook.RESULTS_DATASET
 
 .. autoattribute :: HDF5LabNotebook.PENDINGRESULTS_DATASET
 
-The structure is only really of interest if you're planning on using an ``epyc``-generated
-dataset with some other tools.
+If there are no pending results then there will be no pending results dataset.
+This makes for cleaner interaction when archiving datasets, as there are no
+extraneous datasets hanging around.
 
+So an ``epyc`` notebook containing a result set called "my_data" will give
+rise to an HDF5 file containing a group called "my_data", within which
+will be a dataset named by :attr:`HDF5LabNotebook.RESULTS_DATASET`. There will
+also be a group named by :attr:`LabNotebook.DEFAULT_RESULTSET` which is where
+results are put "by default" (*i.e.*, if you don't define explicit result sets).
+
+
+.. _hdf5-type-management:
 
 HDF5 type management
 --------------------
@@ -54,7 +110,7 @@ experiment can store anything it likes as a result. HDF5 is rather less
 forgiving, in the sense that it requires a fixed set of keys in the dict,
 each of which is always mapped to a value of a given type, with those
 types being more constrained than those of Python. This is as one would expect,
-or course, since HDF5 is essentially an archive format whose files need to be
+of course, since HDF5 is essentially an archive format whose files need to be
 readable by a range of tools over a long period. Nevertheless we somehow
 have to map between these two views, and ``epyc`` supports two choices.
 
@@ -64,6 +120,8 @@ that works well, *modulo* the restrictions imposed by the HDF5 type system
 that forces some Python types to strings.
 
 .. automethod :: HDF5LabNotebook.inferType
+
+.. automethod :: HDF5LabNotebook.inferPendingResultType
 
 The second choice is to let the user set the HDF5 types for each element
 in the results dict -- typically results and parameters, but also any extra
@@ -85,13 +143,7 @@ which are automatically patched to ``datetime`` instances when loaded.
 Managing result sets
 --------------------
 
-Since HDF5 is designed to handle very large datasets, we need to ensure that
-we manage the ways in which data comes into and out of memory. The HDF5
-notebook manages this by only keeping the current result set in memory
-by default: other result sets are unloaded. This process is completely
-transparent to client code.
-
-.. automethod :: HDF5LabNotebook.select
+.. automethod :: HDF5LabNotebook.addResultSet
 
 
 Tuning parameters
@@ -103,22 +155,6 @@ The default size of a new dataset can be increased if desired, to pre-allocate
 space for more results. The dataset will expand and contract automatically to
 accommodate the size of a result set: its hard to see why this value would need
 to be changed.
-
-.. autoattribute :: HDF5LabNotebook.DefaultDatasetSize
-
-By default the notebook swaps-out all result sets apart from the current one,
-to save memory. This behaviour can be changed so that, once loaded (by a call to
-:meth:`HDF5LabNotebook.select`) a result set is retained in memory. This would
-reduce disc accesses but might use a lot of storage.
-
-.. autoattribute :: HDF5LabNotebook.RetainResultSets
-
-The default mapping from Python to HDF5 types is also available. It's probably
-better to change the mappings of individual fields using :meth:`setResultSetType`
-rather than changing the global behaviour.
-
-.. autoattribute :: HDF5LabNotebook.TypeMapping
-    :annotation:
 
 
 Low-level protocol

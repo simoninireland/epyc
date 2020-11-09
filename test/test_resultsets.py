@@ -76,7 +76,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.PARAMETERS]['k'] = 1
         self._rc[Experiment.RESULTS]['total'] = 2.0
         self._rc[Experiment.RESULTS]['flag'] = False
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first', 'flag'])
@@ -94,7 +94,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.METADATA][Experiment.EXCEPTION] = str(Exception('wrong'))
         self._rc[Experiment.METADATA][Experiment.TRACEBACK] = '<backtrace>'
         self._rc[Experiment.PARAMETERS]['k'] = 1
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), [])
@@ -107,7 +107,7 @@ class ResultSetTests(unittest.TestCase):
         '''Test we can add metadata elements beyond the standard set.'''
         self._rc[Experiment.METADATA]['additional'] = True
         self._rc[Experiment.PARAMETERS]['k'] = 1
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata.union(set(['additional'])))
         self.assertEqual(dtype.fields['additional'][0], numpy.dtype(ResultSet.TypeMapping[bool]))
 
@@ -119,7 +119,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.PARAMETERS]['k'] = 1
         self._rc[Experiment.RESULTS]['total'] = 2.0
         self._rc[Experiment.RESULTS]['flag'] = False
-        self._rs.inferType(self._rc)
+        self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first', 'flag'])
 
         # add a result with an extra field and no flag, dtype should be extended
@@ -127,7 +127,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.RESULTS]['total'] = 3.0
         del self._rc[Experiment.RESULTS]['flag']
         self._rc[Experiment.RESULTS]['extra'] = 'hello'
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first', 'flag', 'extra'])
@@ -142,7 +142,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.PARAMETERS]['k'] = 1
         self._rc[Experiment.RESULTS]['total'] = 2.0
         self._rc[Experiment.RESULTS]['flag'] = False
-        self._rs.inferType(self._rc)
+        self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first', 'flag'])
         self.assertFalse(self._rs.isDirty())
@@ -155,7 +155,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.RESULTS]['total'] = 3.0
         self._rc[Experiment.RESULTS]['flag'] = False
         self._rc[Experiment.RESULTS]['extra'] = 'hello'
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'j', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first', 'flag', 'extra'])
@@ -203,7 +203,7 @@ class ResultSetTests(unittest.TestCase):
     def testInferPending(self):
         '''Test we infer the dtype correct for pending results.'''
         self._rc[Experiment.PARAMETERS]['k'] = 1
-        dtype = self._rs.inferPendingResultType(self._rc[Experiment.PARAMETERS])
+        dtype = self._rs.inferPendingResultDtype(self._rc[Experiment.PARAMETERS])
         self.assertCountEqual(self._rs.metadataNames(), [])
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), [])
@@ -215,7 +215,7 @@ class ResultSetTests(unittest.TestCase):
 
         # add initial pending result
         self._rc[Experiment.PARAMETERS]['k'] = 1
-        dtype = self._rs.inferPendingResultType(self._rc[Experiment.PARAMETERS])
+        dtype = self._rs.inferPendingResultDtype(self._rc[Experiment.PARAMETERS])
         self.assertCountEqual(self._rs.metadataNames(), [])
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), [])
@@ -224,7 +224,7 @@ class ResultSetTests(unittest.TestCase):
         # add another pending result with extended parameters, dtype should be extended
         self._rc[Experiment.PARAMETERS]['k'] = 2
         self._rc[Experiment.PARAMETERS]['j'] = 34.56
-        dtype = self._rs.inferPendingResultType(self._rc[Experiment.PARAMETERS])
+        dtype = self._rs.inferPendingResultDtype(self._rc[Experiment.PARAMETERS])
         self.assertCountEqual(self._rs.metadataNames(), [])
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'j', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), [])
@@ -237,11 +237,11 @@ class ResultSetTests(unittest.TestCase):
 
         # set initial pending dtype from parameters
         self._rc[Experiment.PARAMETERS]['k'] = 1
-        self._rs.inferPendingResultType(self._rc[Experiment.PARAMETERS])
+        self._rs.inferPendingResultDtype(self._rc[Experiment.PARAMETERS])
 
         # results, same parameters
         self._rc[Experiment.RESULTS]['total'] = 2.0
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first'])
@@ -252,7 +252,7 @@ class ResultSetTests(unittest.TestCase):
         self._rs.dirty(False)
         self._rc[Experiment.PARAMETERS]['k'] = 2
         self._rc[Experiment.RESULTS]['total'] = 3.0
-        dtype2 = self._rs.inferType(self._rc)
+        dtype2 = self._rs.inferDtype(self._rc)
         self.assertEqual(dtype, dtype2)
         self.assertFalse(self._rs.isDirty())
 
@@ -261,18 +261,45 @@ class ResultSetTests(unittest.TestCase):
 
         # set initial pending dtype
         self._rc[Experiment.PARAMETERS]['k'] = 1
-        dtype = self._rs.inferPendingResultType(self._rc[Experiment.PARAMETERS])
+        dtype = self._rs.inferPendingResultDtype(self._rc[Experiment.PARAMETERS])
 
         # results, same types, extra parameters
         self._rc[Experiment.PARAMETERS]['j'] = 34.56
         self._rc[Experiment.RESULTS]['total'] = 2.0
-        dtype = self._rs.inferType(self._rc)
+        dtype = self._rs.inferDtype(self._rc)
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata)
         self.assertCountEqual(self._rs.parameterNames(), ['k', 'j', 'singleton'])
         self.assertCountEqual(self._rs.resultNames(), ['total', 'first'])
         self.assertEqual(dtype.fields['k'][0], numpy.dtype(ResultSet.TypeMapping[int]))
         self.assertEqual(dtype.fields['j'][0], numpy.dtype(ResultSet.TypeMapping[float]))
         self.assertEqual(dtype.fields['total'][0], numpy.dtype(ResultSet.TypeMapping[float]))
+
+
+    # ---------- Attributes ----------
+
+    def testAttributes(self):
+        '''Test all the attribute operators.'''''
+        
+        # set and get
+        self._rs['number1'] = '1'
+        self.assertEqual(self._rs['number1'], '1')
+        self.assertEqual(len(self._rs.keys()), 1)
+        self.assertEqual(len(self._rs), 0)              # len() refers to results
+
+        # check contains
+        self.assertIn('number1', self._rs)
+        self.assertNotIn('number2', self._rs)
+
+        # exceptions for undefined attributes
+        with self.assertRaises(Exception):
+            self._rs['result2']
+ 
+         # check we can delete attributes
+        del self._rs['number1']
+        with self.assertRaises(Exception):
+            self._rs['result1']
+        self.assertEqual(len(self._rs.keys()), 0)
+        self.assertNotIn('number1', self._rs)
 
 
     # ---------- Adding results ----------

@@ -39,18 +39,14 @@ class ResultSet(object):
     Result sets are immutable: once entered, a result can't be deleted
     or changed. Pending results can however be cancelled.
 
-    A result set can be used as a very Pythonic set of :term:`results dict`s holding
+    A result set can be used very Pythonically using a :term:`results dict` holding
     the metadata, parameters, and results of experiments. For larger experiment
-    sets the results can also be typed using `numpy`'s `dtype` system,
+    sets the results are automatically typed using ``numpy``'s ``dtype`` system,
     which both provides more checking and works well with more archival storage
     formats like HDF5 (see :class:`HDF5LabNotebook`).  
 
-    In general client code will never interact with result sets directly: all
-    interactions should go through the notebook to allow for management of
-    persistence and so on.
-
     :param nb: notebook this result set is part of
-    :param title: (optional) title for the experiment (defaults to datestamp)
+    :param title: (optional) title for the experiment (defaults to a datestamp)
     '''
 
     # Pending results management
@@ -64,16 +60,16 @@ class ResultSet(object):
                                               str: numpy.str,
                                               datetime: numpy.str,
                                               Exception: numpy.str,
-                                            }               #: Default type mapping from Python types to numpy dtypes.
+                                            }               #: Default type mapping from Python types to ``numpy`` ``dtypes``.
 
 
     def __init__(self, title : str =None):
         # generate a title from today's date is none is provided 
         if title is None:
-            now = datetime.now()
-            title = "{d}".format(d=now)
+            title = "{d}".format(d=datetime.now())
 
         self._title : str = title                              # title
+        self._attributes : Dict[str, Any] = dict()             # attributes
         self._names : Dict[str, Optional[List[str]]] = dict()  # dict of names from the results dicts
         self._names[Experiment.METADATA] = None
         self._names[Experiment.PARAMETERS] = None
@@ -132,6 +128,64 @@ class ResultSet(object):
         if ns is None:
             ns = []
         return ns
+
+
+    # ---------- Attributes ----------
+
+    def setAttribute(self, k : str, v : Any):
+        '''Set the given attribute.
+
+        :param k: the key
+        :param v: the attribute value'''
+        self._attributes[k] = v
+        self.dirty()
+
+    def getAttribute(self, k : str) -> Any:
+        '''Retrieve the given attribute. A KeyException will be
+        raised if the attribute doesn't exist.
+
+        :param k: the attribute
+        :returns: the attribute value'''
+        return self._attributes[k]
+
+    def keys(self) -> Set[str]:
+        '''Return the set of attributes.
+
+        :returns: the attribute keys'''
+        return set(self._attributes.keys())
+
+    def __delitem__(self, k : str):
+        '''Delete the named attribute. This method is invoiked
+        by the ``del`` operator. A KeyException will be
+        raised if the attribute doesn't exist.
+
+        :param k: the attribute'''
+        del self._attributes[k]
+        self.dirty()
+
+    def __setitem__(self, k : str, v : Any):
+        '''Set the given attribute. The dict-like form of :meth:`setAttribute`.
+
+        :param k: the key
+        :param v: the attribute value'''
+        self.setAttribute(k, v)
+
+    def __getitem__(self, k : str) -> Any:
+        '''Retrieve the given attribute. The dict-like form of :meth:`getAttribute`.
+
+        :param k: the attribute
+        :returns: the attribute value'''
+        return self.getAttribute(k)
+        
+    def __contains__(self, k):
+        '''True if there is an attribute with the given name.
+
+        :oparam k: the attribute
+        :returns: True if that attribute exists'''
+        return k in self._attributes
+
+
+    # ---------- Dirtiness ----------
 
     def isDirty(self) -> bool:
         '''Test whether the result set is dirty, i.e., if its contents need persisting
@@ -208,7 +262,7 @@ class ResultSet(object):
             # Python types are translated through the type mapping
             return self.TypeMapping[t]
 
-    def inferType(self, rc : ResultsDict):
+    def inferDtype(self, rc : ResultsDict):
         '''Infer the dtype of the given result dict. This will include all the
         standard and exceptional metedata dfined for an :class:`Experiment`, plus
         the parameters and results (if present) for the results dict.
@@ -366,10 +420,10 @@ class ResultSet(object):
         # return the dtype
         return self._dtype
 
-    def inferPendingResultType(self, params : Dict[str, Any]):
+    def inferPendingResultDtype(self, params : Dict[str, Any]):
         '''Infer the dtype of the pending results of
         given dict of experimental parameters. This is essentially the same operation as
-        :meth:`inferType` but restricted to experimental parameters and including
+        :meth:`inferDtype` but restricted to experimental parameters and including
         a string job identifier.
 
         :param params: the experimental parameters
@@ -473,7 +527,7 @@ class ResultSet(object):
         :param rc: a results dict'''
 
         # match the types to the passed information
-        self.inferType(rc)
+        self.inferDtype(rc)
 
         # flatten the key/value pairs in the results dict
         # (in case of clashes, results take precedence)
@@ -504,7 +558,7 @@ class ResultSet(object):
         :param jobid: the job id'''
 
         # match types
-        self.inferPendingResultType(params)
+        self.inferPendingResultDtype(params)
 
         # check the validity of the parameters requested
         dps = set(self.parameterNames()).difference(set(params.keys()))
@@ -723,8 +777,8 @@ class ResultSet(object):
     def parameterSpace(self) -> Dict[str, Any]:
         '''Return a dict mapping parameter names to all their values,
         which is the space of all possible paramater points at which results
-        could have been collected.
-        This does not guarantee that all combinations of values have results
+        *could* have been collected.
+        This does not guarantee that all combinations of values *have* results
         associated with them: that function is provided by :meth:`parameterCombinations`.
 
         :returns: a dict mapping parameter names to their ranges'''
