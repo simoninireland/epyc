@@ -522,7 +522,7 @@ class ResultSet(object):
 
         The results dict may add metadata, parameters, or results to the result
         set, and these will be assumed to be present from then on. Missing values
-        will be defaulted.
+        in previously-saved results will receive default values.
 
         :param rc: a results dict'''
 
