@@ -51,7 +51,7 @@ class Experiment(object):
     RESULTS : Final[str] = 'results'                   #: Results dict key for the experimental results generated at the experiment's parameter point.
 
     # Standard metadata elements reported
-    EXPERIMENT : Final[str] = 'epyc.experiment.classname'              #: Metadata elements astoring the class name of the experiment.
+    EXPERIMENT : Final[str] = 'epyc.experiment.classname'              #: Metadata element for storing the class name of the experiment.
     START_TIME : Final[str] = 'epyc.experiment.start_time'             #: Metadata element for the datetime experiment started.
     END_TIME : Final[str] = 'epyc.experiment.end_time'                 #: Metadata element for the datetime experiment ended.
     ELAPSED_TIME : Final[str] = 'epyc.experiment.elapsed_time'         #: Metadata element for the time experiment took overall in seconds.
