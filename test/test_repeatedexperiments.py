@@ -1,17 +1,25 @@
 # Tests of repeated experiments combinator
 #
-# Copyright (C) 2016--2018 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
 
-import six
 import unittest
-from builtins import range
-import numpy
-import numpy.random
 
 
 class SampleExperiment1(Experiment):
@@ -37,15 +45,11 @@ class RepeatedExperimentTests(unittest.TestCase):
         self._lab.runExperiment(er)
         self.assertTrue(er.success())
 
-        results = self._lab.results()
-        self.assertEqual(len(results), N * len(self._lab['x']))
-        indices = set()
-        for res in results:
-            self.assertEqual(res[Experiment.RESULTS]['result'], self._lab['x'][0])
-            self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
-            self.assertFalse(res[Experiment.METADATA][RepeatedExperiment.I] in indices)
-            indices.add(res[Experiment.METADATA][RepeatedExperiment.I])
-        six.assertCountEqual(self, indices, range(N))
+        df = self._lab.dataframe()
+        self.assertEqual(len(df), N * len(self._lab['x']))
+        self.assertTrue(df['result'].eq(self._lab['x'][0]).all())
+        self.assertTrue(df[RepeatedExperiment.REPETITIONS].eq(N).all())
+        self.assertCountEqual(df[RepeatedExperiment.I].values, range(N))
         
     def testRepetitionsMultiplePoint( self ):
         '''Test we can repeat an experiment across a parameter space'''
@@ -58,19 +62,19 @@ class RepeatedExperimentTests(unittest.TestCase):
 
         self._lab.runExperiment(er)
         self.assertTrue(er.success())
-        self.assertEqual(len(self._lab.notebook()), N * len(self._lab['x']))
 
-        for i in range(3):
-            x = self._lab['x'][i]
-            results = self._lab.notebook().resultsFor(dict(x = x))
-            self.assertEqual(len(results), N)
-            indices = set()
-            for res in results:
-                self.assertIn(res[Experiment.PARAMETERS]['x'], self._lab['x'])
-                self.assertEqual(res[Experiment.RESULTS]['result'], res[Experiment.PARAMETERS]['x'])
-                self.assertEqual(res[Experiment.METADATA][RepeatedExperiment.REPETITIONS], N)
-                self.assertFalse(res[Experiment.METADATA][RepeatedExperiment.I] in indices)
-                indices.add(res[Experiment.METADATA][RepeatedExperiment.I])
-            six.assertCountEqual(self, indices, range(N))
+        df = self._lab.dataframe()
+        self.assertEqual(len(df), N * len(self._lab['x']))
+
+        for x in self._lab['x']:
+            dfx = df[df['x'] == x]
+            self.assertEqual(len(dfx), N)
+            self.assertTrue(dfx['result'].eq(x).all())
+            self.assertTrue(dfx[RepeatedExperiment.REPETITIONS].eq(N).all())
+            self.assertCountEqual(dfx[RepeatedExperiment.I].values, range(N))
+
+
+if __name__ == '__main__':
+    unittest.main()
 
 
