@@ -1,9 +1,21 @@
 # Tests of cluster-driven lab class
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
 
@@ -38,19 +50,21 @@ class SampleExperiment2(Experiment):
         return dict(total = total)
 
     
-# use the existence of an ipcontroller-client.json file in the IPython
+# use the existence of an ipcluster.pid file in the IPython
 # default profile's directory as a proxy for there being a cluster running
 # that we can use for our tests
-default_profile_dir = str(subprocess.check_output('ipython locate profile default', shell = True)).strip('\n')
-connection_file = os.path.join(default_profile_dir, 'security/ipcontroller-client.json')
-@unittest.skipUnless(os.path.isfile(connection_file),
-                     "No default cluster running (no {fn})".format(fn = connection_file))
+# (cluster is created by running `make cluster` in the project Makefile)
+profile = 'epyctest'
+profile_dir = subprocess.check_output('ipython locate profile {p}'.format(p=profile), shell=True).rstrip().decode()
+pid_file = os.path.join(profile_dir, 'pid/ipcluster.pid')
+@unittest.skipUnless(os.path.isfile(pid_file),
+                     "No {p} cluster running (no pid file  {fn})".format(p=profile, fn=pid_file))
 class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):
         '''Create a lab in which to perform tests.'''
-        self._lab = ClusterLab()
-        #self._lab._use_dill()
+        self._lab = ClusterLab(profile=profile)
+        self._lab.use_dill()
         with self._lab.sync_imports():
             import time
 
@@ -58,21 +72,22 @@ class ClusterLabTests(unittest.TestCase):
         '''Close the conection to the cluster.'''
         self._lab.close()
         self._lab = None
-        
-    def testMixup( self ):
-        '''Test that parameter spaces are suitably mixed, defined as not
-        more than 0.5% of elements landing in their original place.'''
-        n = 1000
-        
-        l = numpy.arange(0, n)
-        self._lab._mixup(l)
-        sp = [ v for v in (l == numpy.arange(0, n)) if v ]
-        self.assertTrue(len(sp) <= (n * 0.005))
+
+    def _results(self):
+        '''Retrieve results as a list of dicts, for easier comparisons.'''
+        df = self._lab.dataframe()
+        res = []
+        for i in df.index:
+            row = dict()
+            for k in df.columns:
+                row[k] = df.loc[i][k]
+            res.append(row)
+        return res
 
     def testEmpty( self ):
         '''Test that things work for an empty lab'''
-        self.assertEqual(self._lab.readyFraction(), 0)
-        self.assertEqual(self._lab.results(), [])
+        self.assertEqual(self._lab.notebook().readyFraction(), 1.0)
+        self.assertEqual(len(self._lab.dataframe()), 0)
         
     def testRunExprimentSync( self ):
         '''Test running an experiment and grabbing all the results by sleeping for a while.'''
@@ -83,16 +98,16 @@ class ClusterLabTests(unittest.TestCase):
         self._lab.runExperiment(SampleExperiment())
         time.sleep(n * 2.5 / self._lab.numberOfEngines())
         self.assertTrue(self._lab.ready())
-        res = self._lab.results()
+        res = self._results()
         
         # check that the whole parameter space has a result
         self.assertEqual(len(res), n)
         for p in res:
-            self.assertIn(p[Experiment.PARAMETERS]['a'], r)
+            self.assertIn(p['a'], r)
 
         # check that each result corresponds to its parameter
         for p in res:
-            self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
+            self.assertEqual(p['a'], p['total'])
             
     def testWait( self ):
         '''Test waiting for all jobs to complete.'''
@@ -112,7 +127,7 @@ class ClusterLabTests(unittest.TestCase):
         r = numpy.arange(0, n)
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment2())
-        self.assertFalse(self._lab.wait(timeout = 5))
+        self.assertFalse(self._lab.wait(timeout=5))
         self.assertFalse(self._lab.ready())
         self.assertTrue(self._lab.wait())
         self.assertTrue(self._lab.ready())
@@ -134,16 +149,16 @@ class ClusterLabTests(unittest.TestCase):
             f = f1
         self.assertTrue(self._lab.ready())
         self.assertEqual(self._lab.notebook().numberOfPendingResults(), 0)
-        res = self._lab.results()
+        res = self._results()
         
         # check that the whole parameter space has a result
         self.assertEqual(len(res), n)
         for p in res:
-            self.assertIn(p[Experiment.PARAMETERS]['a'], r)
+            self.assertIn(p['a'], r)
 
         # check that each result corresponds to its parameter
         for p in res:
-            self.assertEqual(p[Experiment.PARAMETERS]['a'], p[Experiment.RESULTS]['total'])
+            self.assertEqual(p['a'], p['total'])
 
     def testReturnWithNoJobs( self ):
         '''Test wait() returns True when there are no jobs pending.'''
@@ -166,11 +181,12 @@ class ClusterLabTests(unittest.TestCase):
         self._lab.runExperiment(SampleExperiment2())
 
         params = dict(a = int(n / 2))
-        self._lab.cancelPendingResultsFor(params)
+        jobids = self._lab.notebook().current().pendingResultsFor(params)
+        for j in jobids:
+            self._lab.notebook().cancelPendingResult(j)
         self._lab.wait()
-        self.assertEqual(self._lab.numberOfResults(), n - 1)
-        self.assertEqual(self._lab.numberOfPendingResults(), 0)
-        self.assertEqual(self._lab.notebook().latestResultsFor(params), None)
+        self.assertEqual(self._lab.notebook().current().numberOfResults(), n - 1)
+        self.assertEqual(self._lab.notebook().current().numberOfPendingResults(), 0)
 
     def testCancelAllJobs( self ):
         '''Test we can cancel all jobs.'''
@@ -180,10 +196,11 @@ class ClusterLabTests(unittest.TestCase):
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment2())
 
-        self._lab.cancelAllPendingResults()
+        for j in self._lab.notebook().allPendingResults():
+            self._lab.notebook().cancelPendingResult(j)
         self._lab.wait()
-        self.assertEqual(self._lab.numberOfResults(), 0)
-        self.assertEqual(self._lab.numberOfPendingResults(), 0)
+        self.assertEqual(self._lab.notebook().current().numberOfResults(), 0)
+        self.assertEqual(self._lab.notebook().current().numberOfPendingResults(), 0)
 
     def testAddExperiments( self ):
         '''Test we can add experiments while some are running, without locking up.'''
@@ -200,8 +217,13 @@ class ClusterLabTests(unittest.TestCase):
         self._lab.runExperiment(SampleExperiment2())
 
         self._lab.wait()
-        self.assertEqual(self._lab.numberOfResults(), 2 * n)
-        self.assertEqual(self._lab.numberOfPendingResults(), 0)
+        self.assertEqual(len(self._lab.notebook().dataframe()), 2 * n)
+        self.assertEqual(self._lab.notebook().current().numberOfPendingResults(), 0)
 
-        
+
+# Test we can run pending jobs from different result sets
+
+if __name__ == '__main__':
+    unittest.main()
+
        
