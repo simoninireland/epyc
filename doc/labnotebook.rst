@@ -3,17 +3,15 @@
 
 .. currentmodule:: epyc
    
-.. autoclass:: LabNotebook
+.. autoclass :: LabNotebook
 
 
-Notebook creation and management
---------------------------------
+Metadata accessed
+-----------------
 
-.. automethod:: LabNotebook.__init__
+.. automethod :: LabNotebook.name
    
-.. automethod:: LabNotebook.name
-   
-.. automethod:: LabNotebook.description
+.. automethod : LabNotebook.description
 
 
 Persistence
@@ -24,9 +22,18 @@ default implementation is simply in-memory and volatile. Committing a
 notebook ensures its data is written-through to persistent storage
 (where applicable).
    
-.. automethod:: LabNotebook.isPersistent
+.. automethod: : LabNotebook.isPersistent
    
-.. automethod:: LabNotebook.commit
+.. automethod :: LabNotebook.commit
+
+
+Result sets
+-----------
+
+Results are stored as :class:`ResultSet` objects. There is seldom any need
+to interact with the result sets directly: the notbook allows them to be created,
+and to be selected to receive results.
+
 
 
 Result storage and access
@@ -34,28 +41,39 @@ Result storage and access
 
 Results are stored using the :term:`results dict` structure of
 parameters, experimental results, and metadata. There may be many
-results dicts associated with each parameter point.
+results dicts associated with each parameter point. The most flexible
+way to add results is using the :meth:`LabNotebook.addResults` method,
+which handles single and sets of results. 
+
+.. automethod :: LabNotebook.addResults
+
+There is also a single-result version of the same method.
+
+.. automethod :: LabNotebook.addResult
 
 Results can be accessed in a number of ways: all together; as a
-``DataFrame`` from ``pandas`` for easier analysis; as a list
-corresponding to a particular parameter point; or as the latest result
-for a given point.
+``pandas.DataFrame`` object for easier analysis; or as a list
+corresponding to a particular parameter point.
 
-.. automethod:: LabNotebook.addResult
+.. automethod :: LabNotebook.numberOfResults
 
-.. automethod:: LabNotebook.numberOfResults
+.. automethod :: LabNotebook.__len__
 
-.. automethod:: LabNotebook.results
+.. automethod :: LabNotebook.results
 
-.. automethod:: LabNotebook.dataframe
+.. automethod :: LabNotebook.resultsFor
 
-.. automethod:: LabNotebook.__len__
+.. automethod :: LabNotebook.dataframe
 
-.. automethod:: LabNotebook.__iter__
+.. automethod :: LabNotebook.dataframeFor
 
-.. automethod:: LabNotebook.resultsFor
+The notebook also exports an iterator innterface.
 
-.. automethod:: LabNotebook.latestResultsFor
+.. automethod :: LabNotebook.__iter__
+
+.. note ::
+
+    The iterator only iterates through results, not pending results.
 
 
 Pending results
@@ -70,14 +88,35 @@ results filled in) using :meth:`addResult`, or can be cancelled, which
 removes the record from the notebook from *not* from the lab managing
 the underlying job.
 
-.. automethod:: LabNotebook.addPendingResult
+Since a notebook can have multiple result sets, the pending results
+interface is split into three parts. Firstly there are the operations
+on the currently-selected result set.
 
-.. automethod:: LabNotebook.pendingResults
+.. automethod: : LabNotebook.addPendingResult
 
-.. automethod:: LabNotebook.pendingResultsFor
- 
-.. automethod:: LabNotebook.cancelPendingResult
- 
-.. automethod:: LabNotebook.cancelPendingResultsFor
- 
-.. automethod:: LabNotebook.cancelAllPendingResults
+.. automethod: : LabNotebook.numberOfPendingResults
+
+.. automethod: : LabNotebook.pendingResults
+
+Secondly, there are operations that work on any result set. You
+can resolve or cancel a pending result simply by knowing its job id and
+regardless of which is the currently selected result set. 
+
+.. automethod: : LabNotebook.resolvePendingResult
+
+.. automethod: : LabNotebook.cancelPendingResult
+
+You can also check whether there are pending results remaining in any result set,
+which defaults to the surrently selected result set.
+
+.. automethod: : LabNotebook.ready
+
+.. automethod: : LabNotebook.readyFraction
+
+Thirdly, there are operations that work on all result sets.
+
+.. automethod :: LabNotebook.allPendingResults
+
+.. automethod :: LabNotebook.numberOfAllPendingResults
+
+.. automethod :: LabNotebook.stop

@@ -166,9 +166,9 @@ any ``numpy`` types used.
 The result set infers the ``numpy``-level types automatically as results (and pending
 results) are added.
 
-.. automethod :: ResultSet.inferType
+.. automethod :: ResultSet.inferDtype
 
-.. automethod :: ResultSet.inferPendingResultType
+.. automethod :: ResultSet.inferPendingResultDtype
 
 This behaviour can be sidestapped by explicitly setting the stypes (with care!).
 
