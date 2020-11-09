@@ -117,12 +117,14 @@ class LabNotebook(object):
         :returns: the tag'''
         return self._resultSetTags[rs] 
 
-    def select(self, tag: str):
+    def select(self, tag: str) -> ResultSet:
         '''Select the given result set as current. Sub-classes may use this
         to manage memory, for example by swapping-out non-current result sets.
 
-        :param tag: the tag'''
+        :param tag: the tag
+        :returns: the result set'''
         self._current = self._resultSets[tag] 
+        return self._current
 
     def current(self) -> ResultSet:
         '''Return the current result set.
