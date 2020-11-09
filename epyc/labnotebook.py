@@ -174,15 +174,6 @@ class LabNotebook(object):
         # record the result set that holds the given job
         self._pending[jobid] = rs
 
-    def cancelAllPendingResults(self):
-        '''Cancel all pending results in the current result set. Note that this is
-        slightly different semantics to :meth:`cancelPendingResult`, which will
-        cancel a result in *any* result set: this method has limited scope
-        to avoid accidental cancellation of too many pending results.'''
-        rsc = self.current()
-        for jobid in rsc.pendingResults():
-            self.cancelPendingResult(jobid)
-
 
     # ---------- Resolving and cancelling results in any result set ----------
 
@@ -271,7 +262,7 @@ class LabNotebook(object):
         return rs.numberOfPendingResults()
 
 
-    # ---------- Managing pending rresults in all result sets ----------
+    # ---------- Managing pending results in all result sets ----------
 
     def stop(self):
         '''Cancel all pending results in all result sets. This essentially shuts
