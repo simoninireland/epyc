@@ -6,6 +6,12 @@
 .. autoclass :: HDF5LabNotebook
 
 
+Managing result sets
+--------------------
+
+.. automethod :: HDF5LabNotebook.addResultSet
+
+
 Persistence
 -----------
 
@@ -50,7 +56,7 @@ underlying file, for example:
 
 The ``with`` block approach is slightly more robust as the notebook will be
 committed even if exceptions are thrown while it is open, ensuring no changes
-are lost accidentally. However notebooks are oftwen held open for a long
+are lost accidentally. However notebooks are often held open for a long
 time while experiments are run and/or analysed, so the explicit commit
 can be more natural.
 
@@ -58,8 +64,10 @@ can be more natural.
 Structure of the HDF5 file
 --------------------------
 
-The structure inside an HDF5 file is only really of interest if you're planning on
-using an ``epyc``-generated dataset with some other tools.
+.. note ::
+
+    The structure inside an HDF5 file is only really of interest if you're planning on
+    using an ``epyc``-generated dataset with some other tools.
 
 HDF5 is a "container" file format, meaning that it behaves like an archive containing
 directory-like structure. ``epyc`` structures its storage by using a group for each
@@ -106,44 +114,31 @@ HDF5 type management
 
 ``epyc`` takes a very Pythonic view of experimental results, storing them
 in a :term:`results dict` with an unconstrained set of keys and types: and
-experiment can store anything it likes as a result. HDF5 is rather less
-forgiving, in the sense that it requires a fixed set of keys in the dict,
-each of which is always mapped to a value of a given type, with those
-types being more constrained than those of Python. This is as one would expect,
+experiment can store anything it likes as a result. The :class:`ResultSet`
+class handles mapping Pythoin types to ``numpy`` dtypes: see :ref:`resultset-type-inference`
+for details.
+
+The HDF5 type mapping follows the ``numpy`` approach closely. Some types
+are mapped more restrictively than in ``numpy``: this is as one would expect,
 of course, since HDF5 is essentially an archive format whose files need to be
-readable by a range of tools over a long period. Nevertheless we somehow
-have to map between these two views, and ``epyc`` supports two choices.
-
-The first choice is to infer the types of each element in a reuslts dict,
-converting them to HDF5 types. This is usually a straightforward choice
-that works well, *modulo* the restrictions imposed by the HDF5 type system
-that forces some Python types to strings.
-
-.. automethod :: HDF5LabNotebook.inferType
-
-.. automethod :: HDF5LabNotebook.inferPendingResultType
-
-The second choice is to let the user set the HDF5 types for each element
-in the results dict -- typically results and parameters, but also any extra
-metadata elements. This allows a programmer to take control of the ways in which
-data is stored, for example by choosing a smaller int or float type when the
-results are known to conform. This can result in a significant storage saving
-for large result sets.
-
-.. automethod :: HDF5LabNotebook.setResultSetType
-
-In either case, some values will be read back with different types to those
-that they had when they were generated. Specifically this affects Exceptions
-and ``datetime`` values, both of which are mapped to HDF5 strings (in ISO standard
+readable by a range of tools over a long period.
+Specifically this affects exceptions, tracebacks,
+and ``datetime`` values, all of which are mapped to HDF5 strings (in ISO standard
 date format for the latter). A little bit of patching happens for "known"
 metadata values (specifically :attr:`Experiment.START_TIME` and :attr:`Experiment.END_TIME`)
 which are automatically patched to ``datetime`` instances when loaded.
 
+.. warning ::
 
-Managing result sets
---------------------
+    ``epyc`` allows result dicts to contain arrays as results. These can only be
+    written to HDF5 if all the array results have the same shape: having different
+    shapes will (probably) result in an exception with a hard-to-understand
+    message.
 
-.. automethod :: HDF5LabNotebook.addResultSet
+    To work around this, it's safest to not have array-valued results. If you need
+    them, pick a shape beforehand.
+
+    This limitation may be removed in future versions.
 
 
 Tuning parameters
@@ -152,7 +147,11 @@ Tuning parameters
 Some parameters are available for tuning the notebook's behaviour.
 
 The default size of a new dataset can be increased if desired, to pre-allocate
-space for more results. The dataset will expand and contract automatically to
+space for more results.
+
+.. autoattribute :: HDF5LabNotebook.DefaultDatasetSize
+
+The dataset will expand and contract automatically to
 accommodate the size of a result set: its hard to see why this value would need
 to be changed.
 
@@ -183,7 +182,12 @@ all assume that the file is opened and closed around them, and will fail if not.
 
 .. automethod :: HDF5LabNotebook._write
 
+There are also two private methods that handle the conversion of ``numpy`` dtypes
+to the (ever so slightly different) ``h5py`` dtypes.
 
+.. automethod :: HDF5LabNotebook._HDF5simpledtype
+
+.. automethod :: HDF5LabNotebook._HDF5dtype
 
 
 

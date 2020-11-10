@@ -133,6 +133,8 @@ unnecessary writing of unchanged data.
 .. automethod :: ResultSet.isDirty
 
 
+.. _resultset-type-inference:
+
 Type mapping and inference
 --------------------------
 
