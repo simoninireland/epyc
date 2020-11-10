@@ -264,12 +264,6 @@ class LabNotebook(object):
 
     # ---------- Managing pending results in all result sets ----------
 
-    def stop(self):
-        '''Cancel all pending results in all result sets. This essentially shuts
-        down any further computation for this notebook.'''
-        for jobid in self._pending.keys():
-            self.cancelPendingResult(jobid)
-
     def allPendingResults(self) -> Set[str]:
         '''Return the identifiers for all pending results in all result sets.
 
