@@ -262,7 +262,6 @@ class HDF5LabNotebook(LabNotebook):
         # read the names of all the fields and all the attributes
         for k in g.attrs.keys():
             rs[k] = g.attrs[k]
-
   
         if self.RESULTS_DATASET in g:   
             # ---- PART 1: read structure ---
