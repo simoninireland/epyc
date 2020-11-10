@@ -349,20 +349,35 @@ class HDF5LabNotebook(LabNotebook):
         # read other attributes
         self._description = self._file.attrs[self.DESCRIPTION]
 
-    def _HDF5dtype(self, dtype : numpy.dtype) -> numpy.dtype:
-        '''Patch a `numpy` dtype into its HDF5 equivalent.
 
-        :param dtype: the numpy dtype
+    # ---------- Type conversion ----------
+
+    def _HDF5simpledtype(self, dtype : numpy.dtype) -> numpy.dtype:
+        '''Patch a simple ``numpy`` dtype to the formats available in HDF5.
+
+        :param dtype: the ``numpy ``dtype
         :returns: the HDF5 dtype'''
-        elements = []
-        for k in dtype.names:
-            t = dtype.fields[k][0]
-            if t.kind in ['S', 'U']:
-                # h5py can't handle Python strings but has its own dtype for them
-                t = h5py.string_dtype()
-                #print('Patched string {k}'.format(k=k))
-            elements.append((k, t))
-        return numpy.dtype(elements)
+        if dtype.kind in ['S', 'U']:
+            # h5py can't handle Python strings but has its own dtype for them
+            dtype = h5py.string_dtype()
+        return dtype
+
+    def _HDF5dtype(self, dtype : numpy.dtype) -> numpy.dtype:
+        '''Patch a ``numpy`` dtype into its HDF5 equivalent. This method
+        handles structured types with named fields.
+
+        :param dtype: the ``numpy`` dtype
+        :returns: the HDF5 dtype'''
+        if dtype.names is not None:
+            # a structured dtype, unpack and patch all the fields
+            elements = []
+            for k in dtype.names:
+                t = self._HDF5simpledtype(dtype.fields[k][0])
+                elements.append((k, t))
+            return numpy.dtype(elements)
+        else:
+            # a simple dtype, patch it
+            return self._HDF5simpledtype(dtype)
 
 
     # ---------- Context manager protocol ----------

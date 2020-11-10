@@ -250,17 +250,29 @@ class ResultSet(object):
         self._pendingdtype = dtype
 
     def typeToDtype(self, t : type) -> numpy.dtype:
-        '''Return the dtype of the given Python value. An exception
+        '''Return the dtype of the given Python type. An exception
         is thrown if there is no appropriate mapping.
 
-        :param t: the type
+        :param t: the (Python) type
         :returns: the dtype of the value'''
-        if issubclass(t, numpy.number):
+        if issubclass(t, numpy.number) or issubclass(t, numpy.ndarray):
             # numpy types are retained
             return t
         else:
             # Python types are translated through the type mapping
             return self.TypeMapping[t]
+
+    def valueToDtype(self, v : Any) -> numpy.dtype:
+        '''Return thwe stype of a Python value. An exception
+        is thrown if there is no appropriate mapping.
+
+        :param v: the value
+        :returns: the dtype'''
+        if isinstance(v, list):
+            et = self.valueToDtype(v[0])
+            return numpy.dtype((et, (len(v),)))
+        else:
+            return self.typeToDtype(type(v))
 
     def inferDtype(self, rc : ResultsDict):
         '''Infer the dtype of the given result dict. This will include all the
@@ -361,15 +373,14 @@ class ResultSet(object):
                     if k in Experiment.StandardMetadata:
                         # standard element, get its type from the type mapping
                         # (this gives the Python-level type, not the dtype)
-                        t = Experiment.StandardMetadataTypes[k]
+                        types[k] = self.typeToDtype(Experiment.StandardMetadataTypes[k])
                     else:
                         # new metadata element, grab its type
-                        t = type(rc[Experiment.METADATA][k])
-                    try:
-                        # map Python type to dtype
-                        types[k] = self.typeToDtype(t)
-                    except Exception:
-                        raise Exception('No type mapping for metadata {k} (type {t})'.format(k=k, t=t))
+                        v = rc[Experiment.METADATA][k]
+                        try:
+                            types[k] = self.valueToDtype(v)
+                        except Exception:
+                            raise Exception('No type mapping for metadata {k} ({v})'.format(k=k, v=v))
             for d in [ Experiment.PARAMETERS, Experiment.RESULTS ]:
                 if self._names[d] is not None:
                     for k in self._names[d]:
@@ -378,12 +389,11 @@ class ResultSet(object):
                             types[k] = oldfields[k][0]
                         elif k in rc[d]:
                             # new field, infer its type
-                            t = type(rc[d][k])
+                            v = rc[d][k]
                             try:
-                                # map Python type to dtype
-                                types[k] = self.typeToDtype(t)
+                                types[k] = self.valueToDtype(v)
                             except Exception:
-                                raise Exception('No type mapping for {k} (type {t})'.format(k=k, t=t))
+                                raise Exception('No type mapping for {k} ({v})'.format(k=k, v=v))
 
             # form the dtype
             elements = []
@@ -470,15 +480,14 @@ class ResultSet(object):
                     types[k] = oldfields[k][0]
                 else:
                     # new field, infer its type
-                    t = type(params[k])
+                    v = params[k]
                     try:
-                        # map Python type to dtype
-                        types[k] = self.typeToDtype(t)
+                        types[k] = self.valueToDtype(v)
                     except Exception:
-                        raise Exception('No type mapping for pending result {k} (type {t})'.format(k=k, t=t))
+                        raise Exception('No type mapping for pending result {k} ({v})'.format(k=k, v=v))
 
             # add the job id column
-            types[self.JOBID] = self.typeToDtype(str)
+            types[self.JOBID] = self.typeToDtype(str)    # job ids are expected to be strings
 
             # form the dtype
             elements = []
