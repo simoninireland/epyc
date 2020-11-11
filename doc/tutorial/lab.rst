@@ -12,19 +12,19 @@ and then will automatically run and collect results.
 
 The object that controls this process is a :class:`Lab`, which we'll create first:
 
-.. code-block:: python
+.. code-block :: python
 
-    lab = epyc.Lab()
+    lab = Lab()
 
 This is the most basic use of labs, which will store the results in an in-memory :class:`LabNotebook`.
 For more serious use, if we wanted to save the results for later, then we can create an persistent
 :class:`JSONLabNotebook` that stores results in a file in a JSON encoding:
 
-.. code-block:: python
+.. code-block :: python
 
-    lab = epyc.Lab(notebook = epyc.JSONLabNotebook("sin.json",
-                                                   create = True,
-                                                   description = "A point cloud of $sin \sqrt{x^2 + y^2}$"))
+    lab = Lab(notebook = JSONLabNotebook("sin.json",
+                                         create = True,
+                                         description = "A point cloud of $sin \sqrt{x^2 + y^2}$"))
 
 This creates a JSON file with the name given in the first argument. The ``create`` argument, if set to ``True``,
 will overwrite the contents of the file; it defaults to ``False``, which will *load* the contents of the file
