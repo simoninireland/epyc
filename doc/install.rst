@@ -4,7 +4,7 @@ Installation
 In a nutshell
 -------------
 
-**Pythons**: 2.7 and 3.7 or later
+**Pythons**: 3.7 or later
 
 **Operating systems**: Linux, OS X
 
@@ -25,5 +25,5 @@ Use the following command:
    pip install epyc
 
 ``epyc`` works perfectly in virtual environments, and indeed doing so is
-good practice for reproducible scientific code.
+good practice for scientific code. See :ref:`epyc-venv` for a discussion.
 
