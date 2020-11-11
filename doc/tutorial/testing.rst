@@ -23,7 +23,8 @@ for which we know the answer:
     rc = e.set(params).run()
     print(rc[epyc.RESULTS]['result'] == res)
 
-The result should be ``True``. Don't worry about how we've accessed the result: that'll become clear in a minute.
+The result should be ``True``. Don't worry about how we've accessed the result: that'll become
+clear in a minute.
 
 
 

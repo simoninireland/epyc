@@ -1,6 +1,6 @@
 .. _disconnected-usage:
 
-.. currentmodule:: epyc
+.. currentmodule :: epyc
 
 Using a cluster without staying connected to it
 -----------------------------------------------
@@ -12,46 +12,88 @@ to stay connected while they're running because you're doing a lot of computatio
 and then come back to collect them later. This is good for long-running sets of experiments, and especially
 good when your front-end machine is a laptop that you want to be able to take off the network when you go home.
 
-Asynchronous operation is actually the default for :class:`ClusterLab`. When you start an experiment,
-for example:
+Asynchronous operation is actually the default for :class:`ClusterLab`. Starting experiments by
+default creates a pending result that will be resoplved when it's been computed on the cluster. 
 
-.. code-block:: python
+.. code-block :: python
 
-    nb = epyc.JSONLabNotrebook('myexperiment.json')
-    lab = epyc.ClusterLab(nb)
-    lab['x'] = range(1000)
-    lab.runExperiment(myExperiment())
+    from epyc import ClusterLab
 
-The call to :meth:`ClusterLab.runExperiment` returns immediately. You can then wait to get all the results:
+    lab = ClusterLab(profile="mycluster",
+                     notebook=HDF5LabNotebook('mydata.h5', create=True))
+    nb = lab.notebook()
 
-.. code-block:: python
+    # perform some of the first experiments
+    nb.addResultSet('first-experiments')
+    lab['a'] = 12
+    lab['b'] = range(1000)
+    e = MyFirstExperiment()
+    lab.runExperiment(e)
+
+    # and then some others
+    nb.addResultSet('second-experiments')
+    lab['a] = 15
+    lab['b'] = ['cat', 'dog', 'snake']
+    lab['c'] = range(200)
+    e = MySecondExperiment()
+    lab.runExperiment(e)
+
+You can then wait to get all the results:
+
+.. code-block :: python
 
     lab.wait()
 
 which will block until all the results become available, implying that your machine has to stay connected
-to the cluster until the experiments finish: possibly a long wait.
+to the cluster until the experiments finish: possibly a long wait. Alternatively you can check
+what fraction of each result set has been successfully computed:
 
-However, you can also just close the progam and walk away. The cluster keeps working. Later, when enough time
-has passed, you can come back and call :meth:`ClusterLab.wait` to get all the results.
+.. code-block :: python
 
-But what if you don't give the cluster enough time? -- you'll be stuck again. A better solution is to get
-the results *that have actually finished*, and leave the rest running. To do this, you simply re-connect to the
-cluster and request that it update its notebook with the completed results:
+    lab = ClusterLab(profile="mycluster",
+                     notebook=HDF5LabNotebook('mydata.h5'))
+    nb = lab.notebook()
 
-.. code-block:: python
+    nb.select('first-experiments')
+    print(lab.readyFraction())
+    nb.select('second-experiments')
+    print(lab.readyFraction())
 
-    nb = epyc.JSONLabNotrebook('myexperiment.json')
-    lab = epyc.ClusterLab(nb)
+
+(This is an important use case especially when using a remote cluster with a Jupyter
+notebook, detailed more in the :ref:`fourth-tutorial`.)
+The notebook will gradually be emptied of pending results and filled with completed results,
+until none remain.
+
+.. code-block :: python
+
+    import time
+
+    allReady = False
+    tags = nb.resultSets()
+    while not allReady:
+        time.sleep(5)    # wait 5s
+        allReady = all(map(lambda tag: lab.ready(tag), tags))
+    print('All ready!')
+
+The system for retrieving completed results is quite robust in that it commits the notebook
+as results come in, minimising the posibility for loss through a crash.
+
+.. important ::
+
+    If you look at the API for :class:`LabNotebook` you'll see methods for
+    :meth:`LabNotebook.ready` and :meth:`LabNotebook.readyFraction`. These
+    check the result set *without updating*; the corresponding methods
+    :meth:`Lab.ready` and :meth:`Lab.readyFraction` check the result set
+    *after updating* with newly-completed results.
+
+You can also, if you prefer, force an update of pending results directly:
+
+.. code-block :: python
+
     lab.updateResults()
-    print('We have {r} results available ({f} of the total'.format(r=lab.numberOfResults(), f=lab.readyFraction()))
 
 The call to :meth:`ClusterLab.updateResults` connects to the cluster and pulls down any results that have completed,
-entering them into the notebook. You can then ask thee lab (or indeed the notebook) for the number of results
-available and.or for the fraction of results so you can check progress.
+entering them into the notebook. You can then query the notebook (rather than the lab) about
+what fraction of results are ready, taking control of when the cluster is interrogated.
 
-This approach works particularly well from Jupyter notebooks, where you can define an experiment, kick-off a simulation,
-carry on writing, and have a cell that checks for the results that you re-execute until they're finished.
-(Updating results when all the results are already in costs nothing.) If you want to be particularly funky, write
-code that generates graphs or other results from whatever results are available, rather than having the code assume
-that all the results are there: that way you can see the simulation progressing, which can be quite iluminating
-in itself.

@@ -8,14 +8,14 @@ Defining the experiment
 We first create a class describing our experiment. We do this by extending
 :class:`Experiment` and overriding :meth:`Experiment.do` to provide the code actually executed:
 
-.. code-block:: python
+.. code-block :: python
 
-    import epyc
+    from epyc import Experiment, Lab, JSONLabNotebook
     import numpy
 
-    class CurveExperiment(epyc.Experiment):
+    class CurveExperiment(Experiment):
 
-        def do( self, params ):
+        def do(self, params):
             '''Compute the sin value from two parameters x and y, returning a dict
             containing a result key with the computed value.
 

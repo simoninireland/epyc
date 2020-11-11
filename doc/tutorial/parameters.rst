@@ -13,7 +13,7 @@ lab will then run the the experiment for all combinations of the values provided
 For our purposes we want to run the experiment over a range :math:`[-2 \pi, 2 \pi]` in two axial directions.
 We can deifne this using ``numpy``:
 
-.. code-block:: python
+.. code-block :: python
 
     lab['x'] = numpy.linspace(-2 * numpy.pi, 2 * numpy.pi)
     lab['y'] = numpy.linspace(-2 * numpy.pi, 2 * numpy.pi)
@@ -24,14 +24,14 @@ Notice that the *lab itself* behaves as a dict for the parameters.
 
 What experiments will the lab now run? We can check by retrieving the entire parameter space for the lab:
 
-.. code-block:: python
+.. code-block :: python
 
-    print lab.parameterSpace()
+    print(lab.parameterSpace())
 
 This returns a list of the combinations of parameters that the lab will use for running experiments. If you're only
 interested in how many experiments will run, you can get this with:
 
-.. code-block:: python
+.. code-block : python
 
-    print print len(lab)
+    print(len(lab))
 

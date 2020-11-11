@@ -1,6 +1,6 @@
 .. _second-tutorial:
 
-Second tutorial: parallel execution
+Second tutorial: Parallel execution
 ===================================
 
 ``epyc``'s main utility comes from being able to run experiments, like those we defined in
@@ -9,8 +9,8 @@ In this tutorial we'll explain how ``epyc`` manages parallel machines.
 
 (If you know about parallel computing, then it'll be enough for you to know that ``epyc`` creates
 a task farm of experiments across multiple cores. If this didn't make sense, then you
-should first read the :ref:`parallel processing concepts <concepts-parallel>`.)
+should first read :ref:`concepts-parallel`.)
 
-.. include:: setup.rst
+.. include :: setup.rst
 
-.. include:: cluster.rst
+.. include :: cluster.rst

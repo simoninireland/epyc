@@ -9,7 +9,7 @@ With this setup we move away from running a cluster on a single machine and tack
 This is the simplest example of a **distributed compute cluster**, where "distributed" just means that we'll
 be making use of several independent machines.
 
-.. warning::
+.. warning ::
 
     We'll assume that all the machines in your cluster is running Linux or some other Unix variant.
 
@@ -17,7 +17,7 @@ The type of cluster we'll set up is common in university environments, and consi
 machines that share a common file system. By this we mean that, whichever machine you log-on to, you're
 presented with the same set of files -- and most especially, with your home directory.
 
-What we want to do is to set up what is essentially a :ref:`multicore machine <muilticore-parallel>`, but
+What we want to do is essentially tjhe same as :ref:`multicore-parallel`, but
 one that uses cores on several machines. For this to work we need to tell ``ipcluster`` what machines
 are in the cluster so that it can start engines on them.
 
@@ -31,7 +31,7 @@ when using only one machine, but it becomes quite important when we're using a d
 ``ipcluster`` is essentially a control script that runs two other programs: ``ipcontroller`` that
 controls the cluster, and ``ipengine`` that does the actual computing. For any cluster there is exactly
 one instance of ``ipcontroller`` running, and then one instance of ``ipengine`` *for each core*.
-So the ``-n=8`` option we saw in the :ref:`multicore case <muilticore-parallel>` is setting how many
+So the ``-n=8`` option we saw in the :ref:`multicore case <multicore-parallel>` is setting how many
 engine processes are started and connected to the (one) controller.
 
 When ``epyc`` connects to a cluster, it actually connects to the controller, which is then in turn
@@ -51,7 +51,7 @@ to start-up a cluster, and this includes all the information we need for a distr
 
 The profile actually lives in a directory which we can find using:
 
-.. code-block:: sh
+.. code-block :: sh
 
     ipython locate profile cluster
 
@@ -62,7 +62,7 @@ in a path "/home/yourself/.ipython/profile_cluster", which would be fairly typic
 There are several files in this directory structure. Two are particularly important to us:
 
 - ``ipcontroller_config.py``, the configuration for the cluster controller
-- ``security/ipcontroller-client.json``, the controller connection credentials file
+- ``security/ipcontroller-client.json``, the controller access token file
 
 We'll refer to each of these files later.
 
@@ -75,17 +75,17 @@ Let's further suppose we're logged-on to ``cl-0``. And let's also suppose that e
 cluster has 8 cores. And finally, let's suppose that we're logging-in to each machine
 using ``ssh``.
 
-.. warning::
+.. warning ::
 
     Distributed computing is a topic that can get very complicated very quickly. What follows
     is the explanation for a common, but rather basic, setup: there are many, many others.
     Your mileage may vary.
 
 What we'll do is start a cluster with the cluster controller on ``cl-0``
-and engines on the other 9 machines. Since the machines are all the same, and since they al
+and engines on the other 9 machines. Since the machines are all the same, and since they all
 have 8 cores, we're expecting to start :math:`8 * 4 = 32` engines.
 
-.. note::
+.. note ::
 
     Why not 40 engines? Well we could, by starting 8 engines on ``cl-0`` as well. It's often
     a reasonable idea to leave the machine with the controller less loaded, though, because
@@ -112,7 +112,7 @@ in this profile, it creates the processes we need.
 
 Move to the end of the file in the editor and append the following:
 
-.. code-block:: python
+.. code-block :: python
    :linenos:
 
     # ssh-based cluster
@@ -138,44 +138,51 @@ form of a Python dict mapping each machine name (as used by ``ssh`` for login) t
 specifying the number of engines and the command used to start each one. For our cluster we have
 four machines that will run 8 engines each, so we add the following:
 
-.. code-block:: python
+.. code-block :: python
 
-c.SSHEngineSetLauncher.engines = {
-    'cl-1' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] },
-    'cl-2' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] },
-    'cl-3' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] },
-    'cl-4' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] } }
+    c.SSHEngineSetLauncher.engines = {
+        'cl-1' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] },
+        'cl-2' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] },
+        'cl-3' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] },
+        'cl-4' : { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] } }
 
-.. note::
+Actually the ``ipcontroller_config.py`` file is just Python so we could get more funky and,
+observing that the names of the cluster machines are very structured, write a loop that
+populates ``c.SSHEngineSetLauncher.engines`` instead of all that repetition, and as a bonus
+put a couple of engines on the cluster head too:
 
-    ``ipcontroller_config.py`` is just Python, so one could get more funky and write
-    a loop that populates ``c.SSHEngineSetLauncher.engines`` instead of all that
-    repetition.
+.. code-block :: python
+
+    mcs = dict()
+    mcs['cl-0'] = { 'n': 2, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] }
+    for i in range(1, 4):
+        mcs['cl-{i}'.format(i=i)] = { 'n': 8, 'engine_cmd': [ 'python3', '-m', 'ipyparallel.engine' ] }
+    c.SSHEngineSetLauncher.engines = mcs
 
 We now have a profile set up to run our cluster, and we can just run it as normal:
 
-.. code-block:: sh
+.. code-block :: sh
 
     ipcluster start --profile=cluster
 
-The cluster should fire-up 8 engines on each of the four worker machines, plus a controller
-on ``cl-0`` where we run the command.
+The cluster should fire-up 8 engines on each of the 4 worker machines, plus 2 more engines
+and a controller on ``cl-0`` where we run the command.
 
 
 Accessing the cluster locally
 -----------------------------
 
-If you're running yyour experiments directly on ``cl-0``, you'll now be able to create
+If you're running your experiments directly on ``cl-0``, you'll now be able to create
 a :class:`ClusterLab` that accesses the cluster immediately:
 
-.. code-block:: python
+.. code-block :: python
 
     lab = epyc.ClusterLab(profile='cluster')
     print(lab.numberOfEngines())
 
-    32
+    34
 
-You now have a 32-node cluster ready for use.
+You now have a 34-node cluster ready for use.
 
 
 Accessing the cluster from another machine
@@ -189,37 +196,38 @@ Firstly, you may be lucky: the shared file system we've assumed for all the clus
 be shared by your workstation too. (This used to be a very common scenario, now sadly a lot
 less so.) In this case, you can work with the cluster just as though it were local.
 
-If this isn't the case, one more step is needed. We need to set up a profile on our workstation
-that "shadows" the one on the cluster. Then a con ection to this profile connects us to
-our cluster as we want.
+If this isn't the case, one more step is needed. The cluster controller generates an access
+token, a JSON file that contains all the information necessary to connect to it. We need
+to copy this to our client machine and use it to establish the connection to our cluster.
 
-We first create the "shadow" profile on our workstation:
+Our cluster on the cluster head ``cl-0`` is called ``cluster``. The access token is stored in a file
+called ``ipcontroller-client.json`` in the profile directory of this machine, and we need
+to copy it to our local machine:
 
-.. code-block:: sh
+.. code-block :: sh
 
-    ipython profile create --parallel shadow
-
-(I called the shadow profile ``shadow``: it might make more sense to use the same name as
-you used for the cluster profile -- ``cluster`` in this tutorial -- but for the sake of explanation
-I thought using a different name made things clearer.)
-
-Now we need to copy the connection credentials file from the ``cluster`` profile to the ``shadow`` profile.
-The following is a likely way to do this:
-
-.. code-block:: sh
-
-    cd ~/.ipython/profile_shadow/security
     scp cl-0:/home/yourself/.ipython/profile_cluster/security/ipcontroller-client.json .
 
-Now if we start a :class:`ClusterLab` pointing at the ``shadow`` profile, we should connect
-to the ``cluster`` profile: 
+.. note ::
 
-.. code-block:: python
+    It's possible that your IPython profiles will live somewhere else. You can
+    find the profile directory by running:
 
-    lab = epyc.ClusterLab(profile='shadow')
+    .. code-block :: sh
+
+        ipython locate profile cluster
+
+    on the machine running the controller (``cl-0`` in our case).
+
+Now if we start a :class:`ClusterLab` pointing at this access file we should establish
+the connection we need:
+
+.. code-block :: python
+
+    lab = epyc.ClusterLab(url_file='ipcontroller-client.json')
     print(lab.numberOfEngines())
 
-    32
+    34
 
 
 What can possibly go wrong?
@@ -228,10 +236,10 @@ What can possibly go wrong?
 An enormous amount! -- and unfortunately far too much to discuss in this tutorial, since most
 of what can go wrong will go wrong in ``ipyparallel``, not in ``epyc`` (I hope...). A lot
 of debugging can be done by `referring to the documentation <https://ipyparallel.readthedocs.io/en/latest/>`_,
-but that does unfortunately require a lot of patience. The results are worth it, though,
+but that does unfortunately require a lot of patience and quite a lot of knowledge of
+Unix system adminstration and hdistributed computing. If you have a local expert, asking/bribing them
+to help is almost certainly the best way to proceed. The results are worth it, though,
 as Python parallelism this way gives you access to far more computing power than can possibly
 be available on a single machine. Good luck!
-
-
 
 

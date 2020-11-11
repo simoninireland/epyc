@@ -51,7 +51,7 @@ would take only 100s -- a speedup of 64. In fact things are more complicated tha
 this *linear* speedup: but you can get very decent reductions in runtimes.
 
 There's a problem still remaining, though. If a program has been written for sequential execution -- and the vast
-majority of software is -- then it can't automatically make use of multiple cores. The code has to be **paralleelised**,
+majority of software is -- then it can't automatically make use of multiple cores. The code has to be **parallelised**,
 re-written to exploit parallelism, either by hand or by a clever compiler. Both these approaches have their own challenges.
 
 However, there's one class of program that is trivially easy to parallelise, and that's a program that consists of

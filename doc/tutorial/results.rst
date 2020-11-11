@@ -8,7 +8,7 @@ Accessing the results
 There are several ways to get at the results. The simplest is that we can simply get back
 a list of dicts:
 
-.. code-block:: python
+.. code-block :: python
 
     results = lab.results()
 
@@ -30,7 +30,7 @@ A list isn't a very convenient way to get at results, and analysing an experimen
 requires some more machinery. Many experiments will use ``pandas`` to perform analysis,
 and the lab can generate a ``pandas.DataFrame`` structure directly:
 
-.. code-block:: python
+.. code-block :: python
 
     import pandas
 
@@ -40,7 +40,7 @@ The dataframe contains all the information from the runs: each row holds a singl
 each result, parameters, and metadata element. We can now do anaysis in ``pandas`` as appropriate: for example we can
 use ``matplotlib`` to draw the results as a point cloud:
 
-.. code-block:: python
+.. code-block :: python
 
     import matplotlib
     from mpl_toolkits.mplot3d import Axes3D
@@ -61,7 +61,7 @@ use ``matplotlib`` to draw the results as a point cloud:
 
     plt.show()
 
-.. figure:: pointcloud.png
+.. figure :: pointcloud.png
     :alt: A plot of the results pointcloud
     :align: center
 
