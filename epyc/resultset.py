@@ -46,7 +46,7 @@ class ResultSet(object):
     formats like HDF5 (see :class:`HDF5LabNotebook`).  
 
     :param nb: notebook this result set is part of
-    :param title: (optional) title for the experiment (defaults to a datestamp)
+    :param description: (optional) description for the result set (defaults to a datestamp)
     '''
 
     # Pending results management
@@ -63,12 +63,12 @@ class ResultSet(object):
                                             }               #: Default type mapping from Python types to ``numpy`` ``dtypes``.
 
 
-    def __init__(self, title : str =None):
-        # generate a title from today's date is none is provided 
-        if title is None:
-            title = "{d}".format(d=datetime.now())
+    def __init__(self, description : str =None):
+        # generate a description from today's date is none is provided 
+        if description is None:
+            description = "Results collected on {d}".format(d=datetime.now())
 
-        self._title : str = title                              # title
+        self._description : str = description                  # free text description
         self._attributes : Dict[str, Any] = dict()             # attributes
         self._names : Dict[str, Optional[List[str]]] = dict()  # dict of names from the results dicts
         self._names[Experiment.METADATA] = None
@@ -78,18 +78,25 @@ class ResultSet(object):
         self._dtype : Optional[numpy.dtype] = None             # experimental results dtype
         self._pending : DataFrame = DataFrame()                # pending results
         self._pendingdtype : Optional[numpy.dtype] = None      # pending results dtype
-        self._dirty: bool  = False                             # (pending) results need persisting
+        self._dirty: bool = False                              # (pending) results need persisting
         self._typedirty: bool  = False                         # structure of results has changed
 
 
     # ---------- Metadata access ----------
+    
+    def description(self) -> str:
+        '''Return the free text description of the result set.
 
-    def title(self) -> str:
-        '''Return the title of the experiment corresponding to this result set.
+        :returns: the description'''
+        return self._description
 
-        :returns: the title'''
-        return self._title
-        
+    def setDescription(self, d : str):
+        '''Set the free text description of the result set.
+
+        :param d: the description'''
+        self._description = d
+        self.dirty()
+
     def names(self) -> Dict[str, Optional[List[str]]]:
         '''Return a dict of sets of names, corresponding to the entries in
         the results dicts for this result set. If only pending results have so far

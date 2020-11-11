@@ -275,14 +275,17 @@ class ClusterLab(Lab):
                     # resolve the result in the appropriate result set
                     nb.resolvePendingResult(r, j)
 
-                    # commit changes to the notebook
-                    nb.commit()
-
-                    # purge the completed job from the cluster
-                    self._client.purge_hub_results(j)
-                         
                     # record that we retrieved the results for the given job
                     n = n + 1
+
+                # commit changes to the notebook
+                nb.commit()
+
+                # purge the completed jobs from the cluster
+                # (only happens after they've been committed to storage in the notebook)
+                for j in status['completed']:
+                    self._client.purge_hub_results(j)        
+ 
         return n
 
 

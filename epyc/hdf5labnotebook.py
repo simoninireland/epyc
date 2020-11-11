@@ -25,7 +25,7 @@ from datetime import datetime
 from pandas import DataFrame   # type: ignore
 import dateutil.parser
 from contextlib import contextmanager
-from typing import ContextManager, Dict, List, Set, Type, Final, Any, cast
+from typing import Final
 
 class HDF5LabNotebook(LabNotebook):
     '''A lab notebook that persists itself to an HDF5 file.
@@ -45,6 +45,9 @@ class HDF5LabNotebook(LabNotebook):
     :param description: (optional) free text description of the notebook 
     '''
 
+    # Latest file format, defining how a notebook is laid out within the HDF5 file
+    Version : Final[str] = '1.0'                     #: File structure version number used by this notebook.
+
     # Tuning parameters
     DefaultDatasetSize : int = 10                    #: Default initial size for a new HDF5 dataset.
 
@@ -52,14 +55,13 @@ class HDF5LabNotebook(LabNotebook):
     RESULTS_DATASET : Final[str] = 'results'         #: Name of results dataset within the HDF5 group for a result set.
     PENDINGRESULTS_DATASET : Final[str] = 'pending'  #: Name of pending results dataset within the HDF5 group for a result set.
 
-    # Metadata for the datasets
-
     # Metadata for the notebook
-    DESCRIPTION : Final[str] = 'description'         #: Attribute holding the notebook description.
-    CURRENT : Final[str] = 'current'                 #: Attribute holding the tag of the current result set.
+    VERSION : Final[str] = 'version'                 #: Attribute holding the version of file structure used.
+    DESCRIPTION : Final[str] = 'description'         #: Attribute holding the notebook and result set descriptions.
+    CURRENT : Final[str] = 'current-resultset'       #: Attribute holding the tag of the current result set.
 
 
-    def __init__(self, name : str, create : bool =False, description : str = ''):
+    def __init__(self, name : str, create : bool =False, description : str =None):
         # create an empty file structure
         self._file : h5py.File = None          # file handle for underlying HDF5 file
         self._group : h5py.Group = None        # group associated with the current result set
@@ -67,13 +69,13 @@ class HDF5LabNotebook(LabNotebook):
         # check for file needing creation
         created = create or not os.path.isfile(name)
         if created:
-            self._create(name, description)                
+            self._create(name)                
 
         # perform the normal initialisation
         super(HDF5LabNotebook, self).__init__(name, description)
 
-        # load notebook from file if it wasn't newly created
         if not created:
+            # load notebook from file if it wasn't newly created
             self._open()
             self._load()
             self._close()
@@ -96,7 +98,7 @@ class HDF5LabNotebook(LabNotebook):
 
     # ---------- Managing result sets ----------
 
-    def addResultSet(self, tag : str, title : str =None) -> str:
+    def addResultSet(self, tag : str, title : str =None) -> ResultSet:
         '''Add the necessary structure to the underlying file when creating the
         new result set. This ensures that, even if no results are added,
         there will be structure in the persistent store to indicate that the result
@@ -104,28 +106,29 @@ class HDF5LabNotebook(LabNotebook):
 
         :param tag: the tag
         :param title: (optional) the title
-        :returns: the tag'''
-        super(HDF5LabNotebook, self).addResultSet(tag, title)
+        :returns: the result set'''
+        rs = super(HDF5LabNotebook, self).addResultSet(tag, title)
 
         # add the appropriate group to the HDF5 file
         self._open()
         if tag not in self._file:
             self._file.create_group(tag)
 
-        return tag
+        # mark the result set as being dirty to force a save
+        rs.dirty()
+
+        return rs
 
 
     # ---------- Protocol for managing the HDF5 file----------
     
-    def _create(self, name : str, description : str):
+    def _create(self, name : str):
         '''Create the HDF5 file to back this notebook.
         
         :param name: the filename
         :param description: the free text description of this notebook'''
         self._file = h5py.File(name, 'w')
-        self._file.attrs[self.DESCRIPTION] = description
-        self._description = description
-        self._file.attrs[self.CURRENT] = self.DEFAULT_RESULTSET
+        self._file.attrs[self.VERSION] = self.Version
         #self._current = self.resultSet(self.DEFAULT_RESULTSET)
 
     def _open(self):
@@ -147,10 +150,9 @@ class HDF5LabNotebook(LabNotebook):
         names = rs.names()
         g = self._file[tag]
 
-        # if the result set is dirty, delete any attributes
-        if rs.isDirty():
-            for k in g.attrs.keys():
-                del g.attrs[k]
+        # delete any attributes
+        for k in g.attrs.keys():
+            del g.attrs[k]
 
         # if the result set's type has changed, delete any existing datasets
         if rs.isTypeChanged():
@@ -158,7 +160,9 @@ class HDF5LabNotebook(LabNotebook):
                 del g[self.RESULTS_DATASET]
             if self.PENDINGRESULTS_DATASET in g:
                 del g[self.PENDINGRESULTS_DATASET]
-            rs.typechanged(False)        
+
+        # write out the description
+        g.attrs.create(self.DESCRIPTION, rs.description(), (1,), h5py.string_dtype())
 
         # write out all attributes (as strings)
         for k in rs.keys():
@@ -250,6 +254,7 @@ class HDF5LabNotebook(LabNotebook):
 
         # mark the result set as now clean
         rs.dirty(False)
+        rs.typechanged(False)
 
     def _read(self, tag : str):
         '''Read the given result set into memory.
@@ -259,9 +264,13 @@ class HDF5LabNotebook(LabNotebook):
         names = dict()
         g = self._file[tag]
 
-        # read the names of all the fields and all the attributes
+        # read the attributes
         for k in g.attrs.keys():
-            rs[k] = g.attrs[k]
+            if k == self.DESCRIPTION:
+                # description held separately from attributes
+                rs.setDescription(g.attrs[self.DESCRIPTION])
+            else:
+                rs[k] = g.attrs[k]
   
         if self.RESULTS_DATASET in g:   
             # ---- PART 1: read structure ---
@@ -328,10 +337,18 @@ class HDF5LabNotebook(LabNotebook):
 
         # write out the housekeeping information for the notebook
         meta = self._file.attrs
+        self._file.attrs[self.VERSION] = self.Version
+        self._file.attrs[self.DESCRIPTION] = self.description()
         meta[self.CURRENT] = self.resultSetTag(self.current())
 
     def _load(self):
         '''Load the notebook and all result sets.'''
+
+        # version check
+        v = self._file.attrs[self.VERSION]
+        if v != self.Version:
+            # at present can't handle different file structure versions
+            raise Exception('Expected version {v} file structure, got version {v2}'.format(v=self.Version, v2=v))
 
         # read the tags of all result sets and create empty sets for them
         tags = list(self._file.keys())
@@ -355,7 +372,7 @@ class HDF5LabNotebook(LabNotebook):
     def _HDF5simpledtype(self, dtype : numpy.dtype) -> numpy.dtype:
         '''Patch a simple ``numpy`` dtype to the formats available in HDF5.
 
-        :param dtype: the ``numpy ``dtype
+        :param dtype: the ``numpy`` dtype
         :returns: the HDF5 dtype'''
         if dtype.kind in ['S', 'U']:
             # h5py can't handle Python strings but has its own dtype for them

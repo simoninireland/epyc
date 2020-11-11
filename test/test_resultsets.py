@@ -56,11 +56,11 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.RESULTS]['first'] = 1
 
     def testTitle(self):
-        '''Test we can set titles, and get default ones.'''
+        '''Test we can set descriptions, and get default ones.'''
         rs1 = ResultSet('My results')
-        self.assertEqual(rs1.title(), 'My results')
+        self.assertEqual(rs1.description(), 'My results')
         rs2 = ResultSet()
-        self.assertNotEquals(rs2.title(), None)
+        self.assertIsNotNone(rs2.description())
 
 
     # ---------- Type inference ----------
@@ -475,6 +475,30 @@ class ResultSetTests(unittest.TestCase):
         res = ress[0]
         self.assertIn(Experiment.RESULTS, res)
         self.assertDictEqual(res[Experiment.RESULTS], dict())        
+
+    def testInferList(self):
+        '''Test we can infer a list type for a result.'''
+
+        # add a result with a list
+        self._rc[Experiment.PARAMETERS]['singleton'] = 1
+        self._rc[Experiment.RESULTS]['list'] = [ 1, 2, 3 ]
+        self._rs.addSingleResult(self._rc)
+        
+        # add another with the same shape1
+        self._rc[Experiment.PARAMETERS]['singleton'] = 2
+        self._rc[Experiment.RESULTS]['list'] = [ 4, 5, 6 ]
+        self._rs.addSingleResult(self._rc)
+
+        # add another with a different shape
+        self._rc[Experiment.PARAMETERS]['singleton'] = 3
+        self._rc[Experiment.RESULTS]['list'] = [ 14, 15, 16, 17, 18 ]
+        self._rs.addSingleResult(self._rc)
+
+        # check the values have the right shapes
+        params = dict()
+        params['singleton'] = 1
+        rc = self._rs.resultsFor(params)[0]
+        self.assertCountEqual(rc[Experiment.RESULTS]['list'], [ 1, 2, 3 ])
 
 
     # ---------- Pending results ----------

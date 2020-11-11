@@ -225,19 +225,21 @@ class Lab(object):
         self.updateResults()
         return self._notebook.results()
 
-    def ready(self) -> bool:
-        """Test whether all the results are ready in the current result
+    def ready(self, tag : str =None) -> bool:
+        """Test whether all the results are ready in the tagged result
         set -- that is, none are pending.
 
+        :param tag: (optional) the result set to check (default is the current result set)
         :returns: True if the results are in"""
         self.updateResults()
-        return self._notebook.ready()
+        return self._notebook.ready(tag)
 
-    def readyFraction(self) -> float:
+    def readyFraction(self, tag : str =None) -> float:
         '''Return the fraction of results available (not pending) in the
-        current result set after first updating the results.
+        tagged result set after first updating the results.
 
+        :param tag: (optional) the result set to check (default is the current result set)
         :returns: the ready fraction'''
         self.updateResults()
-        return self._notebook.readyFraction()
+        return self._notebook.readyFraction(tag)
 

@@ -1,16 +1,27 @@
 # Tests of summarising experiments combinator
 #
-# Copyright (C) 2016--2018 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
-# Licensed under the GNU General Public Licence v.2.0
+# This file is part of epyc, experiment management in Python.
 #
+# epyc is free software: you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation, either version 3 of the License, or
+# (at your option) any later version.
+#
+# epyc is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
+
 
 from epyc import *
 
-import six
 import unittest
 import numpy
-import numpy.random
 import os
 from tempfile import NamedTemporaryFile
 
@@ -25,10 +36,11 @@ class SampleExperiment2(Experiment):
 
     def __init__( self ):
         super(SampleExperiment2, self).__init__()
+        self._rng = numpy.random.default_rng()
         self._allvalues = []
     
     def do( self, params ):
-        v = numpy.random.random()
+        v = self._rng.random()
         self._allvalues.append(v)
         return dict(result = v)
 
@@ -42,7 +54,7 @@ class SampleExperiment3(SampleExperiment2):
         self._ran = 0
     
     def do( self, params ):
-        v = numpy.random.random()
+        v = self._rng.random()
         if v < 0.5:
             # experiment succeeds
             self._allvalues.append(v)
@@ -70,10 +82,11 @@ class SampleExperiment5(Experiment):
 
     def __init__( self ):
         super(SampleExperiment5, self).__init__()
+        self._rng = numpy.random.default_rng()
         self._values = []
 
     def do( self, params ):
-        v = numpy.random.random()
+        v = self._rng.random()
         self._values.append(v)
         return dict(result = v)
     
@@ -155,11 +168,11 @@ class SummaryExperimentTests(unittest.TestCase):
         res = (self._lab.results())[0]
 
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
-        six.assertCountEqual(self, res[Experiment.RESULTS].keys(), [ 'dummy_mean',
-                                                                     'dummy_median',
-                                                                     'dummy_variance',
-                                                                     'dummy_min',
-                                                                     'dummy_max' ])
+        self.assertCountEqual(res[Experiment.RESULTS].keys(), [ 'dummy_mean',
+                                                                'dummy_median',
+                                                                'dummy_variance',
+                                                                'dummy_min',
+                                                                'dummy_max' ])
         self.assertEqual(res[Experiment.RESULTS]['dummy_mean'], 1)
         self.assertEqual(res[Experiment.RESULTS]['dummy_median'], 1)
         self.assertEqual(res[Experiment.RESULTS]['dummy_variance'], 0)

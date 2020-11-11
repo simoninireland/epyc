@@ -37,21 +37,28 @@ class SampleExperiment1(Experiment):
     def do( self, param ):
         raise Exception('A (deliberate) failure')
 
+class SampleExperiment2(Experiment):
+    '''An experiment whose results contain a list.'''
     
+    def do( self, param ):
+        k = param['k']
+        return dict(list=[k] * k)
+
+  
 class HDF5LabNotebookTests(unittest.TestCase):
 
     def setUp( self ):
         '''Set up with a temporary file.'''
-        #tf = NamedTemporaryFile()
-        #tf.close()
-        #self._fn = tf.name
-        self._fn = 'test.h5'
+        tf = NamedTemporaryFile()
+        tf.close()
+        self._fn = tf.name
+        #self._fn = 'test.h5'
 
     def tearDown( self ):
         '''Delete the temporary file.'''
         try:
-            #os.remove(self._fn)
-            pass
+            os.remove(self._fn)
+            #pass
         except OSError:
             pass
         
@@ -368,6 +375,35 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb = HDF5LabNotebook(self._fn)
         self.assertEqual(nb.currentTag(), LabNotebook.DEFAULT_RESULTSET)
        
+    def testInferList(self):
+        '''Test we can add results that contain lists.'''
+        nb = HDF5LabNotebook(self._fn, create=True)
+
+        # add a result with a list
+        params = dict()
+        params['k'] = 3
+        rc = SampleExperiment2().set(params).run()
+        nb.addResult(rc)
+        
+        # add another with the same shape1
+        params['k'] = 3
+        rc = SampleExperiment2().set(params).run()
+        nb.addResult(rc)
+        nb.commit()
+
+        # check the values have the right shapes
+        nb = HDF5LabNotebook(self._fn)
+        params['k'] = 3
+        rc = nb.resultsFor(params)[0]
+        self.assertCountEqual(rc[Experiment.RESULTS]['list'], [ 3, 3, 3 ])
+
+        # check we can't add another with a different shape
+        with self.assertRaises(Exception):
+            params['k'] = 5
+            rc = SampleExperiment2().set(params).run()
+            nb.addResult(rc)
+            nb.commit()
+
     def testContextManager(self):
         '''Test that the conext manager works as inteneded.'''
         nb = HDF5LabNotebook(self._fn, create=True) 
@@ -412,10 +448,9 @@ class HDF5LabNotebookTests(unittest.TestCase):
         params['k'] = 4
         self.assertEqual(len(nb.dataframeFor(params)), 0)
 
-
     def testAttributes(self):
         '''Test we can read and write attributes.'''
-        nb = HDF5LabNotebook(self._fn, create=True)
+        nb = HDF5LabNotebook(self._fn, description='A test notebook', create=True)
         
         # attributes of a result set but no results dataset
         rs = nb.current()
@@ -427,8 +462,11 @@ class HDF5LabNotebookTests(unittest.TestCase):
         self.assertEqual(rs['number1'], '1')
         self.assertEqual(rs['number2'], '2')    # all attributes stored as strings at present
 
+        # check we pulled the description as well
+        self.assertEqual(nb.description(), 'A test notebook')
+
         # add a new result set and some results, check attributes
-        nb.addResultSet('new')
+        nb.addResultSet('new', 'Another result set')
         rs = nb.current()
         rs['number1'] = '4'
         rs['number3'] = '3'
@@ -439,6 +477,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb.commit()
         nb = HDF5LabNotebook(self._fn)
         rs = nb.current()
+        self.assertEqual(rs.description(), 'Another result set')
         self.assertEqual(len(rs), 1)
         self.assertEqual(rs['number3'], '3')
         self.assertEqual(rs['number1'], '4')
@@ -453,10 +492,45 @@ class HDF5LabNotebookTests(unittest.TestCase):
         rs = nb.current()
         self.assertCountEqual(rs.keys(), ['number2'])
 
+    def testChangeAttributes(self):
+        '''Test we can change attributes, descriptions, etc.'''
+        with HDF5LabNotebook(self._fn, description='A test notebook', create=True).open() as nb:
+            pass
 
+        # check the description matches
+        with HDF5LabNotebook(self._fn).open() as nb:
+            self.assertEqual(nb.description(), 'A test notebook')
 
+            # check we can change the description
+            nb.setDescription('A new description')
+        with HDF5LabNotebook(self._fn).open() as nb:
+            self.assertEqual(nb.description(), 'A new description')
 
+        # check we can set and change a result set description
+        with HDF5LabNotebook(self._fn).open() as nb:
+            nb.addResultSet('second', 'A result set')
+        with HDF5LabNotebook(self._fn).open() as nb:
+            rs = nb.current()
+            self.assertEqual(rs.description(), 'A result set')
+            rs.setDescription('Changed')
+        with HDF5LabNotebook(self._fn).open() as nb:
+            self.assertEqual(rs.description(), 'Changed')
 
+        # check we can set, change, and delete result set attributes
+        with HDF5LabNotebook(self._fn).open() as nb:
+            rs = nb.current()
+            rs['name'] = 'an attribute'
+            rs['date'] = 'today'
+        with HDF5LabNotebook(self._fn).open() as nb:
+            rs = nb.current()
+            self.assertEqual(rs['name'], 'an attribute')
+            self.assertEqual(rs['date'], 'today')
+            rs['date'] = 'tomorrow'
+            del rs['name']
+        with HDF5LabNotebook(self._fn).open() as nb:
+            rs = nb.current()
+            self.assertCountEqual(rs.keys(), [ 'date' ])
+            self.assertEqual(rs['date'], 'tomorrow')
 
 if __name__ == '__main__':
     unittest.main()

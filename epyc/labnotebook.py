@@ -24,7 +24,7 @@ from typing import List, Set, Dict, Any, Optional, Final
                     
 class LabNotebook(object):
     '''A "laboratory notebook" collecting together the results obtained from
-    different sets of experiments. A notebook is composed of :class:`ResultSet`s,
+    different sets of experiments. A notebook is composed of :class:`ResultSet` objects,
     which are homogeneous collections of results of experiments performed at different values
     for the same set of parameters. Each result set is tagged for access,
     with the notebook using one result set as "current" at any time.
@@ -34,12 +34,14 @@ class LabNotebook(object):
     there are multiple sets of experiments running simultaneously.
 
     :param name: (optional) the notebook name (may be meaningful for sub-classes)
-    :param description: (optional)a free text description'''
+    :param description: (optional) a free text description'''
  
     # Defaults
     DEFAULT_RESULTSET : Final[str] = 'epyc.resultset.default'  #: Tag for the default result set.
 
-    def __init__(self, name : str =None, description : str =''):
+    def __init__(self, name : str =None, description : str =None):
+        if description is None:
+            description = 'A notebook' 
         self._name : Optional[str] = name                    # name
         self._description : str = description                # description
         self._resultSets: Dict[str, ResultSet] = dict()      # tag to result set
@@ -66,6 +68,12 @@ class LabNotebook(object):
         :returns: the notebook description"""
         return self._description
 
+    def setDescription(self, d : str):
+        '''Set the free text description of the notebook.
+
+        :param d: the description'''
+        self._description = d
+
 
     # ---------- Persistence ----------
 
@@ -84,18 +92,18 @@ class LabNotebook(object):
 
     # ---------- Managing results sets ----------
 
-    def addResultSet(self, tag : str, title : str =None) -> str:
+    def addResultSet(self, tag : str, description : str =None) -> ResultSet:
         '''Start a new experiment. This creates a new result set to hold
         the results, which will receive any results and notes.
 
         :param tag: unique tag for this result set
-        :param: (optional) title
-        :returns: the tag for the result set'''
-        rs = ResultSet(title)
+        :param: (optional) free text description of the result set
+        :returns: the result set'''
+        rs = ResultSet(description)
         self._resultSets[tag] = rs
         self._resultSetTags[rs] = tag
         self._current = rs
-        return tag
+        return self._current
 
     def resultSets(self) -> List[str]:
         '''Return the tags for all the result sets in this notebook.
@@ -209,7 +217,7 @@ class LabNotebook(object):
 
         # mark the job as resolved with the notebook
         del self._pending[jobid] 
-
+            
     def ready(self, tag : str =None) -> bool:
         '''Test whether the result set has pending results. 
 
