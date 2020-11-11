@@ -14,4 +14,5 @@ This section is a work-in-progress cookbook of using ``epyc`` in practice.
 
     cookbook/epyc-venv.rst
     cookbook/disconnected-usage.rst
+    cookbook/metadata.rst
 
