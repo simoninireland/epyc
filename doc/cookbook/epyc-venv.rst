@@ -1,6 +1,6 @@
 .. _epyc-venv:
 
-.. currentmodule:: epyc
+.. currentmodule :: epyc
 
 Reproducing experiments reliably
 --------------------------------
@@ -11,7 +11,7 @@ worried this might affect your code, either by breaking it or by changing its re
 **Solution**: This is a real problem with computational science. Fortunately it's fairly easy to address, at least
 at a simple level.
 
-Pythonincludes a feature called **virtual environments** or **venvs**. A venv is an installation of Python and its libraries
+Python includes a feature called **virtual environments** or **venvs**. A venv is an installation of Python and its libraries
 that's closed-off from any other installations you may have on your machine. Essentially it takes the global
 installation of Python and  throws away anything that's not part of the core distribution. You can "enter" the
 venv and install exactly those packages you want -- and *only* those packages, and with specific version numbers
@@ -21,24 +21,16 @@ bversion numbers installed, and then install this exact environment again later 
 machine.
 
 Let's assume we want to *create* a venv that we've imaginatively named ``venv``. (You can pick any name you like.)
-Creating this venv initially depends on whether you're running Python 2.7 or Python 3.
+You create venvs from the command line:
 
-For Python 2.7 you use the ``virtualenv`` tool from the command line:
-
-.. code-block:: sh
-
-    virtualenv venv
-
-For Python 3 you use:
-
-.. code-block:: sh
+.. code-block :: sh
 
     python3 -m venv ./venv
 
 We next need to *activate* the environment, making it the "current" one that Python will use. This is again done from the
 command line:
 
-.. code-block:: sh
+.. code-block :: sh
 
     . venv/bin/activate
 
@@ -47,11 +39,11 @@ Python interpreter or any of the related tools, it runs the ones in the venv and
 
 We next need to *populate* the venv, that is, add the packages we want. We do this using ``pip`` as normal:
 
-.. code-block:: sh
+.. code-block :: sh
 
-    pip install ipython ipyparallel
+    pip3 install ipython ipyparallel
 
-.. note::
+.. note ::
 
     In some installations, ``pip`` always refers to the ``pip`` tool of Python 2.7, while Python 3's
     tool is called ``pip3``. It never hurts when unsure to run ``pip3`` explicitly if you're working with
@@ -69,7 +61,7 @@ other) venv, it will run in the packages installed globally: *what happens in th
 Suppose we now want to be able to reproduce this venv for later use. We can use ``pip`` to *freeze* the state of the
 venv for us:
 
-.. code-block:: sh
+.. code-block :: sh
 
     pip freeze >requirements.txt
 
@@ -77,16 +69,16 @@ This generates a ``requirements.txt`` file including all the packages and their 
 command from the shell in which we activated the venv. If we later want to reproduce this environment, so we're sure of
 the package versions our code will use, we can create another venv that uses this file to reproduce the frozen venv:
 
-.. code-block:: shell
+.. code-block :: sh
 
-    virtualenv venv2
+    python3 -m venv ./venv2
     . venv2/bin/activate
     pip install -r requirements.txt
 
-(That was the Python 2,7 commands, of course.) This new venv now has exactly the structure of the old one, meaning
+This new venv now has exactly the structure of the old one, meaning
 we can move the computational environment across machines.
 
-.. warning::
+.. warning ::
 
     This sometimes doesn't work as well as it might: Python's requirements files aren't very well structured,
     not all packages (or all package versions) are available on all operating systems, Python on OS X has some
