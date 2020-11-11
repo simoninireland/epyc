@@ -52,14 +52,13 @@ Current features
 * Start and walk away from remote simulations, collect results as they become available
 
 
-.. toctree::
+.. toctree ::
    :hidden:
 
    install
    tutorial
    reference
    cookbook
-   epycluster
    gotchas
    glossary
 
