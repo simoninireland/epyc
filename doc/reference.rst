@@ -3,25 +3,40 @@
 API reference
 =============
 
-Core classes and concepts
--------------------------
+Core classes
+------------
 
-.. toctree::
+.. toctree ::
    :maxdepth: 2
 
    experiment
+   resultset
    labnotebook
    lab
-   glossary
+
+Persistent storage
+------------------
+
+.. toctree ::
+   :maxdepth: 2
+
+   jsonlabnotebook
+   hdf5labnotebook
 
 Extended functionality
 ----------------------
 
-.. toctree::
+.. toctree ::
    :maxdepth: 2
 
    experimentcombinator
    repeatedexperiment
    summaryexperiment
-   jsonlabnotebook
+
+Parallel experiments
+--------------------
+
+.. toctree ::
+   :maxdepth: 2
+
    clusterlab
