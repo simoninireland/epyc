@@ -74,11 +74,13 @@ directory-like structure. ``epyc`` structures its storage by using a group for e
 result set, held within the "root" group of the container. The root group has
 attributes that hold "housekeeping" information about the notebook.
 
+.. autoattribute :: HDF5LabNotebook.VERSION
+
 .. autoattribute :: HDF5LabNotebook.DESCRIPTION
 
 .. autoattribute :: HDF5LabNotebook.CURRENT
 
-Any attributes of the notebook are written as top-level attributes in this grup.
+Any attributes of the notebook are also written as top-level attributes in this grup.
 Then, for each :class:`ResultSet` in the notebook, there is a group whose name
 corresponds to the result set's tag. This group contains any attributes of the
 result set, always including three attributes storing the metadata, parameter,
@@ -102,7 +104,8 @@ extraneous datasets hanging around.
 
 So an ``epyc`` notebook containing a result set called "my_data" will give
 rise to an HDF5 file containing a group called "my_data", within which
-will be a dataset named by :attr:`HDF5LabNotebook.RESULTS_DATASET`. There will
+will be a dataset named by :attr:`HDF5LabNotebook.RESULTS_DATASET` and possibly
+another dataset named by :attr:`HDF5LabNotebook.PENDINGRESULTS_DATASET`. There will
 also be a group named by :attr:`LabNotebook.DEFAULT_RESULTSET` which is where
 results are put "by default" (*i.e.*, if you don't define explicit result sets).
 

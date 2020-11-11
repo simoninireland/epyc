@@ -1,9 +1,9 @@
 :class:`ClusterLab`: Managing experiments in parallel
 =====================================================
 
-.. currentmodule:: epyc
+.. currentmodule :: epyc
    
-.. autoclass:: ClusterLab
+.. autoclass :: ClusterLab
 
 
 Lab creation and management
@@ -22,13 +22,20 @@ automatically, and try to close the connection where possible to avoid
 occupying network resources. Closing the connection explicitly will
 cause no problems, as it re-opens automatically when needed.
 
-.. automethod:: ClusterLab.__init__
+.. automethod :: ClusterLab.__init__
 
-.. automethod:: ClusterLab.open
+.. automethod :: ClusterLab.open
 		
-.. automethod:: ClusterLab.close
+.. automethod :: ClusterLab.close
 
-		
+Ina  very s,mall number of circumstances it may be necessary to take control
+of the basioc connectio functionality, which is provided by two other helped methods.
+
+.. automethod :: ClusterLab.connect
+
+.. automethod :: ClusterLab.activate
+
+
 Interacting with the cluster
 ----------------------------
 
@@ -40,13 +47,13 @@ to be imported into the namespace of the cluster's engines. This needs
 to be done before running experiments, to make all the code used by an
 experiment available in the cluster.
 
-.. automethod:: ClusterLab.numberOfEngines
+.. automethod :: ClusterLab.numberOfEngines
 		
-.. automethod:: ClusterLab.engines
+.. automethod :: ClusterLab.engines
 
-.. automethod:: ClusterLab.sync_imports
+.. automethod :: ClusterLab.sync_imports
 
-.. automethod:: ClusterLab.use_dill
+.. automethod :: ClusterLab.use_dill
 
 		
 Running experiments
@@ -66,33 +73,26 @@ whether *all* results are ready. For cases where it is needed (which
 will hopefully be few and far between), :meth:`ClusterLab.wait` blocks
 until all results are ready.  
 
-.. automethod:: ClusterLab.runExperiment
+.. automethod :: ClusterLab.runExperiment
 
-.. automethod:: ClusterLab.readyFraction
+.. automethod :: ClusterLab.readyFraction
 
-.. automethod:: ClusterLab.ready
+.. automethod :: ClusterLab.ready
 
-.. automethod:: ClusterLab.wait
-
+.. automethod :: ClusterLab.wait
 
 
 Results management
 ------------------
 
+A cluster lab is performing computation remotely to itself, typically on another machine
+or machines. This means that pending results may become ready spontaneously (from the
+lab's perspective.) Most of the operations that access results first synchronise the 
+lab's notebook with the cluster, retrieving any results that have been resolved since
+the previous check. (Checks can also be carried out directly.)
 
-.. automethod:: ClusterLab.updateResults
+.. automethod :: ClusterLab.updateResults
 		
-.. automethod:: ClusterLab.numberOfResults
-
-.. automethod:: ClusterLab.numberOfPendingResults
-
-.. automethod:: ClusterLab.pendingResults
-		
-.. automethod:: ClusterLab.pendingResultsFor
-
-.. automethod:: ClusterLab.cancelPendingResultsFor
-		
-.. automethod:: ClusterLab.cancelAllPendingResults
 		
 
 

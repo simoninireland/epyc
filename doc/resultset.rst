@@ -7,19 +7,25 @@
 
 .. important ::
 
-    In general client code will never interact with result sets directly: all
-    interactions should go through a :class:`LabNotebook` to allow for management of
-    persistence and so on.
+    Most interactions with results should go through a :class:`LabNotebook` to allow
+    for management of persistence and so on.
 
 
 Metadata access
 ---------------
 
-The result set gives access to its title and the names of the various elements it
+The result set gives access to its description and the names of the various elements it
 stores. These names may change over time, if for example you add a results dict
 that has extra results than those you added earlier.
 
-.. automethod :: ResultSet.title
+.. automethod :: ResultSet.description
+
+.. automethod :: ResultSet.setDescription
+
+.. important ::
+
+    You can change the description of a result set after it's been created -- but you
+    can't change any results that've been added to it.
 
 .. automethod :: ResultSet.names
 
@@ -27,7 +33,7 @@ that has extra results than those you added earlier.
 
 .. automethod :: ResultSet.parameterNames
 
-.. automethod :: ResultSet.namesNames
+.. automethod :: ResultSet.resultNames
 
 The result set can also have attributes set, which can be accessed either
 using methods or by treating the result set as a dict.
@@ -45,6 +51,9 @@ using methods or by treating the result set as a dict.
 .. automethod :: ResultSet.__getitem__
 
 .. automethod :: ResultSet.__delitem__
+
+There are various uses for these attributes: see :ref:`resultset-metadata`
+for one common use case.
 
 .. important ::
 
@@ -163,7 +172,9 @@ The default type mapping maps each Python type we expect to see to a correspondi
 The type mapping is used to generate a dtype for each Python type, but preserving
 any ``numpy`` types used.
 
-.. automethod :: ResultSet.typeToDType
+.. automethod :: ResultSet.typeToDtype
+
+.. automethod :: ResultSet.valueToDtype
 
 The result set infers the ``numpy``-level types automatically as results (and pending
 results) are added.

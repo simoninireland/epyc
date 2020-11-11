@@ -6,12 +6,14 @@
 .. autoclass :: LabNotebook
 
 
-Metadata accessed
------------------
+Metadata access
+---------------
 
 .. automethod :: LabNotebook.name
    
 .. automethod : LabNotebook.description
+
+.. automethod : LabNotebook.setDescription
 
 
 Persistence
@@ -67,51 +69,43 @@ corresponding to a particular parameter point.
 
 .. automethod :: LabNotebook.dataframeFor
 
-The notebook also exports an iterator innterface.
-
-.. automethod :: LabNotebook.__iter__
-
-.. note ::
-
-    The iterator only iterates through results, not pending results.
-
 
 Pending results
 ---------------
 
 Pending results allow a notebook to keep track of on-going
 experiments, and are used by some :class:`Lab` sub-classes (for
-example :class:`CLusterLab`) to manage submissions to a compute
+example :class:`ClusterLab`) to manage submissions to a compute
 cluster. A pending result is identified by some unique identifier,
 typically a job id. Pending results can be resolved (have their
-results filled in) using :meth:`addResult`, or can be cancelled, which
-removes the record from the notebook from *not* from the lab managing
+results filled in) using :meth:`LabNotebook.addResult`, or can be cancelled, which
+removes the record from the notebook but *not* from the lab managing
 the underlying job.
 
 Since a notebook can have multiple result sets, the pending results
 interface is split into three parts. Firstly there are the operations
 on the currently-selected result set.
 
-.. automethod: : LabNotebook.addPendingResult
+.. automethod :: LabNotebook.addPendingResult
 
-.. automethod: : LabNotebook.numberOfPendingResults
+.. automethod :: LabNotebook.numberOfPendingResults
 
-.. automethod: : LabNotebook.pendingResults
+.. automethod :: LabNotebook.pendingResults
 
 Secondly, there are operations that work on any result set. You
 can resolve or cancel a pending result simply by knowing its job id and
 regardless of which is the currently selected result set. 
 
-.. automethod: : LabNotebook.resolvePendingResult
+.. automethod :: LabNotebook.resolvePendingResult
 
-.. automethod: : LabNotebook.cancelPendingResult
+.. automethod :: LabNotebook.cancelPendingResult
 
 You can also check whether there are pending results remaining in any result set,
 which defaults to the surrently selected result set.
 
-.. automethod: : LabNotebook.ready
+.. automethod :: LabNotebook.ready
 
-.. automethod: : LabNotebook.readyFraction
+.. automethod :: LabNotebook.readyFraction
 
 Thirdly, there are operations that work on all result sets.
 
@@ -119,4 +113,3 @@ Thirdly, there are operations that work on all result sets.
 
 .. automethod :: LabNotebook.numberOfAllPendingResults
 
-.. automethod :: LabNotebook.stop

@@ -55,6 +55,8 @@ parameter space.
 		
 .. automethod:: Lab.ready
 		
+.. automethod:: Lab.readyFraction
+
 
 Accessing results
 -----------------
