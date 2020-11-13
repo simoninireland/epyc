@@ -258,23 +258,6 @@ class SummaryExperimentTests(unittest.TestCase):
         
         self.assertFalse(res[Experiment.METADATA][Experiment.STATUS])
                          
-    def testUnderlyingExceptions( self ):
-        '''Test we record the underlying exceptions.'''
-        N = 10
-        
-        self._lab['x'] = [ 5 ]
-        
-        e = SampleExperiment3()
-        es = SummaryExperiment(RepeatedExperiment(e, N))
-
-        self._lab.runExperiment(es)
-        self.assertTrue(es.success())
-        res = (self._lab.results())[0]
-        
-        self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
-        self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], N)
-        self.assertEqual(len(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_EXCEPTIONS]), N - e.ran())
-
     def testNoPoint( self ):
         '''Test we do nothing if we have an empty parameter space.'''
         e = SampleExperiment5()

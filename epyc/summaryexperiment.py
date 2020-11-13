@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2016--2018 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -16,8 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import *
-import numpy
+from epyc import ExperimentCombinator, Experiment, ResultsDict
+import numpy                     # type: ignore
+import sys
+from typing import List, Dict, Any
 
 
 class SummaryExperiment(ExperimentCombinator):
@@ -36,25 +38,25 @@ class SummaryExperiment(ExperimentCombinator):
     The summarisation obviously only works on result keys coming from the
     underlying experiments that are numeric. The default behaviour is to try to
     summarise all keys: you can restrict this by providing a list of keys to the
-    constructor in the summarised_results keyword argument.
+    constructor in the summarised_results keyword argument. Trying to summarise
+    non-numeric results will be ignored (with a warining).
 
     The summary calculations only include those experimental runs that succeeded,
     that is that have their status set to True. Failed runs are ignored."""
 
     # Additional metadata
-    UNDERLYING_RESULTS = 'repetitions'                         #: Metadata relement for the number of results that were obtained
-    UNDERLYING_SUCCESSFUL_RESULTS = 'successful_repetitions'   #: Metadata elements for the number of results that were summarised
-    UNDERLYING_EXCEPTIONS = 'underlying_exceptions'            #: Metadata elements for any exceptions raised
+    UNDERLYING_RESULTS = 'epyc.summaryexperiment.repetitions'                          #: Metadata element for the number of results that were obtained.
+    UNDERLYING_SUCCESSFUL_RESULTS = 'epyc.summaryexperiment.successful_repetitions'    #: Metadata elements for the number of results that were summarised.
 
     # Prefix and suffix tags attached to summarised result and metadata values
-    MEAN_SUFFIX = '_mean'              #: Suffix for the mean of the underlying values
-    MEDIAN_SUFFIX = '_median'          #: Suffix for the median of the underlying values
-    VARIANCE_SUFFIX = '_variance'      #: Suffix for the variance of the underlying values
-    MIN_SUFFIX = '_min'                #: Suffix for the minimum of the underlying values
-    MAX_SUFFIX = '_max'                #: Suffix for the maximum of the underlying values
+    MEAN_SUFFIX = '_mean'              #: Suffix for the mean of the underlying values.
+    MEDIAN_SUFFIX = '_median'          #: Suffix for the median of the underlying values.
+    VARIANCE_SUFFIX = '_variance'      #: Suffix for the variance of the underlying values.
+    MIN_SUFFIX = '_min'                #: Suffix for the minimum of the underlying values.
+    MAX_SUFFIX = '_max'                #: Suffix for the maximum of the underlying values.
     
     
-    def __init__( self, ex, summarised_results = None ):
+    def __init__( self, ex : Experiment, summarised_results = None ):
         """Create a summarised version of the given experiment. The given
         fields in the experimental results will be summarised, defaulting to all.
         If there are fields that can't be summarised (because they're not
@@ -65,27 +67,27 @@ class SummaryExperiment(ExperimentCombinator):
         super(SummaryExperiment, self).__init__(ex)
         self._summarised_results = summarised_results
 
-    def _mean( self, k ):
+    def _mean( self, k : str) -> str:
         """Return the tag associated with the mean of k."""
         return k + self.MEAN_SUFFIX
 
-    def _median( self, k ):
+    def _median( self, k : str) -> str:
         """Return the tag associated with the median of k."""
         return k + self.MEDIAN_SUFFIX
 
-    def _variance( self, k ):
+    def _variance( self, k : str) -> str:
         """Return the tag associated with the variance of k."""
         return k + self.VARIANCE_SUFFIX
     
-    def _min( self, k ):
+    def _min( self, k : str) -> str:
         """Return the tag associated with the minimum of k."""
         return k + self.MIN_SUFFIX
     
-    def _max( self, k ):
+    def _max( self, k : str) -> str:
         """Return the tag associated with the maximum of k."""
         return k + self.MAX_SUFFIX
     
-    def summarise( self, results ):
+    def summarise( self, results : List[ResultsDict] ) -> ResultsDict:
         """Generate a summary of results from a list of result dicts
         returned by running the underlying experiment. By default we generate
         mean, median, variance, and extrema for each value recorded.
@@ -113,15 +115,19 @@ class SummaryExperiment(ExperimentCombinator):
             for k in ks:
                 # compute summaries for all fields we're interested in
                 vs = [ res[Experiment.RESULTS][k] for res in results ]
-                summary[self._mean(k)]     = numpy.mean(vs)
-                summary[self._median(k)]   = numpy.median(vs)
-                summary[self._variance(k)] = numpy.var(vs)
-                summary[self._min(k)]      = numpy.min(vs)
-                summary[self._max(k)]      = numpy.max(vs)
+                try:
+                    summary[self._mean(k)]     = numpy.mean(vs)
+                    summary[self._median(k)]   = numpy.median(vs)
+                    summary[self._variance(k)] = numpy.var(vs)
+                    summary[self._min(k)]      = numpy.min(vs)
+                    summary[self._max(k)]      = numpy.max(vs)
+                except Exception as e:
+                    # couldn't do the statistics
+                    print('Failed to summarise {k}: {e}'.format(k=k, e=e), file=sys.stderr)
                     
             return summary   
 
-    def do( self, params ):
+    def do( self, params : Dict[str, Any] ) -> ResultsDict:
         """Perform the underlying experiment and summarise its results.
         Our results are the summary statistics extracted from the results of
         the instances of the underlying experiment that we performed.
@@ -148,12 +154,10 @@ class SummaryExperiment(ExperimentCombinator):
 
         # extract only the successful runs
         sresults = [ res for res in results if res[Experiment.METADATA][Experiment.STATUS] ]
-        exs = [ res[Experiment.METADATA][Experiment.EXCEPTION] for res in results if not res[Experiment.METADATA][Experiment.STATUS] ]
-       
+      
         # add extra values to our metadata record
         self._metadata[self.UNDERLYING_RESULTS]            = len(results)
         self._metadata[self.UNDERLYING_SUCCESSFUL_RESULTS] = len(sresults)
-        self._metadata[self.UNDERLYING_EXCEPTIONS]         = exs
 
         # construct summary results
         return self.summarise(sresults)
