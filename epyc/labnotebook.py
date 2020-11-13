@@ -19,6 +19,7 @@
 
 from epyc import Experiment, ResultSet, ResultsDict
 from pandas import DataFrame                               # type: ignore
+from contextlib import contextmanager
 from typing import List, Set, Dict, Any, Optional, Final
 
                     
@@ -269,6 +270,14 @@ class LabNotebook(object):
             rs = self._resultSets[tag]
         return rs.numberOfPendingResults()
 
+    def pendingResultParameters(self, jobid : str) -> Dict[str, Any]:
+        '''Return a dict of paramneters corresponding to the given pending result.
+
+        :param jobid: the job id
+        :returns: a dict of parameter values'''
+        rs = self._pending[jobid]
+        return rs.pendingResultParameters(jobid)
+
 
     # ---------- Managing pending results in all result sets ----------
 
@@ -421,3 +430,20 @@ class LabNotebook(object):
         else:
             rs = self._resultSets[tag]
         return rs.numberOfResults()
+
+
+    # ---------- Context manager protocol ----------
+
+    @contextmanager
+    def open(self):
+        '''Open and close the notebook using a ``with`` block. For persistent
+        notebooks this will cause the notebook to be committed to persistent
+        storage in a robust manner.'''
+        try:
+            # nothing to do, as the operations all open as required
+            yield self
+        finally:
+            # commit any changes and close the file
+            self.commit()
+
+

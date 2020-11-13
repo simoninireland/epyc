@@ -24,7 +24,6 @@ import numpy                   # type: ignore
 from datetime import datetime
 from pandas import DataFrame   # type: ignore
 import dateutil.parser
-from contextlib import contextmanager
 from typing import Final
 
 class HDF5LabNotebook(LabNotebook):
@@ -46,7 +45,7 @@ class HDF5LabNotebook(LabNotebook):
     '''
 
     # Latest file format, defining how a notebook is laid out within the HDF5 file
-    Version : Final[str] = '1.0'                     #: File structure version number used by this notebook.
+    Version : Final[str] = '1'                       #: File structure version number used by this notebook.
 
     # Tuning parameters
     DefaultDatasetSize : int = 10                    #: Default initial size for a new HDF5 dataset.
@@ -79,6 +78,10 @@ class HDF5LabNotebook(LabNotebook):
             self._open()
             self._load()
             self._close()
+
+            # use the description we were given, if there is one
+            if description is not None:
+                self.setDescription(description)
 
 
     # ---------- Persistence ----------
@@ -395,21 +398,4 @@ class HDF5LabNotebook(LabNotebook):
         else:
             # a simple dtype, patch it
             return self._HDF5simpledtype(dtype)
-
-
-    # ---------- Context manager protocol ----------
-
-    @contextmanager
-    def open(self):
-        '''Open and close the underlying file using a ``with`` block.'''
-        try:
-            # open the underlying file
-            # sd: strictly unnecessary as the operations all open as required
-            self._open()
-            yield self
-        finally:
-            # commit any changes and close the file
-            self.commit()
-
-
 
