@@ -20,6 +20,7 @@
 from __future__ import annotations               # so we can type instances of Experiment returned from its methods
 from datetime import datetime
 import traceback
+import sys
 from typing import Set, Dict, Any, Final
 
 # The type of results dicts
@@ -197,23 +198,28 @@ class Experiment(object):
         self._results = dict()
         res = dict()
         doneSetupTime = doneExperimentTime = doneTeardownTime = None
+        elapsedTime = 0
+        startTime = datetime.now()
+        self._metadata[self.START_TIME] = startTime
         try:
             # do the phases in order, recording the wallclock times at each phase
-            startTime = datetime.now()
             self.setUp(params)
             doneSetupTime = datetime.now()
+            dt = (doneSetupTime - startTime).total_seconds()
+            elapsedTime = dt
+            self._metadata[self.SETUP_TIME] = dt
             res = self.do(params)
-            doneExperimentTime = datetime.now() 
+            doneExperimentTime = datetime.now()
+            dt = (doneExperimentTime - doneSetupTime).total_seconds()
+            elapsedTime += dt
+            self._metadata[self.EXPERIMENT_TIME] = dt
             self.tearDown()
             doneTeardownTime = datetime.now() 
-            
-            # record the various timings
-            self._metadata[self.START_TIME] = startTime
+            dt = (doneTeardownTime - doneExperimentTime).total_seconds()
+            elapsedTime += dt
+            self._metadata[self.TEARDOWN_TIME] = dt
             self._metadata[self.END_TIME] = doneTeardownTime
-            self._metadata[self.ELAPSED_TIME] = (doneTeardownTime - startTime).total_seconds()
-            self._metadata[self.SETUP_TIME] = (doneSetupTime - startTime).total_seconds()
-            self._metadata[self.EXPERIMENT_TIME] = (doneExperimentTime - doneSetupTime).total_seconds()
-            self._metadata[self.TEARDOWN_TIME] = (doneTeardownTime - doneExperimentTime).total_seconds()
+            self._metadata[self.ELAPSED_TIME] = elapsedTime
             
             # set the success flag
             self._metadata[self.STATUS] = True
@@ -233,8 +239,10 @@ class Experiment(object):
                 except Exception as f:
                     # log, but otherwise ignore, any exceptions
                     # that happen in the teardown
-                    print("Caught exception in teardown (ignored): {f}".format(f=f))
-                
+                    print("Caught exception in teardown (ignored): {f}".format(f=f), file=sys.stderr)
+            self._metadata[self.ELAPSED_TIME] = elapsedTime
+            self._metadata[self.END_TIME] = datetime.now()
+
             # set the failure flag and record the exception
             # (there will be no timing information recorded)
             self._metadata[self.STATUS] = False
