@@ -20,6 +20,7 @@
 from epyc import Experiment, ResultsDict
 import numpy                       # type: ignore
 from pandas import DataFrame       # type: ignore
+import sys
 from datetime import datetime
 from typing import Final, List, Dict, Set, Any, Type, Optional
 
@@ -548,12 +549,18 @@ class ResultSet(object):
         # flatten the key/value pairs in the results dict
         # (in case of clashes, results take precedence)
         row = dict()
-        for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+        for d in [ Experiment.METADATA, Experiment.PARAMETERS ]:
             for k in self._names[d]:
                 if k not in rc[d]:
                     row[k] = 0  
                 else:
                     row[k] = rc[d][k]
+        if rc[Experiment.METADATA][Experiment.STATUS]:
+            for k in self._names[Experiment.RESULTS]:
+                if k not in rc[Experiment.RESULTS]:
+                    row[k] = 0  
+                else:
+                    row[k] = rc[Experiment.RESULTS][k]
 
         # add the results to the dataframe
         df = self._results
@@ -657,7 +664,7 @@ class ResultSet(object):
             # shouldn't be more than one either....
             raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
         df.drop(index=ids, inplace=True)
-        print('Dropped {j}'.format(j=jobid))
+        print('Dropped {j}'.format(j=jobid), file=sys.stderr)
 
         # mark us as dirty
         self.dirty()
@@ -667,6 +674,27 @@ class ResultSet(object):
 
         :returns: True if all pending results have been either resolved or cancelled'''
         return (self.numberOfPendingResults() == 0)
+
+    def pendingResultParameters(self, jobid : str) -> Dict[str, Any]:
+        '''Return a dict of the parameters for the given pending result.
+
+        :param jobid: the job id
+        :returns: a dict of parameter values'''
+        df = self._pending
+
+        # retieve the line from the pending table for the given job
+        df = df[df[self.JOBID] == jobid]
+        if len(df) < 1:
+            raise Exception('No pending job {j}'.format(j=jobid))
+        elif len(df) > 1:
+            raise Exception('Corrupted internal data structures for pending result {j}'.format(j=jobid))
+
+        # unpack into a dict and return it
+        js = df.iloc[0]
+        params = dict()
+        for k in self.parameterNames():
+            params[k] = js[k]
+        return params
 
 
     # ---------- Retrieving results ----------
@@ -734,9 +762,12 @@ class ResultSet(object):
         for i in df.index:
             res = df.loc[i]
             rc = Experiment.resultsdict()
-            for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+            for d in [ Experiment.METADATA, Experiment.PARAMETERS ]:
                 for k in self._names[d]:
                     rc[d][k] = res[k]
+            if rc[Experiment.METADATA][Experiment.STATUS]:
+                for k in self._names[Experiment.RESULTS]:
+                    rc[Experiment.RESULTS][k] = res[k]
             results.append(rc)
         return results
 

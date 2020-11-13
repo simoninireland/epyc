@@ -588,6 +588,20 @@ class ResultSetTests(unittest.TestCase):
         self._rs.cancelSinglePendingResult('1234')
         self.assertCountEqual(self._rs.pendingResults(), [ '4567' ])
 
+    def testFailedResult(self):
+        '''Test we can save a failed result, i.e., with an exception and no results.'''
+        self._rc[Experiment.METADATA][Experiment.STATUS] = False
+        self._rc[Experiment.METADATA][Experiment.EXCEPTION] = "An exception"
+        self._rc[Experiment.METADATA][Experiment.TRACEBACK] = "...happened somewhere..."
+        del self._rc[Experiment.RESULTS]
+        self._rs.addSingleResult(self._rc)
+        self.assertEqual(len(self._rs), 1)
+        rcs = self._rs.resultsFor(self._rc[Experiment.PARAMETERS])
+        self.assertEqual(len(rcs), 1)
+        rc = rcs[0]
+        self.assertDictEqual(self._rc[Experiment.METADATA], rc[Experiment.METADATA])
+        self.assertDictEqual(self._rc[Experiment.PARAMETERS], rc[Experiment.PARAMETERS])
+
     def _resultsEqual(self, df, rc):
         '''Check that the dataframe contains a row with the given results.
 
@@ -673,6 +687,8 @@ class ResultSetTests(unittest.TestCase):
         self.assertCountEqual(self._rs.pendingResults(), [])
         self.assertTrue(self._rs.ready())
 
+if __name__ == '__main__':
+    unittest.main()
 
 
 
