@@ -127,6 +127,8 @@ cancelled and deleted from the result set -- often by "resolving" them into
 
 .. automethod :: ResultSet.pendingResultsFor
 
+.. automethod :: ResultSet.pendingResultParameters
+
 .. automethod :: ResultSet.ready
 
 

@@ -24,8 +24,10 @@ changes to be saved.
 .. automethod :: HDF5LabNotebook.commit 
 
 
-File access
------------
+.. _hdf5-file-access:
+
+HDF5 file access
+----------------
 
 The notebook will open the underlying HDF5 file as required, and generally will leave
 it open. If you want more control, for example to make sure that the file is closed
@@ -41,9 +43,6 @@ used in code such as:
 
 After this the notebook's underlying file will be closed, with the new results
 having been saved.
-
-.. automethod :: HDF5LabNotebook.open
-
 Alternatively simply use :meth:`LabNotebook.commit` to flush any changes to the
 underlying file, for example:
 
@@ -53,12 +52,6 @@ underlying file, for example:
     nb.addResult(rc1)
     nb.addResult(rc2)
     nb.commit()
-
-The ``with`` block approach is slightly more robust as the notebook will be
-committed even if exceptions are thrown while it is open, ensuring no changes
-are lost accidentally. However notebooks are often held open for a long
-time while experiments are run and/or analysed, so the explicit commit
-can be more natural.
 
 
 Structure of the HDF5 file

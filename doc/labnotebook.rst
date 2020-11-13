@@ -29,6 +29,25 @@ notebook ensures its data is written-through to persistent storage
 .. automethod :: LabNotebook.commit
 
 
+With blocks
+-----------
+
+Notebooks support ``with`` blocks, like files. For persistent notebooks
+this will ensure that the notebook is committed. (For the default in-memory
+notebook this does nothing.)
+
+.. automethod :: LabNotebook.open
+
+(See :ref:`json-file-access` and  :ref:`hdf5-file-access` for examples of this method in use.)
+
+The ``with`` block approach is slightly more robust than the explicit
+use of :meth:`LabNotebook.commit` as the notebook will be
+committed even if exceptions are thrown while it is open, ensuring no changes
+are lost accidentally. However notebooks are often held open for a long
+time while experiments are run and/or analysed, so the explicit commit
+can be more natural.
+
+
 Result sets
 -----------
 
