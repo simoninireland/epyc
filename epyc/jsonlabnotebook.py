@@ -1,6 +1,6 @@
 # Simulation "lab notebook" for collecting results, JSON version
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,14 +17,17 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-import epyc
-
+from __future__ import annotations
+from epyc import LabNotebook, Experiment
 import os
+import sys
 import json
+import re
 import numpy
 from datetime import datetime
 import dateutil.parser
-import types
+from contextlib import contextmanager
+from typing import Any, Dict
 
 
 class MetadataEncoder(json.JSONEncoder):
@@ -32,7 +35,7 @@ class MetadataEncoder(json.JSONEncoder):
     JSON objects, using the standard ISO string representation.
     (Plus a few other minor tweaks to get things to work more smoothly.)"""
 
-    def default( self, o ):
+    def default( self, o : Any) -> Any:
         """If o is a datetime object, convert it to an ISO string. If it is an
         exception, convert it to a string. If it is a numpy int, coerce it to
         a Python int.
@@ -42,124 +45,209 @@ class MetadataEncoder(json.JSONEncoder):
         if isinstance(o, datetime):
             # date/time, return an ISO formatted string
             return o.isoformat()
+        elif isinstance(o, Exception):
+            # exception, stringify it
+            return str(o)
+        elif isinstance(o, numpy.integer):
+            # numpy ints inherit differently between Python 2 and 3
+            # see https://bugs.python.org/issue24313
+            return int(o)
         else:
-            if isinstance(o, Exception):
-                # exception, stringify it
-                return str(o)
-            else:
-                if isinstance(o, numpy.integer):
-                    # numpy ints inherit differently between Python 2 and 3
-                    # see https://bugs.python.org/issue24313
-                    return int(o)
-                else:
-                    # everything else, pass through
-                    return super(MetadataEncoder, self).default(o)
+            # everything else, pass through
+            return super(MetadataEncoder, self).default(o)
 
 
-class JSONLabNotebook(epyc.LabNotebook):
-    """A lab notebook that persists intself to a JSON file. This is
+class JSONLabNotebook(LabNotebook):
+    '''A lab notebook that persists intself to a JSON file. This is
     the most basic kind of persistent notebook, readable by
     virtually any tooling.
 
     Using JSON presents some disadvantages, as not all types can be
     represented. Specifically, exceptions from the metadata of failed
-    experiments (with the :attr:`Experiment.EXCEPTION`)
-    will be saved as strings (for the exception).
+    experiments (with :attr:`Experiment.EXCEPTION`) will be saved as strings.
     We also need to convert `datetime` objects to ISO-format strings
     when saving.
-    """
 
-    def __init__( self, name, create = False, description = None ):
-        """Create a new JSON notebook, using the notebook's name
-        as the JSON file. If this file exists, it will be opened
-        and loaded unless create is True, in which case it will
-        be erased.
+    :param name: JSON file to persist the notebook to
+    :param create: if True, erase existing file (defaults to False)
+    :param description: free text description of the notebook
+    '''
 
-        :param name: JSON file to persist the notebook to
-        :param create: if True, erase existing file (defaults to False)
-        :param description: free text description of the notebook"""
-        super(epyc.JSONLabNotebook, self).__init__(name, description)
+    # Structure of the file
+    VERSION = 'version'                              #: Tag for version number (missing for v1).
+
+    def __init__(self, name : str, create : bool =False, description : str =None):
+        super(JSONLabNotebook, self).__init__(name, description)
 
         # check for the file already existing
-        if os.path.isfile(self.name()):
+        if os.path.isfile(name):
             # file exists, do we load it or create into it?
             if create:
-                # empty the file
-                with open(self.name(), 'w') as f:
-                    f.write('')
-
-                # preserve any description we were passed
-                self._description = description
+                self._create(name)
             else:
-                # load notebook from file
-                self._load(self.name())
+                self._load(name)
 
-    def isPersistent( self ):
+                # use the description we were given, if there is one
+                if description is not None:
+                    self.setDescription(description)
+
+    def isPersistent(self) -> bool:
         """Return True to indicate the notebook is persisted to a JSON file.
 
         :returns: True"""
         return True
 
-    def commit( self ):
+    def commit(self):
         """Persist to disc."""
         self._save(self.name())
         
-    def _load( self, fn ):
+    def _create(self, fn : str):
+        '''Create an empty JSON file for this notebook.
+
+        :param fn: the file name'''
+        with open(fn, 'w') as f:
+            f.write('')
+
+    def _load(self, fn : str):
         """Retrieve the notebook from the given file.
 
         :param fn: the file name"""
-
-        # if file is empty, create an empty notebook
-        if os.path.getsize(fn) == 0:
-            self._description = None
-            self._results = dict()
-            self._pending = dict()
-        else:
-            # load the JSON object
+        if os.path.getsize(fn) > 0:
             with open(fn, "r") as f:
+                # load the JSON object
                 s = f.read()
-
-                # parse back into appropriate variables
                 j = json.loads(s)
-                self._description = j['description']
-                self._pending = dict(j['pending'])
-                self._results = j['results']
 
-                # perform any post-load patching
-                self.patch()
+                # check version
+                if self.VERSION in j:
+                    # we have a version string, check it's ours
+                    v = j[self.VERSION] 
+                    if v == '2':
+                        self._newload(j)
+                    else:
+                        raise Exception('Unhandled JSON file format {v}'.format(v=v))
+                else:
+                    # no version string, do the old-style load
+                    print('Version 1 JSON format, notebook may have import errors', file=sys.stderr)
+                    self._oldload(j)
 
-    def _patchDatetimeMetadata( self, res, mk ):
-        """Private method to patch an ISO datetime string to a datetime object
-        for metadata key mk.
+    def _oldload(self, j : Dict[str, Any]):
+        '''Load an old-format file.
 
-        :param res: results dict
-        :param mk: metadata key"""
-        t = res[epyc.Experiment.METADATA][mk]
-        res[epyc.Experiment.METADATA][mk] = dateutil.parser.parse(t)
-        
-    def patch( self ):
-        """Patch the results dict. The default processes the :attr:`Experiment.START_TIME`
-        and :attr:`Experiment.END_TIME` metadata fields back into Python `datetime` objects
-        from ISO strings. This isn't strictly necessary, but it makes notebook
-        data structure more Pythonic."""
+        In this format, all results were held in dicts keyed by a key synthesised from the
+        parameter names and values. Pending results were held as a mapping from job ids
+        to these synthetic keys.
 
-        for k in self._results.keys():
-            ars = self._results[k]
-            for res in ars:
-                if isinstance(res, dict) and res[epyc.Experiment.METADATA][epyc.Experiment.STATUS]:
-                    # a successful, non-pending result, patch its timing metadata
-                    self._patchDatetimeMetadata(res, epyc.Experiment.START_TIME)
-                    self._patchDatetimeMetadata(res, epyc.Experiment.END_TIME)
+        :param j: the old-style JSON object'''
+
+        # description
+        self.setDescription(j['description'])
+
+        # results
+        # held as mapping from key to list of results dicts for same parameters
+        for k in j['results]']:
+            rcs = j['results'][k]
+            for rc in rcs:
+                meta = rc[Experiment.METADATA]
+                for k in meta:
+                    if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
+                        meta[k] = dateutil.parser.parse(meta[k])    # patch ISO-format strings to datetime objects
+                self.addResult(rc)
+
+        # pending results
+        # held as mapping from job id to key, which need to be unpacked to retrieve the actual parameters
+        # key held as string containing a sequence of of "<name>:[[<value>]];" for each parameter
+        # sd: which idiot decided '[[...]]' was good bracketing???...
+        pattern = re.compile('([a-zA-Z0-9\-\.]+)=\[\[([^\]]+)\]\]')
+        pendings = dict(j['pending'])
+        for jobid in pendings:
+            key = pendings[jobid]
+
+            # convert key to params
+            params = dict()
+            ps = key.split(';')
+            for p in ps[0:-1]:      # terminating ; needs to be ignored
+                m = pattern.match(p)
+                n = m.group(1)
+                v = m.group(2)
+                if n in [ Experiment.START_TIME, Experiment.END_TIME ]:
+                    v = dateutil.parser.parse(v)    # patch ISO-format strings to datetime objects
+                params[n] = v
+            self.addPendingResult(params, jobid)
+
+    def _newload(self, j : Dict[str, Any]):
+        '''Load a new-format file.
+
+        In this format we save everything as dicts, nested or otherwise.
+
+        :param j: the JSON object'''
+
+        # notebook-level metadata
+        self.setDescription(j['description'])
+        currentTag = j['current']
+
+        # result sets
+        for tag in j['resultsets']:
+            rs = self.addResultSet(tag)
+            res = j['resultsets'][tag]
+
+            # attributes
+            for k in res.keys():
+                if k != 'results':
+                    rs[k] = res[k]
+
+            # results
+            rcs = res['results']
+            for rc in rcs:
+                meta = rc[Experiment.METADATA]
+                for k in meta:
+                    if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
+                        meta[k] = dateutil.parser.parse(meta[k])    # patch ISO-format strings to datetime objects
+                self.addResult(rc, tag=tag)
+
+            # pending results
+            pendings = res['pending-results']
+            for jobid in pendings:
+                params = dict(pendings[jobid])
+                self.addPendingResult(params, jobid, tag=tag)
+
+        # select the correct result set
+        self.select(currentTag)
 
     def _save( self, fn ):
-        """Persist the notebook to the given file.
+        """Persist the notebook to the given file. Note that, while we can load
+        both old and new formats, we only save in the new format.  
 
         :param fn: the file name"""
 
-        # create JSON object
-        j = json.dumps({ 'description': self.description(),
-                         'pending': self._pending,
-                         'results': self._results },
+        # result sets
+        rsrcs = dict()
+        for tag in self.resultSets():
+            rs = self.resultSet(tag)
+
+            # results (as nested results dicts)
+            rsres = dict()
+            rsres['results'] = list(rs.results())
+
+            # pending results
+            pending = dict()
+            for jobid in rs.pendingResults():
+                params = rs.pendingResultParameters(jobid)
+                pending[jobid] = params
+            rsres['pending-results'] = pending
+
+            # attributes
+            for k in rs.keys():
+                rsres[k] = rs[k]
+
+            # store the whole result set
+            rsrcs[tag] = rsres
+
+        # create the JSON object
+        j = json.dumps({ 'version': '2',
+                         'description': self.description(),
+                         'current' : self.currentTag(),
+                         'resultsets': rsrcs },
                        indent = 4,
                        cls = MetadataEncoder)
 
@@ -167,5 +255,3 @@ class JSONLabNotebook(epyc.LabNotebook):
         with open(fn, 'w') as f:
             f.write(j)
             
-
-    
