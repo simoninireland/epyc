@@ -434,6 +434,8 @@ class HDF5LabNotebookTests(unittest.TestCase):
                 nb.addResult(rc)
                 params['k'] = 4
                 raise Exception('second one is skipped')
+
+                # this is what we then shouldn't see, because of the exception
                 rc = SampleExperiment().set(params).run()
                 nb.addResult(rc)
         except:
