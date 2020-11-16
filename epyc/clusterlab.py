@@ -20,6 +20,7 @@
 from epyc import Lab, LabNotebook, Experiment
 import numpy                                  # type: ignore
 import time
+import sys
 from ipyparallel import Client, DirectView    # type: ignore
 from contextlib import AbstractContextManager
 from typing import List,  Any, cast
@@ -128,7 +129,7 @@ class ClusterLab(Lab):
             # if we get here, we're definitely disconnected, so try
             # to re-connect the requisite number of times
             for i in range(self.Retries):
-                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i, n=self.Retries))
+                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i, n=self.Retries), file=sys.stderr)
                 try:
                     # try to connect
                     self.connect()

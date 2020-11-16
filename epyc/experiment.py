@@ -224,7 +224,7 @@ class Experiment(object):
             # set the success flag
             self._metadata[self.STATUS] = True
         except Exception as e:
-            print("Caught exception in experiment: {e}".format(e=e))
+            print("Caught exception in experiment: {e}".format(e=e), file=sys.stderr)
 
             # grab the traceback before we do anything else
             #_, _, tb = sys.exc_info()
@@ -244,7 +244,6 @@ class Experiment(object):
             self._metadata[self.END_TIME] = datetime.now()
 
             # set the failure flag and record the exception
-            # (there will be no timing information recorded)
             self._metadata[self.STATUS] = False
             self._metadata[self.EXCEPTION] = e
             self._metadata[self.TRACEBACK] = tb
