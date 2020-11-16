@@ -9,3 +9,8 @@ and in this tutorial we'll show you how.
 
 .. include :: jupyter.rst
 
+.. include :: disconnected.rst
+
+.. include :: here-and-there.rst
+
+

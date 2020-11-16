@@ -13,16 +13,14 @@ years and now includes a multi-window IDE (Jupyter Lab), a publishing system (Ju
 and various interactive widget libraries for visualisation. 
 
 ``epyc`` can be used from Jupyter notebooks in a naive way simply by creating a local
-lab and working with it as normal:
+lab in a notebook and working with it as normal:
 
 .. code-block :: python
+
+    from epyc import Lab
 
     lab = epyc.Lab()
 
 However this provides access only to the simplest kind of lab, running on a single local core.
 It is clearly desirable to be able to use more flexible resources. It's also desirable to 
-make use of code and classes defined in notebooks.
-
-The :class:`ClusterLab` class has a number of features which work well with Jupyter.
-
-TBC
+be able to make use of code and classes defined in notebooks.
