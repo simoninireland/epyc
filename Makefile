@@ -205,10 +205,10 @@ $(VENV):
 	$(ACTIVATE) && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt
 
 # Build a source distribution
-sdist: $(SOURCES_SDIST)
+sdist: $(DIST_SDIST)
 
 # Build a wheel distribution
-wheel: $(SOURCES_WHEEL)
+wheel: $(DIST_WHEEL)
 
 # Upload a source distribution to PyPi
 upload: sdist wheel
@@ -239,11 +239,11 @@ setup.py: $(SOURCES_SETUP_IN) Makefile
 	$(CAT) $(SOURCES_SETUP_IN) | $(SED) -e 's|VERSION|$(VERSION)|g' -e 's|REQUIREMENTS|$(PY_REQUIREMENTS)|g' >$@
 
 # The source distribution tarball
-$(SOURCES_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
+$(DIST_SDIST): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
 	$(ACTIVATE) && $(RUN_SETUP) sdist
 
 # The binary (wheel) distribution
-$(SOURCES_WHEEL): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
+$(DIST_WHEEL): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
 	$(ACTIVATE) && $(RUN_SETUP) bdist_wheel
 
 

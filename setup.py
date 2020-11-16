@@ -2,7 +2,7 @@
 
 # Setup for epyc
 #
-# Copyright (C) 2016--2019 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -25,7 +25,7 @@ with open('README.rst') as f:
     longDescription = f.read()
 
 setup(name = 'epyc',
-      version = '0.99.3',
+      version = '1.0.1',
       description = 'Python computational experiment management',
       long_description = longDescription,
       url = 'http://github.com/simoninireland/epyc',
@@ -35,11 +35,13 @@ setup(name = 'epyc',
       classifiers = [ 'Development Status :: 4 - Beta',
                       'Intended Audience :: Science/Research',
                       'Intended Audience :: Developers',
-                      'Programming Language :: Python :: 2.7',
+                      'Programming Language :: Python :: 3.6',
                       'Programming Language :: Python :: 3.7',
+                      'Programming Language :: Python :: 3.8',
                       'Topic :: Scientific/Engineering' ],
       packages = [ 'epyc' ],
-      zip_safe = True,
-      install_requires = [ "six", "future", "numpy", "pyzmq", "ipyparallel >= 6.2.4", "dill", "pandas",  ])
+      package_data = { 'epyc': [ 'py.typed' ] },
+      zip_safe = False,
+      install_requires = [ "numpy", "pyzmq", "ipyparallel >= 6.2.4", "dill", "pandas", "h5py",  ])
 
 
