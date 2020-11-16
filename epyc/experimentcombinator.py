@@ -1,5 +1,6 @@
+# Base class for experiment combinators that co=ordinate other experiments
 #
-# Copyright (C) 2016 Simon Dobson
+# Copyright (C) 2016--2020 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -16,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import *
+from epyc import Experiment
+from typing import Dict, Any
 
 
 class ExperimentCombinator(Experiment):
@@ -28,20 +30,20 @@ class ExperimentCombinator(Experiment):
     give rise to metadata of their own, and modify the results returned by running
     their underlying experiment."""
 
-    def __init__( self, ex ):
+    def __init__(self, ex : Experiment):
         """Create a combinator based on the given experiment.
 
         ex: the underlying experiment"""
         super(ExperimentCombinator, self).__init__()
         self._experiment = ex
 
-    def experiment( self ):
+    def experiment(self) -> Experiment:
         """Return the underlying experiment.
 
         :returns: the underlying experiment"""
         return self._experiment
 
-    def set( self, params ):
+    def set(self, params : Dict[str, Any]) -> Experiment:
         """Set the parameters for the experiment, returning the
         now-configured experiment.
 
@@ -50,7 +52,7 @@ class ExperimentCombinator(Experiment):
         self.experiment().set(params)
         return self
 
-    def parameters( self ):
+    def parameters(self) -> Dict[str, Any]:
         """Return the current experimental parameters, taken from the
         underlying experiment.
 
