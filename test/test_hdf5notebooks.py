@@ -239,6 +239,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
         rc = SampleExperiment().set(params).run()
         nb.addResult(rc)
         nb.commit()
+        t = rc[Experiment.RESULTS]['total']   # grab for later test
 
         # add the failed result
         rc[Experiment.METADATA][Experiment.STATUS] = False
@@ -247,6 +248,17 @@ class HDF5LabNotebookTests(unittest.TestCase):
         rc[Experiment.RESULTS] = dict()
         nb.addResult(rc)
         nb.commit()
+
+        # check the results were stored correctly
+        nb = HDF5LabNotebook(self._fn)
+        for rc in nb.results():
+            if rc[Experiment.METADATA][Experiment.STATUS]:
+                # the successful result, check we have all result fields
+                self.assertCountEqual(rc[Experiment.RESULTS].keys(), ['total'])
+                self.assertEqual(rc[Experiment.RESULTS]['total'], t)
+            else:
+                # failed result, shouldn't be any result fields
+                self.assertCountEqual(rc[Experiment.RESULTS].keys(), [])
 
     def testMaintainType(self):
         '''Test we can add several results without rebuilding the file unnecessarily.'''
