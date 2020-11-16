@@ -61,9 +61,7 @@ SOURCES_DOCUMENTATION = \
 	doc/index.rst \
 	doc/install.rst \
 	doc/lifecycle.rst \
-	doc/cookbook.rst \
-	doc/cookbook/epyc-venv.rst \
-	doc/cookbook/disconnected-usage.rst \
+	doc/glossary.rst \
 	doc/tutorial.rst \
     doc/tutorial/concepts.rst \
     doc/tutorial/first.rst \
@@ -81,7 +79,17 @@ SOURCES_DOCUMENTATION = \
     doc/tutorial/multicore-parallel.rst \
     doc/tutorial/sharedfs-parallel.rst \
 	doc/tutorial/third.rst \
+	doc/tutorial/large.rst \
+	doc/tutorial/persistent.rst \
+	doc/tutorial/pending.rst \
+	doc/tutorial/fourth.rst \
 	doc/tutorial/jupyter.rst \
+	doc/tutorial/disconnected.rst \
+	doc/tutorial/here-and-there.rst \
+	doc/cookbook.rst \
+	doc/cookbook/epyc-venv.rst \
+	doc/cookbook/disconnected-usage.rst \
+	doc/cookbook/metadata.rst \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/resultset.rst \
@@ -91,10 +99,7 @@ SOURCES_DOCUMENTATION = \
 	doc/summaryexperiment.rst \
 	doc/jsonlabnotebook.rst \
 	doc/hdf5labnotebook.rst \
-	doc/clusterlab.rst \
-	doc/gotchas.rst \
-    doc/gotchas/jupyter-class-names.rst \
-	doc/glossary.rst
+	doc/clusterlab.rst
 
 # Extras for building diagrams etc
 SOURCES_UTILS = \
@@ -116,9 +121,8 @@ DIST_WHEEL = dist/$(PACKAGENAME)-$(VERSION)-py3-none-any.whl
 
 # ipyparallel testing cluster
 CLUSTER_PROFILE = $(PACKAGENAME)test
-CLUSTER_TOKEN = ipcontroller-client.json
 CLUSTER_PROFILE_DIR = `$(IPYTHON) locate profile $(CLUSTER_PROFILE)`
-CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/security/$(CLUSTER_TOKEN) 
+CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/pid/ipcluster.pid
 
 # ----- Tools -----
 
@@ -159,7 +163,6 @@ RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 RUN_CREATE_PROFILE = $(IPYTHON) profile create --parallel $(CLUSTER_PROFILE)
-RUN_CREATE_TOKEN = $(CP) $(CLUSTER_TOKEN_FILE) ./$(CLUSTER_TOKEN)
 RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH $(IPCLUSTER) start --profile $(CLUSTER_PROFILE) --n 2
 
 
@@ -180,6 +183,7 @@ coverage: env Makefile setup.py
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env
 	$(ACTIVATE) && $(RUN_CREATE_PROFILE) 
+	$(RM) $(CLUSTER_TOKEN_FILE)
 	$(ACTIVATE) && $(RUN_CLUSTER)
 
 # Just run the ClusterLab tests

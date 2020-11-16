@@ -1,3 +1,29 @@
+Version 1.0.1 2020-11-16
+
+   - Removed support for Python 2.7
+   - Remove test/__main__.py as unnecessary
+   - Added result sets to notebooks
+   - Changed default behaviour of Experiment.do() to nothing rather than
+     raising an exception, as it makes sub-classing easier to describe
+   - Replaced explicit Fisher-Yates shuffle of parameter space with
+     numpy.random.shuffle() 
+   - Moved management of pending results into ResultSet
+   - Removed ability to add a result with a job id in LabNotebook.addResult(),
+     replaced with LabNotebook.resolvePendingResult()
+   - Removed "Managing clusters from the documentation
+   - Added HDF5-based lab notebooks for larger datasets
+   - Added storing the classname of an experiment in the metadata
+   - Added type annotations 
+   - Changed some methods to return empty lists or dicts rather than None
+   - Added tutorials on large datasets and Jupyter integration
+   - Added new format for JSCON storage that handles result sets (while maintaining
+     the ability to read the old, flat format)
+   - Log information messages to sys.stderr rather than standard output
+   - Changed recording of timing information to capture as much as possible
+     even if there's an exception in an experiment 
+   - Added ``with`` block (context manager) support to notebooks to manage
+      committing results (even in the face of exceptions)
+
 Version 0.99.3 2020-03-22
 
    - Fixed mistake in setup.py that stopped everything building....
