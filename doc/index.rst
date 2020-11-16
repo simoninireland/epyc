@@ -39,7 +39,7 @@ Current features
 * Experiment combinators to control repetition and summarisation, separate from the core
   logic of an experiment
 
-* Immutable storage of reesults
+* Immutable storage of results
 
 * Experiments can run locally, remotely, and in parallel
 
@@ -59,7 +59,6 @@ Current features
    tutorial
    reference
    cookbook
-   gotchas
    glossary
 
 
