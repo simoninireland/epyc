@@ -555,9 +555,10 @@ class ResultSet(object):
                     row[k] = 0  
                 else:
                     row[k] = rc[d][k]
-        if rc[Experiment.METADATA][Experiment.STATUS]:
+        if self._names[Experiment.RESULTS] is not None:
             for k in self._names[Experiment.RESULTS]:
-                if k not in rc[Experiment.RESULTS]:
+                if not rc[Experiment.METADATA][Experiment.STATUS] or k not in rc[Experiment.RESULTS]:
+                    # failed results and missing fields are zeroed
                     row[k] = 0  
                 else:
                     row[k] = rc[Experiment.RESULTS][k]
