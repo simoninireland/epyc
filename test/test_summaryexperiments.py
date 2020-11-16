@@ -244,7 +244,7 @@ class SummaryExperimentTests(unittest.TestCase):
                 pass
 
     def testSummaryExceptions( self ):
-        '''Test we generate (and record) exceptions for illegal summary keys.'''
+        '''Test we handle illegal summary keys.'''
         N = 10
         
         self._lab['x'] = 'hello'
@@ -253,10 +253,9 @@ class SummaryExperimentTests(unittest.TestCase):
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
-        self.assertTrue(es.failed())
-        res = (self._lab.results())[0]
-        
-        self.assertFalse(res[Experiment.METADATA][Experiment.STATUS])
+        self.assertEqual(len(self._lab.results()), 1)
+        rc = (self._lab.results())[0]
+        self.assertNotIn(es._mean('e'), rc[Experiment.RESULTS])
                          
     def testNoPoint( self ):
         '''Test we do nothing if we have an empty parameter space.'''
