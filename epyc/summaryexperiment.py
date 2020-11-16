@@ -19,7 +19,7 @@
 from epyc import ExperimentCombinator, Experiment, ResultsDict
 import numpy                     # type: ignore
 import sys
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Final
 
 
 class SummaryExperiment(ExperimentCombinator):
@@ -45,15 +45,15 @@ class SummaryExperiment(ExperimentCombinator):
     that is that have their status set to True. Failed runs are ignored."""
 
     # Additional metadata
-    UNDERLYING_RESULTS = 'epyc.summaryexperiment.repetitions'                          #: Metadata element for the number of results that were obtained.
-    UNDERLYING_SUCCESSFUL_RESULTS = 'epyc.summaryexperiment.successful_repetitions'    #: Metadata elements for the number of results that were summarised.
+    UNDERLYING_RESULTS : Final[str] = 'epyc.summaryexperiment.repetitions'                          #: Metadata element for the number of results that were obtained.
+    UNDERLYING_SUCCESSFUL_RESULTS : Final[str] = 'epyc.summaryexperiment.successful_repetitions'    #: Metadata elements for the number of results that were summarised.
 
     # Prefix and suffix tags attached to summarised result and metadata values
-    MEAN_SUFFIX = '_mean'              #: Suffix for the mean of the underlying values.
-    MEDIAN_SUFFIX = '_median'          #: Suffix for the median of the underlying values.
-    VARIANCE_SUFFIX = '_variance'      #: Suffix for the variance of the underlying values.
-    MIN_SUFFIX = '_min'                #: Suffix for the minimum of the underlying values.
-    MAX_SUFFIX = '_max'                #: Suffix for the maximum of the underlying values.
+    MEAN_SUFFIX : Final[str] = '_mean'              #: Suffix for the mean of the underlying values.
+    MEDIAN_SUFFIX : Final[str] = '_median'          #: Suffix for the median of the underlying values.
+    VARIANCE_SUFFIX : Final[str] = '_variance'      #: Suffix for the variance of the underlying values.
+    MIN_SUFFIX : Final[str] = '_min'                #: Suffix for the minimum of the underlying values.
+    MAX_SUFFIX : Final[str] = '_max'                #: Suffix for the maximum of the underlying values.
     
     
     def __init__( self, ex : Experiment, summarised_results = None ):
