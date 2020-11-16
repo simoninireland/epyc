@@ -143,13 +143,13 @@ class ExperimentTests(unittest.TestCase):
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
 
         timing = res[Experiment.METADATA]
-        print(timing)
+        #print(timing)
         self.assertTrue(timing[Experiment.END_TIME] > timing[Experiment.START_TIME])
         self.assertTrue(timing[Experiment.ELAPSED_TIME] > 0)
         self.assertTrue(timing[Experiment.SETUP_TIME] > 0)
         self.assertTrue(timing[Experiment.EXPERIMENT_TIME] > 0)
         self.assertTrue(timing[Experiment.TEARDOWN_TIME] > 0)
-        self.assertTrue(timing[Experiment.ELAPSED_TIME] >= timing[Experiment.SETUP_TIME] + timing[Experiment.TEARDOWN_TIME] + timing[Experiment.EXPERIMENT_TIME])
+        self.assertAlmostEqual(timing[Experiment.ELAPSED_TIME], timing[Experiment.SETUP_TIME] + timing[Experiment.TEARDOWN_TIME] + timing[Experiment.EXPERIMENT_TIME], places=3)
 
     def testException( self ):
         '''Test that exceptions are caught and reported in-line.'''
