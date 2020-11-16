@@ -18,7 +18,7 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import ExperimentCombinator, Experiment, ResultsDict
-from typing import Any, Dict, List
+from typing import Any, Dict, List, Final
 
 class RepeatedExperiment(ExperimentCombinator):
     """A experiment combinator that takes a "base" experiment and runs it
@@ -29,18 +29,17 @@ class RepeatedExperiment(ExperimentCombinator):
     experiment at the same point in the parameter space. The result of the
     repeated experiment is the list of results from the underlying experiment.
     If the underlying experiment itself returns a list of results, these are all
-    flattened into a single list."""
+    flattened into a single list.
+    
+    :param ex: the underlying experiment
+    :pamam N: the number of repetitions to perform"""
 
     # Extra metadata
-    REPETITIONS = 'epyc.experiment.repetitions'   #: Metadata element for number of repetitions performed.
-    I           = 'epyc.experiment.rep'           #: Metadata element for index in the repetitions.
+    REPETITIONS : Final[str] = 'epyc.experiment.repetitions'   #: Metadata element for number of repetitions performed.
+    I           : Final[str] = 'epyc.experiment.rep'           #: Metadata element for index in the repetitions.
 
 
     def __init__( self, ex : Experiment, N : int ):
-        """Create a repeated version of the given experiment.
-
-        :param ex: the underlying experiment
-        :param N: the number of repetitions to perform"""
         super(RepeatedExperiment, self).__init__(ex)
         self._N = N
 
