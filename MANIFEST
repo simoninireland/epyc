@@ -1,0 +1,16 @@
+README.rst
+LICENSE
+HISTORY
+MANIFEST
+setup.py
+epyc/py.typed
+epyc/__init__.py
+epyc/experiment.py
+epyc/experimentcombinator.py
+epyc/repeatedexperiment.py
+epyc/summaryexperiment.py
+epyc/lab.py
+epyc/clusterlab.py
+epyc/labnotebook.py
+epyc/jsonlabnotebook.py
+epyc/hdf5labnotebook.py
