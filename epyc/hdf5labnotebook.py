@@ -184,14 +184,14 @@ class HDF5LabNotebook(LabNotebook):
                 # create the results dataset
                 g.create_dataset(self.RESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=hdf5dtype)
 
-            # get the HDF5 dataset associated with this result set
-            ds = self._file[tag][self.RESULTS_DATASET]
+                # write out the names of all the fields as attributes
+                for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+                    ns = names[d]
+                    if ns is not None:
+                        g[self.RESULTS_DATASET].attrs.create(d, ns, (len(ns),), h5py.string_dtype())
 
-            # write out the names of all the fields as attributes
-            for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
-                ns = names[d]
-                if ns is not None:
-                    ds.attrs.create(d, ns, (len(ns),), h5py.string_dtype())
+            # get the HDF5 dataset associated with this result set
+            ds = g[self.RESULTS_DATASET]
 
             # ---- PART 2: write results ---
 
@@ -204,8 +204,10 @@ class HDF5LabNotebook(LabNotebook):
             df = rs.dataframe()
             dfnames = rs.dtype().names
             for i in range(len(df.index)):
-                # convert row in the results table to a line in the dataset
+                # get the row to write
                 res = df.loc[df.index[i]]
+
+                # convert row in the results table to a line in the dataset
                 entry = []
                 for k in dfnames:
                     if k in [ Experiment.START_TIME, Experiment.END_TIME ] and isinstance(res[k], datetime):
@@ -283,7 +285,10 @@ class HDF5LabNotebook(LabNotebook):
 
             # read the names of all the fields and all the attributes
             for k in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
-                names[k] = list(ds.attrs[k])
+                if k in ds.attrs:
+                    names[k] = list(ds.attrs[k])
+                else:
+                    names[k] = []   # no result fields (suggests any results so far have failed)
 
             # ---- PART 2: read results ---
 
