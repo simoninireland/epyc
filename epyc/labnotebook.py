@@ -50,8 +50,10 @@ class LabNotebook(object):
         self._pending : Dict[str, ResultSet] = dict()        # pending results job ids to result sets
 
         # add a result set with the default tag, and make it current
-        self.addResultSet(self.DEFAULT_RESULTSET)
-        self._current : ResultSet = self._resultSets[self.DEFAULT_RESULTSET]
+        defrc = self.addResultSet(self.DEFAULT_RESULTSET)
+        self._current : ResultSet = defrc
+        #defrc.dirty(False)                  # default shouldn't trigger a write
+
 
     # ---------- Access ----------
 
