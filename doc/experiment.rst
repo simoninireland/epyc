@@ -11,12 +11,6 @@
     when writing any but the simplest experiments. See :ref:`lifecycle` for
     a detailed description.
 
-
-Creating an experiment
-----------------------
-
-.. automethod :: Experiment.__init__
-	       
 	       
 Creating the results dict
 --------------------------
