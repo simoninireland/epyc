@@ -93,7 +93,7 @@ Now when you submit your experiments they will function as required.
 
 .. important ::
 
-    You only need to use ``%%pxlocal`` whfor cells in whichen you're defining classes.
+    You only need to use ``%%pxlocal`` for cells in which you're defining classes.
     When you're running the experiments all the code runs notebook-side only, and ``epyc`` handles
     passing the necessary objects around the network.
 
