@@ -546,6 +546,33 @@ class HDF5LabNotebookTests(unittest.TestCase):
             self.assertCountEqual(rs.keys(), [ 'date' ])
             self.assertEqual(rs['date'], 'tomorrow')
 
+    def testNoDefault(self):
+        '''Test things work when the default resultset is left empty.'''
+
+        # get some results for later
+        params = dict()
+        params['k'] = 3
+        rc = SampleExperiment().set(params).run()
+
+        # put a pending result into a new dataset, then commit
+        with HDF5LabNotebook(self._fn, create=True).open() as nb:
+            nb.addResultSet('another')
+            nb.addPendingResult(params, '1234')
+
+        # resolve the result, then commit
+        with HDF5LabNotebook(self._fn).open() as nb:
+            nb.resolvePendingResult(rc, '1234')
+
+        # check everything went to the right place
+        with HDF5LabNotebook(self._fn).open() as nb:
+            self.assertEqual(nb.currentTag(), 'another')
+            self.assertEqual(nb.numberOfResults(), 1)
+            self.assertEqual(nb.numberOfPendingResults(), 0)
+            nb.select(nb.DEFAULT_RESULTSET)
+            self.assertEqual(nb.numberOfResults(), 0)
+            self.assertEqual(nb.numberOfPendingResults(), 0)
+
+
 if __name__ == '__main__':
     unittest.main()
 
