@@ -1,6 +1,13 @@
 epyc: Python computational experiment management
 ================================================
 
+.. image:: https://badge.fury.io/py/epyc.svg
+    :target: https://badge.fury.io/py/epyc
+
+.. image:: https://readthedocs.org/projects/epyc/badge/?version=latest
+    :target: https://epyc.readthedocs.io/en/latest/index.html
+
+
 Overview
 --------
 
