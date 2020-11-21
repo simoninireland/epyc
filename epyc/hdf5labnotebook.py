@@ -205,7 +205,7 @@ class HDF5LabNotebook(LabNotebook):
             dfnames = rs.dtype().names
             for i in range(len(df.index)):
                 # get the row to write
-                res = df.loc[df.index[i]]
+                res = df.iloc[i]
 
                 # convert row in the results table to a line in the dataset
                 entry = []
@@ -222,7 +222,7 @@ class HDF5LabNotebook(LabNotebook):
 
         # ---- PART 3: write pending results ---
 
-        if self.numberOfPendingResults() == 0:
+        if rs.numberOfPendingResults() == 0:
             if self.PENDINGRESULTS_DATASET in g:
                 # table isn't needed any more, so delete it to keep things tidy
                 del g[self.PENDINGRESULTS_DATASET]
@@ -248,7 +248,7 @@ class HDF5LabNotebook(LabNotebook):
             if pdf is not None:
                 pdfnames = names[Experiment.PARAMETERS]
                 for i in range(len(pdf.index)):
-                    res = pdf.loc[i]
+                    res = pdf.iloc[i]
                     entry = []
                     for k in pdfnames:
                         entry.append(res[k])
