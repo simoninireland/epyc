@@ -1,3 +1,8 @@
+Version 1.0.2 2020-11-22
+
+   - Fixed issue with saving notebooks where the default result set was empty
+   - Added a test to make sure this was caught :-)
+
 Version 1.0.1 2020-11-16
 
    - Removed support for Python 2.7
