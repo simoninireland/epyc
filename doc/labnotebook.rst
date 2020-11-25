@@ -11,9 +11,9 @@ Metadata access
 
 .. automethod :: LabNotebook.name
    
-.. automethod : LabNotebook.description
+.. automethod :: LabNotebook.description
 
-.. automethod : LabNotebook.setDescription
+.. automethod :: LabNotebook.setDescription
 
 
 Persistence
@@ -24,7 +24,7 @@ default implementation is simply in-memory and volatile. Committing a
 notebook ensures its data is written-through to persistent storage
 (where applicable).
    
-.. automethod: : LabNotebook.isPersistent
+.. automethod :: LabNotebook.isPersistent
    
 .. automethod :: LabNotebook.commit
 
@@ -51,10 +51,26 @@ can be more natural.
 Result sets
 -----------
 
-Results are stored as :class:`ResultSet` objects. There is seldom any need
-to interact with the result sets directly: the notbook allows them to be created,
-and to be selected to receive results.
+Results are stored as :class:`ResultSet` objects, each with a unique tag.
+The notebook allows them to be created, and to be selected to receive results.
 
+.. automethod :: LabNotebook.addResultSet
+
+.. automethod :: LabNotebook.resultSet
+
+.. automethod :: LabNotebook.resultSets
+
+.. automethod :: LabNotebook.numberOfResultSets
+
+.. automethod :: LabNotebook.__len__
+
+.. automethod :: LabNotebook.resultSetTag
+
+.. automethod :: LabNotebook.current
+
+.. automethod :: LabNotebook.currentTag
+
+.. automethod :: LabNotebook.select
 
 
 Result storage and access
@@ -62,13 +78,7 @@ Result storage and access
 
 Results are stored using the :term:`results dict` structure of
 parameters, experimental results, and metadata. There may be many
-results dicts associated with each parameter point. The most flexible
-way to add results is using the :meth:`LabNotebook.addResults` method,
-which handles single and sets of results. 
-
-.. automethod :: LabNotebook.addResults
-
-There is also a single-result version of the same method.
+results dicts associated with each parameter point.
 
 .. automethod :: LabNotebook.addResult
 
