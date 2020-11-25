@@ -192,7 +192,7 @@ class Lab(object):
         for p in ps:
             #print "Running {p}".format(p = p)
             res = e.set(p).run()
-            nb.addResults(res)
+            nb.addResult(res)
 
         # commit the results
         nb.commit()
