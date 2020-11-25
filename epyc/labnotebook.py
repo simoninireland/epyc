@@ -20,9 +20,51 @@
 from epyc import Experiment, ResultSet, ResultsDict
 from pandas import DataFrame                               # type: ignore
 from contextlib import contextmanager
-from typing import List, Set, Dict, Any, Optional, Final
+from typing import List, Set, Dict, Any, Optional, Union, Final, cast
 
-                    
+
+class ResultsStructureException(Exception):
+    '''An exception raised when there is a problem with the structure of a
+    results dict. 
+
+    :param rc: the results dict structure that causes the problem''' 
+
+    def __init__(self, rc : Union[ResultsDict, List[ResultsDict]]):
+        super(ResultsStructureException, self).__init__("Can't handle results dict {rc}".format(rc=rc))
+        self._rc = rc
+
+    def resultsdict(self) -> Union[ResultsDict, List[ResultsDict]]:
+        '''Return the results dict that caused the problem.
+
+        :returns: the results dict or list of them'''
+        return self._rc
+
+
+class NotebookVersionException(Exception):
+    '''An exception raised when a notebook encounters an unexpected version
+    of a persistent file format.
+
+    :param expected: the expected version
+    :param actual: the actual version'''
+
+    def __init__(self, expected : str, actual : str):
+        super(NotebookVersionException, self).__init__('Expected notebook version {v1}, got {v2}'.format(v1=expected, v2=actual))
+        self._expected = expected
+        self._actual = actual
+    
+    def expectedVersion(self) -> str:
+        '''Return the expected version of the file.
+
+        :returns: the expected version'''
+        return self._expected
+    
+    def actualVersion(self) -> str:
+        '''Return the actual version of the file.
+
+        :returns: the actual version'''
+        return self._expected
+
+
 class LabNotebook(object):
     '''A "laboratory notebook" collecting together the results obtained from
     different sets of experiments. A notebook is composed of :class:`ResultSet` objects,
@@ -199,10 +241,18 @@ class LabNotebook(object):
 
         :param rc: the results dict
         :param jobid: the job id'''
+
+        # add the result to the correct result set
         tag = self._resultSetTags[self._pending[jobid]]
+        rs = self._pending[jobid]
         self.addResult(rc, tag=tag)
-        self.cancelPendingResult(jobid)
- 
+
+        # resolve the pending result in that result set
+        rs.resolveSinglePendingResult(jobid)
+
+        # mark the job as resolved with the notebook
+        del self._pending[jobid] 
+
     def cancelPendingResult(self, jobid : str):
         '''Cancel the given pending result.
 
@@ -298,9 +348,8 @@ class LabNotebook(object):
 
     # --------- Managing results ----------
 
-    def addResult(self, result : ResultsDict, tag : str =None):
-        '''Add a single result. Client code should use :meth:`addResults`
-        in preference to this method and work solely with the current result set.
+    def _addResult(self, result : ResultsDict, tag : str =None):
+        '''Add a single result.
 
         :param tag: (optional) the result set to add to (defaults to the current result set)
         :param result: the results dict'''
@@ -310,7 +359,7 @@ class LabNotebook(object):
             rs = self._resultSets[tag]
         rs.addSingleResult(result)
 
-    def addResults(self, results : Any):
+    def addResult(self, results : Union[ResultsDict, List[ResultsDict]], tag : str =None):
         """Add one or more results dicts to the current result set. Each should
         be a :term:`results dict` as returned from
         an instance of :class:`Experiment`, that contains metadata,
@@ -324,26 +373,30 @@ class LabNotebook(object):
         One may also add a list of results dicts, in which case they will
         be added individually.
 
+        Any structure of results dicts that can't be handled will raise a 
+        :class:`ResultsStructureException`.
+
         :param result: a results dict or collection of them
+        :param tag: (Optional) result set to add tp (defalts to the current result set)
         """
 
         # deal with the different ways of presenting results to be added
-        if isinstance(ResultSet, list):
+        if isinstance(results, list):
             # a list, recursively add all elements
             for res in results:
-                self.addResult(res)
-        else:
-            if isinstance(results, dict):
-                if isinstance(results[Experiment.RESULTS], list):
-                    # a result with embedded results, unwrap and and add them
-                    for res in results[Experiment.RESULTS]:
-                        self.addResult(res)
-                else:
-                    # a single results dict with a single set of experimental results
-                    self.addResult(results)
-
+                self._addResult(res, tag)
+        elif isinstance(results, dict):
+            # a results dict, check for nesting
+            if isinstance(results[Experiment.RESULTS], list):
+                # a result with embedded results, unwrap and and add them
+                for res in cast(List[ResultsDict], results[Experiment.RESULTS]):
+                    self._addResult(res, tag)
             else:
-                raise Exception("Can't deal with results like this: {r}".format(r = results)) 
+                # a single results dict with a single set of experimental results
+                self._addResult(results, tag)
+
+        else:
+            raise ResultsStructureException(results)
     
     def dataframe(self, tag : str =None, only_successful : bool =True) -> DataFrame:
         """Return results as a ``pandas.DataFrame``. If no tag is provided,
@@ -363,10 +416,7 @@ class LabNotebook(object):
             rs = self._current
         else:
             rs = self._resultSets[tag]
-        df = rs.dataframe()
-        if len(df) > 0 and only_successful:
-            # filter out only the successful runs (if there are any to start with)
-            df = df[df[Experiment.STATUS] == True]
+        df = rs.dataframe(only_successful)
         return df
 
     def dataframeFor(self, params : Dict[str, Any], tag : str =None, only_successful : bool =True) -> DataFrame:
@@ -384,10 +434,7 @@ class LabNotebook(object):
             rs = self._current
         else:
             rs = self._resultSets[tag]
-        df = rs.dataframeFor(params)
-        if len(df) > 0 and only_successful:
-            # filter out only the successful runs (if there are any to start with)
-            df = df[df[Experiment.STATUS] == True]
+        df = rs.dataframeFor(params, only_successful)
         return df
 
     def results(self, tag : str =None) -> List[ResultsDict]:
