@@ -50,8 +50,8 @@ from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
 
-from .resultset import ResultSet
-from .labnotebook import LabNotebook
+from .resultset import ResultSet, ResultSetLockedException, CancelledException
+from .labnotebook import LabNotebook, ResultsStructureException, NotebookVersionException
 from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
 
