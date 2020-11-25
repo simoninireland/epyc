@@ -1,6 +1,6 @@
 numpy
 pyzmq
 ipyparallel >= 6.2.4
-dill
+cloudpickle
 pandas
 h5py
