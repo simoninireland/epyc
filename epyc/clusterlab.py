@@ -42,9 +42,9 @@ class ClusterLab(Lab):
 
     # Tuning parameters
     WaitingTime : int = 30           #: Waiting time for checking for job completion. Lower values increase network traffic.
-    Retries : int = 3                #: Number of re-tries when re-connecting to a cluster.
+    Retries : int = 5                #: Number of re-tries when re-connecting to a cluster.
     
-    def __init__( self, notebook : LabNotebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, use_dill = False, **extra_args ):
+    def __init__( self, notebook : LabNotebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
         """Create an empty lab attached to the given cluster. Most of the arguments
         are as expected by the ``pyparallel.Client`` class, and are used to create the
         underlying connection to the cluster. The connection is opened immediately,
@@ -62,8 +62,7 @@ class ClusterLab(Lab):
         :param password: ssh password
         :param paramiko: True to use paramiko for ssh (defaults to False)
         :param timeout: timeout in seconds for ssh connection (defaults to 10s)
-        :param cluster_id: string added to runtime files to prevent collisions
-        :param use_dill: whether to use Dill as pickler (defaults to False)"""
+        :param cluster_id: string added to runtime files to prevent collisions"""
         super(ClusterLab, self).__init__(notebook)
         
         # record all the connection arguments for later
@@ -79,16 +78,14 @@ class ClusterLab(Lab):
                                paramiko = paramiko,
                                timeout = timeout,
                                cluster_id = cluster_id,
-                               # use_dill = use_dill,
                                **extra_args)
         self._client : Client = None
 
         # connect to the cluster
         self.open()
 
-        # use Dill if requested
-        if use_dill:
-            self.use_dill()
+        # use the more sophisticated pickler
+        rc = self._client[:].use_cloudpickle()
 
 
     # ---------- Protocol ----------
@@ -113,7 +110,6 @@ class ClusterLab(Lab):
         else:
             self._client.direct_view().activate()
 
-
     def open(self):
         """Connect to the cluster. This will involve several possible re-tries."""
         try:
@@ -122,14 +118,13 @@ class ClusterLab(Lab):
                 # no open connection, try to connect
                 self.connect()
             else:
-                # we have an open connection, try to activate it
-                # (catches the case where the cluster has hung up on us)
+                # we have an open connection, activate it
                 self.activate()
         except Exception as exc:
             # if we get here, we're definitely disconnected, so try
             # to re-connect the requisite number of times
             for i in range(self.Retries):
-                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i, n=self.Retries), file=sys.stderr)
+                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i + 1, n=self.Retries), file=sys.stderr)
                 try:
                     # try to connect
                     self.connect()
@@ -176,16 +171,6 @@ class ClusterLab(Lab):
         :returns: a list of engines"""
         self.open()
         return self._client[:]
-
-    def use_dill(self):
-        """Make the cluster use Dill as pickler for transferring results. This isn't
-        generally needed, but is sometimes useful for particularly complex experiments
-        such as those involving closures. (Or, to put it another way, if you find yourself
-        tempted to use this method, consider re-structuring your experiment code.)"""
-        self.open()
-        with self.sync_imports(quiet=True):
-            import dill
-        self._client.direct_view().use_dill()
 
     def sync_imports(self, quiet : bool =False) -> AbstractContextManager:
         """Return a context manager to control imports onto all the engines
@@ -238,7 +223,10 @@ class ClusterLab(Lab):
                 view = self._client.load_balanced_view()
                 jobs = []
                 for p in ps:
-                    jobs.extend((view.apply_async((lambda p: e.set(p).run()), p)).msg_ids)
+                    rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (e, p))
+                    ids = rc.msg_ids
+                    #print('Started {ids}'.format(ids=ids))
+                    jobs.extend(ids)
 
                     # there seems to be a race condition in submitting jobs,
                     # whereby jobs get dropped if they're submitted too quickly
@@ -253,10 +241,13 @@ class ClusterLab(Lab):
                 nb.commit()
                 self.close()
 
-    def updateResults(self) -> int:
+    def updateResults(self, purge : bool =False) -> int:
         """Update our results within any pending results that have completed since we
-        last retrieved results from the cluster.
+        last retrieved results from the cluster. Optionally purges any jobs that
+        have crashed, which can be due to engine failure within the
+        cluster. This prevents individual crashes blocking the retrieval of other jobs.
 
+        :param purge: (optional) purge any jobs that have crashed (defaults to False)
         :returns: the number of pending results completed at this call"""
         nb = self.notebook()
 
@@ -264,29 +255,43 @@ class ClusterLab(Lab):
         n = 0
         if not nb.ready():
             # we have results to get
-            self.open()
-            for j in set(nb.allPendingResults()):
-                # query the status of a job
-                status = self._client.result_status(j, status_only=False)
+            try:
+                crashed = []
+                self.open()
+                for j in set(nb.allPendingResults()):
+                    try:
+                        # query the status of a job
+                        #print('Test status of {j}'.format(j=j))
+                        status = self._client.result_status(j, status_only=False)
                     
-                # add all completed jobs to the notebook
-                if j in status['completed']:
-                    r = status[j]
-                        
-                    # resolve the result in the appropriate result set
-                    nb.resolvePendingResult(r, j)
+                        # add all completed jobs to the notebook
+                        if j in status['completed']:
+                            r = status[j]
+                            #print('{j} completed'.format(j=j))
 
-                    # record that we retrieved the results for the given job
-                    n = n + 1
+                            # resolve the result in the appropriate result set
+                            nb.resolvePendingResult(r, j)
 
-                # commit changes to the notebook
+                            # record that we retrieved the results for the given job
+                            n = n + 1
+                    
+                            # purge the completed job from the cluster
+                            self._client.purge_hub_results(j)        
+                    except Exception as e:
+                        # report the exception and carry on, recording the job as crashed
+                        print(e, file=sys.stderr)
+                        crashed.append(j)
+
+                # purge any crashed jobs if requested
+                if purge and len(crashed) > 0:
+                    for j in crashed:
+                        nb.cancelPendingResult(j)
+                        self._client.purge_hub_results(j)    
+            finally:
+                # commit changes to the notebook and close the connection
                 nb.commit()
+                self.close()
 
-                # purge the completed jobs from the cluster
-                # (only happens after they've been committed to storage in the notebook)
-                for j in status['completed']:
-                    self._client.purge_hub_results(j)        
- 
         return n
 
 
