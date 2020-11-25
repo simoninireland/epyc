@@ -42,6 +42,8 @@ After this the notebook's underlying file will be closed, with the new results
 having been saved.
 
 
+.. _json-file-structure:
+
 Structure of the JSON file
 --------------------------
 

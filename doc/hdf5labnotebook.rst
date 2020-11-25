@@ -54,6 +54,8 @@ underlying file, for example:
     nb.commit()
 
 
+.. _hdf5-file-structure:
+
 Structure of the HDF5 file
 --------------------------
 
@@ -84,6 +86,13 @@ and experimental result field names.
     Attributes are all held as strings at the moment. There's a case for giving
     them richer types in the future.
 
+The attributes also include the description of the result set and a flag indicating whether
+it has been locked.
+
+.. autoattribute :: HDF5LabNotebook.DESCRIPTION
+
+.. autoattribute :: HDF5LabNotebook.LOCKED
+
 Within the group are two datasets: one holding the results of experiments, and one holding
 pending results yet to be resolved.
 
@@ -111,7 +120,7 @@ HDF5 type management
 ``epyc`` takes a very Pythonic view of experimental results, storing them
 in a :term:`results dict` with an unconstrained set of keys and types: and
 experiment can store anything it likes as a result. The :class:`ResultSet`
-class handles mapping Pythoin types to ``numpy`` dtypes: see :ref:`resultset-type-inference`
+class handles mapping Python types to ``numpy`` dtypes: see :ref:`resultset-type-inference`
 for details.
 
 The HDF5 type mapping follows the ``numpy`` approach closely. Some types
@@ -132,7 +141,7 @@ which are automatically patched to ``datetime`` instances when loaded.
     message.
 
     To work around this, it's safest to not have array-valued results. If you need
-    them, pick a shape beforehand.
+    them, pick a shape beforehand and stick to it.
 
     This limitation may be removed in future versions.
 

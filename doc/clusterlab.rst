@@ -6,36 +6,6 @@
 .. autoclass :: ClusterLab
 
 
-Lab creation and management
----------------------------
-
-Creating a :class:`ClusterLab` connects the lab object to a
-pre-existing ``ipyparallel`` cluster. This can be done in a number of
-ways, matching all the ways available for ``ipyparallel.Client``
-objects: the easiest is to provide a link to the
-``ipcluster-client.json`` file that is created by the cluster to
-contain the necessary connection parameters.
-
-Once created, the :class:`ClusterLab` can be opened and closed to
-connect and disconnect from the cluster: the class' methods do this
-automatically, and try to close the connection where possible to avoid
-occupying network resources. Closing the connection explicitly will
-cause no problems, as it re-opens automatically when needed.
-
-.. automethod :: ClusterLab.__init__
-
-.. automethod :: ClusterLab.open
-		
-.. automethod :: ClusterLab.close
-
-Ina  very s,mall number of circumstances it may be necessary to take control
-of the basioc connectio functionality, which is provided by two other helped methods.
-
-.. automethod :: ClusterLab.connect
-
-.. automethod :: ClusterLab.activate
-
-
 Interacting with the cluster
 ----------------------------
 
@@ -53,8 +23,6 @@ experiment available in the cluster.
 
 .. automethod :: ClusterLab.sync_imports
 
-.. automethod :: ClusterLab.use_dill
-
 		
 Running experiments
 -------------------
@@ -66,14 +34,14 @@ experiments are run on points in the parameter space in
 parallel. Experiments are run asynchronously: :meth:`runExperiment`
 returns as soon as the experiments have been sent to the cluster.
 
+.. automethod :: ClusterLab.runExperiment
+
 The :meth:`ClusterLab.readyFraction` method returns the fraction of
 results that are ready for retrieval, *i.e.*, the fraction of the
 parameter space that has been explored. :meth:`ClusterLab.ready` tests
 whether *all* results are ready. For cases where it is needed (which
 will hopefully be few and far between), :meth:`ClusterLab.wait` blocks
 until all results are ready.  
-
-.. automethod :: ClusterLab.runExperiment
 
 .. automethod :: ClusterLab.readyFraction
 
@@ -94,5 +62,30 @@ the previous check. (Checks can also be carried out directly.)
 .. automethod :: ClusterLab.updateResults
 		
 		
+Connection management
+---------------------
+
+A :class:`ClusterLab` can be opened and closed to
+connect and disconnect from the cluster: the class' methods do this
+automatically, and try to close the connection where possible to avoid
+occupying network resources. Closing the connection explicitly will
+cause no problems, as it re-opens automatically when needed.
+
+.. important ::
+
+    Connection management is intended to be transparent, so
+    there will seldom be a need to use any these methods directly.
+
+.. automethod :: ClusterLab.open
+		
+.. automethod :: ClusterLab.close
+
+In a very small number of circumstances it may be necessary to take control
+of (or override) the basic connection functionality, which is provided by two
+other helped methods.
+
+.. automethod :: ClusterLab.connect
+
+.. automethod :: ClusterLab.activate
 
 
