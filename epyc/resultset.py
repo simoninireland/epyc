@@ -21,8 +21,29 @@ from epyc import Experiment, ResultsDict
 import numpy                       # type: ignore
 from pandas import DataFrame       # type: ignore
 import sys
+import traceback
 from datetime import datetime
 from typing import Final, List, Dict, Set, Any, Type, Optional
+
+
+class CancelledException(Exception):
+    '''An exception stored within the :class:`Experiment` :term:`results dict`
+    when a pending result is cancelled without completeing the experiment.
+    This means that all experiments started either complete successfully (and
+    have their results recorded), or fail within the experiment itself
+    (and have that exception stored, without results), or are cancelled
+    (and have this exception and a traceback stored).'''
+
+    def __init__(self):
+        super(CancelledException, self).__init__('Cancelled')
+
+
+class ResultSetLockedException(Exception):
+    '''An exception raised if an attempt is made to write new results to a result
+    set that's been locked by a call to :meth:`ResultSet.finish`.'''
+
+    def __init__(self):
+        super(ResultSetLockedException, self).__init__('Result set locked')
 
 
 class ResultSet(object):
@@ -62,7 +83,13 @@ class ResultSet(object):
                                               datetime: numpy.str,
                                               Exception: numpy.str,
                                             }               #: Default type mapping from Python types to ``numpy`` ``dtypes``.
-
+    ZeroMapping : Dict[str, Any] = { 'i': 0,
+                                     'f': 0.0,
+                                     'c': 0 + 0j,
+                                     'b': False,
+                                     'U': '',
+                                     'S': '',
+                                   }                        #: Default ("zero") values for all the numpy type kinds we handle.
 
     def __init__(self, description : str =None):
         # generate a description from today's date is none is provided 
@@ -81,6 +108,7 @@ class ResultSet(object):
         self._pendingdtype : Optional[numpy.dtype] = None      # pending results dtype
         self._dirty: bool = False                              # (pending) results need persisting
         self._typedirty: bool  = False                         # structure of results has changed
+        self._locked : bool = False                            # locked to further results
 
 
     # ---------- Metadata access ----------
@@ -138,6 +166,35 @@ class ResultSet(object):
         return ns
 
 
+    # ---------- locking ----------
+
+    def finish(self):
+        '''Finish and lock this result set. This cancels any pending results
+        and locks the result set against future additions. This is useful to tidy up 
+        after experiments are finished, and protects against accidentally re-using
+        a result set for something else.'''
+
+        # cancel any peiding results
+        for j in self.pendingResults():
+            self.cancelSinglePendingResult(j)
+
+        # lock the result set
+        self._locked = True
+
+    def isLocked(self) -> bool:
+        '''Returns true if the result set is locked.
+
+        :returns: True if the result set is locked'''
+        return self._locked
+
+    def assertUnlocked(self):
+        '''Tests whewther the result set is locked, and raises a :class:`ResultSetLockedException`
+        if so. This is used to protect update methods, since locked result sets are never
+        updated.'''
+        if self.isLocked():
+            raise ResultSetLockedException()
+
+
     # ---------- Attributes ----------
 
     def setAttribute(self, k : str, v : Any):
@@ -145,6 +202,7 @@ class ResultSet(object):
 
         :param k: the key
         :param v: the attribute value'''
+        self.assertUnlocked()
         self._attributes[k] = v
         self.dirty()
 
@@ -168,6 +226,7 @@ class ResultSet(object):
         raised if the attribute doesn't exist.
 
         :param k: the attribute'''
+        self.assertUnlocked()
         del self._attributes[k]
         self.dirty()
 
@@ -176,6 +235,7 @@ class ResultSet(object):
 
         :param k: the key
         :param v: the attribute value'''
+        self.assertUnlocked()
         self.setAttribute(k, v)
 
     def __getitem__(self, k : str) -> Any:
@@ -240,6 +300,7 @@ class ResultSet(object):
         data is stored (if required).
 
         :param dtype: the dtype'''
+        self.assertUnlocked()
         self._dtype = dtype
 
     def pendingdtype(self) -> numpy.dtype:
@@ -529,6 +590,16 @@ class ResultSet(object):
         # return the dtype
         return self._pendingdtype
 
+    def zero(self, dtype : numpy.dtype) -> Any:
+        '''Return the appropriate "zero" for the given simple dtype.
+
+        :param dtype: the dtype
+        :returns: "zero"'''
+        if dtype.kind in self.ZeroMapping:
+            return self.ZeroMapping[dtype.kind]
+        else:
+            return 0.0     # and hope for the best
+
 
     # ---------- Adding results ----------
 
@@ -542,9 +613,10 @@ class ResultSet(object):
         in previously-saved results will receive default values.
 
         :param rc: a results dict'''
+        self.assertUnlocked()
 
         # match the types to the passed information
-        self.inferDtype(rc)
+        dt = self.inferDtype(rc)
 
         # flatten the key/value pairs in the results dict
         # (in case of clashes, results take precedence)
@@ -552,14 +624,14 @@ class ResultSet(object):
         for d in [ Experiment.METADATA, Experiment.PARAMETERS ]:
             for k in self._names[d]:
                 if k not in rc[d]:
-                    row[k] = 0  
+                    row[k] = self.zero(dt[k])
                 else:
                     row[k] = rc[d][k]
         if self._names[Experiment.RESULTS] is not None:
             for k in self._names[Experiment.RESULTS]:
                 if not rc[Experiment.METADATA][Experiment.STATUS] or k not in rc[Experiment.RESULTS]:
                     # failed results and missing fields are zeroed
-                    row[k] = 0  
+                    row[k] = self.zero(dt[k])
                 else:
                     row[k] = rc[Experiment.RESULTS][k]
 
@@ -580,6 +652,7 @@ class ResultSet(object):
 
         :param params: the experimental parameters
         :param jobid: the job id'''
+        self.assertUnlocked()
 
         # match types
         self.inferPendingResultDtype(params)
@@ -648,15 +721,21 @@ class ResultSet(object):
         # return the ids
         return list(df[self.JOBID])
 
-    def cancelSinglePendingResult(self, jobid : str):
-        '''Cancel the given pending result. Note that cancellation doesn't imply failure:
-        it's used by :meth:`LabNotebook.resolvePendingResult` to remove the pending result
-        after it's been added to the "real" results.
+    def _dropPendingResult(self, jobid : str):
+        '''Drop a pending result from the pending table.
 
         :param jobid: the job id'''
-        df = self._pending
+
+    def resolveSinglePendingResult(self, jobid : str):
+        '''Resolve the given pending result. This drops the job from the
+        pending results table. User code should call :meth:`LabNotebook.resolvePendingResult`
+        rather than using this method directly.
+
+        :param jobid: the job id'''
+        self.assertUnlocked()
 
         # drop the job line from the pending table
+        df = self._pending
         ids = df[df[self.JOBID] == jobid].index
         if len(ids) == 0:
             # identified job doesn't exist
@@ -665,7 +744,56 @@ class ResultSet(object):
             # shouldn't be more than one either....
             raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
         df.drop(index=ids, inplace=True)
-        print('Dropped {j}'.format(j=jobid), file=sys.stderr)
+        print('Resolved {j}'.format(j=jobid), file=sys.stderr)
+
+        # mark us as dirty
+        self.dirty()
+
+    def cancelSinglePendingResult(self, jobid : str):
+        '''Cancel a pending job, This records the cancellation using a
+        :class:`CancelledException`, storing a traceback to show where the cancellation
+        was triggered from. User code should call :meth:`LabNotebook.cancelPendingResult`
+        rather than using this method directly.
+
+        :param jobid: the job id'''
+        self.assertUnlocked()
+
+        # create the "marker" exception for the results dict
+        rc = Experiment.resultsdict()
+        try:
+            raise CancelledException()
+        except CancelledException as ex:
+            # grab a traceback
+            tb = traceback.format_exc()
+
+            # fill in the limited metadata we have 
+            rc[Experiment.METADATA][Experiment.STATUS] = False
+            rc[Experiment.METADATA][Experiment.END_TIME] = datetime.now()
+            rc[Experiment.METADATA][Experiment.EXCEPTION] = ex
+            rc[Experiment.METADATA][Experiment.TRACEBACK] = tb
+
+        # find the job line in the pending table
+        df = self._pending
+        ids = df[df[self.JOBID] == jobid].index
+        if len(ids) == 0:
+            # identified job doesn't exist
+            raise Exception('No pending result {j}'.format(j=jobid))
+        elif len(ids) != 1:
+            # shouldn't be more than one either....
+            raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
+
+        # extract the parameters
+        id = ids[0]
+        row = df.loc[id]
+        for k in self._names[Experiment.PARAMETERS]:
+            rc[Experiment.PARAMETERS][k] = row[k]
+        
+        # add the result to the results table
+        self.addSingleResult(rc)
+
+        # drop the line in the pending table
+        df.drop(index=ids, inplace=True)
+        print('Cancelled {j}'.format(j=jobid), file=sys.stderr)
 
         # mark us as dirty
         self.dirty()
@@ -700,19 +828,25 @@ class ResultSet(object):
 
     # ---------- Retrieving results ----------
 
-    def dataframe(self) -> DataFrame:
+    def dataframe(self, only_successful : bool =False) -> DataFrame:
         '''Return all the available results.
         The results are returned as a `pandas` DataFrame object, which is detached
         from the results held in the result set, thereby keeping the result set
         itself immutable.
 
         You can pre-filter the contents of the dataframe to only include results
-        for specific parameter values using :meth:`dataframeFor`.
+        for specific parameter values using :meth:`dataframeFor`. You can also discard
+        any unsuccessful results the using only_successful flag.
 
+        :param only_successful: (optional) filter out any failed results (defaults to False)
         :returns: a dataframe of results'''
-        return self._results.copy()
+        df = self._results.copy()
+        if len(df) > 0 and only_successful:
+            # filter out only the successful runs (if there are any to start with)
+            df = df[df[Experiment.STATUS] == True]
+        return df
 
-    def dataframeFor(self, params : Dict[str, Any]) -> DataFrame:
+    def dataframeFor(self, params : Dict[str, Any], only_successful : bool =False) -> DataFrame:
         '''Extract a dataframe the results for only the given set of parameters. These need not be
         all the parameters for the experiments, so it's possible to project-out
         all results for a sub-set of the parameters. If a parameter is mapped to
@@ -726,7 +860,10 @@ class ResultSet(object):
         from the results held in the result set, thereby keeping the result set
         itself immutable.
 
+        You can also discard any unsuccessful results the using only_successful flag.
+
         :param params: a dict of parameters and values
+        :param only_successful: (optional) filter out any failed results (defaults to False)
         :returns: a dataframe containing results matching the parameter constraints'''
 
         # if we have no results, exit immediately
@@ -739,7 +876,7 @@ class ResultSet(object):
             raise Exception('Unexpected experimental parameters: {dps}'.format(dps=dps))
 
         # project-out the rows with these values
-        df = self._results
+        df = self._results.copy()
         for k in params.keys():
             try:
                 _ = iter(params[k])    # will raise an exception if applied to a singleton
@@ -750,8 +887,12 @@ class ResultSet(object):
                 # singleton value, just capture the results that match
                 df = df[df[k] == params[k]]
 
+        # filter out only the successful runs (if there are any to start with)
+        if len(df) > 0 and only_successful:
+           df = df[df[Experiment.STATUS] == True]
+
         # return the dataframe with the projected-out results
-        return df.copy()
+        return df
 
     def _dataframeToDict(self, df : DataFrame) -> List[ResultsDict]:
         '''Convert all the rows in a dataframe into a results dict with the correct
