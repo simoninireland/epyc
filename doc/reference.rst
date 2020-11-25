@@ -40,3 +40,11 @@ Parallel experiments
    :maxdepth: 2
 
    clusterlab
+
+Exceptions
+----------
+
+.. toctree ::
+   :maxdepth: 2
+
+   exceptions
