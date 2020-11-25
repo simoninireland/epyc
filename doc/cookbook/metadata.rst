@@ -55,10 +55,13 @@ likely some units. We can use attributes to store this metadata too:
         rs[MyExperiment.NPARTICLES] = 'Number of particls (number)'
         rs[MyExperiment.DENSITY] = 'Final particle density (m^-2)'
 
+        # lock the result set against further updates
+        rs.finish()
+
 We've assumed we have a class ``MyExperiment`` that defines field names for its
 parameter and result fields. For each of these we create an attribute of the result
 set holding a text description and units. Now, when sometime later we examine the notebook,
-we'll have at least some idea of what's what. Admittedly that metadat isn't machine-readable
+we'll have at least some idea of what's what. Admittedly that metadata isn't machine-readable
 to allow a program to (for example) work out that masses are measured in grams: that
 would require a far more sophisticated system using ontologies to describe the structure
 of information. But it's a start to have the information recorded in a human-readable form,
@@ -68,5 +71,8 @@ In particular fields it may also be worth adhering to specific standards for met
 The UK Digital Curation Centre maintains a `list <https://www.dcc.ac.uk/guidance/standards/metadata/list>`_
 that may be useful.
 
-
+Finally, we called :meth:`ResultSet.finish` to finish and lock the result set. This
+will (hopefully) prevent accidental corruption, and will also tidy up the final
+file by cancelling any submitted-but-not-completed pending results. (Any such results
+will still be recorded in the dataset for audit purposes.)
 

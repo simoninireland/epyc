@@ -14,3 +14,5 @@ should first read :ref:`concepts-parallel`.)
 .. include :: setup.rst
 
 .. include :: cluster.rst
+
+.. include :: cluster-problems.rst

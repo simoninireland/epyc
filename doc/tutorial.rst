@@ -1,5 +1,5 @@
-Tutorial
-========
+Tutorials
+=========
 
 This page is a tutorial introduction to ``epyc``.
 

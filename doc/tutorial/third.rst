@@ -16,3 +16,4 @@ to need to be able to handle larger-scale datasets.
 
 .. include :: pending.rst
 
+.. include :: locking.rst
