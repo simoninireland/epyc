@@ -136,7 +136,43 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(self._nb.dataframe(only_successful=False)), 3)
         self.assertEqual(len(self._nb.dataframe()), 2)
 
-# Test we can add metadata
+    def testAddList(self):
+        '''Test we can add a list of results dicts.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+        self._nb.addResult([rc1, rc2, rc3])
+        self.assertEqual(self._nb.numberOfResults(), 3)
+        df = self._nb.dataframe()
+        vals = df['a']
+        self.assertCountEqual(vals, [10, 20, 30])
+
+    def testAddNested(self):
+        '''Test we can add a set of nested results, as we get from a repeated experiment.'''
+        rc = self._resultsdict()
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+
+        # construct the nested experiment
+        rc[Experiment.RESULTS] = [rc1, rc2, rc3]
+        self._nb.addResult([rc1, rc2, rc3])
+
+        self.assertEqual(self._nb.numberOfResults(), 3)
+        df = self._nb.dataframe()
+        vals = df['a']
+        self.assertCountEqual(vals, [10, 20, 30])
+
+
+
+
+# TODO: Test we can add metadata
 
 if __name__ == '__main__':
     unittest.main()
