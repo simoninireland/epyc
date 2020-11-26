@@ -64,9 +64,7 @@ class ClusterLabTests(unittest.TestCase):
     def setUp( self ):
         '''Create a lab in which to perform tests.'''
         self._lab = ClusterLab(profile=profile)
-        self._lab.use_dill()
-        with self._lab.sync_imports():
-            import time
+        #self._lab = ClusterLab(url_file='ipcontroller-client.json')
 
     def tearDown( self ):
         '''Close the conection to the cluster.'''
@@ -180,13 +178,20 @@ class ClusterLabTests(unittest.TestCase):
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment2())
 
+        # cancel a job, check we retained them all
         params = dict(a = int(n / 2))
         jobids = self._lab.notebook().current().pendingResultsFor(params)
         for j in jobids:
             self._lab.notebook().cancelPendingResult(j)
         self._lab.wait()
-        self.assertEqual(self._lab.notebook().current().numberOfResults(), n - 1)
+        self.assertEqual(self._lab.notebook().current().numberOfResults(), n)
         self.assertEqual(self._lab.notebook().current().numberOfPendingResults(), 0)
+
+        # check cancelled job had a marker exception
+        for rc in self._lab.notebook().results():
+            if rc[Experiment.PARAMETERS]['a'] == int(n / 2):
+                self.assertTrue(isinstance(rc[Experiment.METADATA][Experiment.EXCEPTION], CancelledException))
+
 
     def testCancelAllJobs( self ):
         '''Test we can cancel all jobs.'''
@@ -196,11 +201,17 @@ class ClusterLabTests(unittest.TestCase):
         self._lab['a'] = r
         self._lab.runExperiment(SampleExperiment2())
 
+        # cancel all jobs
         for j in self._lab.notebook().allPendingResults():
             self._lab.notebook().cancelPendingResult(j)
         self._lab.wait()
-        self.assertEqual(self._lab.notebook().current().numberOfResults(), 0)
+        self.assertEqual(self._lab.notebook().current().numberOfResults(), 20)
         self.assertEqual(self._lab.notebook().current().numberOfPendingResults(), 0)
+
+        # make sure all jobs have a marker
+        for rc in self._lab.notebook().results():
+            self.assertTrue(isinstance(rc[Experiment.METADATA][Experiment.EXCEPTION], CancelledException))
+
 
     def testAddExperiments( self ):
         '''Test we can add experiments while some are running, without locking up.'''
@@ -220,8 +231,25 @@ class ClusterLabTests(unittest.TestCase):
         self.assertEqual(len(self._lab.notebook().dataframe()), 2 * n)
         self.assertEqual(self._lab.notebook().current().numberOfPendingResults(), 0)
 
+    def testClusterAndHDF5(self):
+        '''Test that a cluster works with HDF5 properly.'''
+        self._lab = ClusterLab(url_file='ipcontroller-client.json',
+                               notebook=HDF5LabNotebook('test.h5', create=True))
+        self._lab.notebook().addResultSet('mydata')
 
-# Test we can run pending jobs from different result sets
+        # run an experiment, with all the trimmings
+        n = 20
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab.runExperiment(SampleExperiment2())
+        self._lab.wait()
+        self._lab.notebook().commit()
+
+        with self._lab.notebook().open() as nb:
+            self.assertEqual(len(nb), nb)
+
+
+# TODO: Test we can run pending jobs from different result sets
 
 if __name__ == '__main__':
     unittest.main()
