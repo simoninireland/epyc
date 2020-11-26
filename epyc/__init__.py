@@ -30,13 +30,13 @@ experiments simultaneously.
 Managing all these tasks is complicated, so `epyc` tries to automate
 the process. It provides a way to define a :term:`lab` that performs
 an :term:`experiment` (or, more likely, a sequence of experiments)
-whose parameters and results are recorded in a lab :term:`notebook`
+whose parameters and results are recorded as a :term:`result set` in a lab :term:`notebook`
 for later retrieval. Laboratories can be sequential (for a single
 machine) or parallel (to use a multicore or cluster of machines); lab
 notebooks can be persistent to allow experiments to be fired-off and
-their results retrieved later - handy if you use a laptop. Notebooks
-store all the data and metadata immutably in a portable format to
-improve the reproducibility of computational experiments.
+their results retrieved later -- handy if you use a laptop. Notebooks
+store all the data and metadata immutably in a portable format
+(JSON or HDF5) to improve the reproducibility of computational experiments.
 
 `epyc` also includes a small number of :term:`experiment combinators` that
 separate the logic of a single experiment from the logic of performing
@@ -53,7 +53,7 @@ from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
 
-from .resultset import ResultSet, ResultSetLockedException, CancelledException
+from .resultset import ResultSet, ResultSetLockedException, CancelledException, PendingResultException
 from .labnotebook import LabNotebook, ResultsStructureException, NotebookVersionException
 from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
@@ -63,5 +63,6 @@ from .clusterlab import ClusterLab
 
 # Late and/or complex initialisation
 Experiment._init_statics()
+ResultSet._init_statics()
 
 
