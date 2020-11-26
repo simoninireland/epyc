@@ -334,13 +334,16 @@ class HDF5LabNotebook(LabNotebook):
 
             # read in each pending result
             # sd: this uses the results dict API and so is quite wasteful
-            pdfnames = names[Experiment.PARAMETERS]
+            pdfnames = list(pds.dtype.names)
+            jobidcol = pdfnames.index(ResultSet.JOBID)
             for i in range(len(pds)):
                 elements = list(pds[i])
                 params = dict()
                 for j in range(len(pdfnames)):
-                    params[pdfnames[j]] = elements[j]
-                jobid = elements[-1]                      # job id must be the last column!
+                    if j == jobidcol:
+                        jobid = elements[j]
+                    else:
+                        params[pdfnames[j]] = elements[j]
 
                 # some backends force strings, not bytes, for job ids
                 if isinstance(jobid, bytes):
