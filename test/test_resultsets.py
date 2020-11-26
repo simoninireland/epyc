@@ -511,7 +511,13 @@ class ResultSetTests(unittest.TestCase):
         self._rs.addSingleResult(self._rc)
         self._rs.cancelSinglePendingResult('1234')
         self.assertCountEqual(self._rs.pendingResults(), [])
+
+        # check we have the cancelled result still
         rss = self._rs.dataframeFor(self._rc[Experiment.PARAMETERS])
+        self.assertEqual(len(rss), 2)
+
+        # check there's only one successful result
+        rss = self._rs.dataframeFor(self._rc[Experiment.PARAMETERS], only_successful=True)
         self.assertEqual(len(rss), 1)
         self.assertEqual(rss['first'][0], 1)
 
@@ -558,9 +564,15 @@ class ResultSetTests(unittest.TestCase):
         self._rs.cancelSinglePendingResult('4567')
         self.assertCountEqual(self._rs.pendingResults(), [])
 
+        # check the two cancelled results were zeroed correctly
         rss = self._rs.dataframeFor(self._rc[Experiment.PARAMETERS])
-        self.assertEqual(len(rss), 2)
-        self.assertCountEqual(rss['first'], [ 1, 2 ])
+        self.assertEqual(len(rss), 4)
+        self.assertCountEqual(rss['first'], [ 0, 0, 1, 2 ])
+
+        # check that we project out the right successes
+        rsss = rss[rss[Experiment.STATUS] == True]
+        self.assertEqual(len(rsss), 2)
+        self.assertCountEqual(rsss['first'], [ 1, 2 ])
 
     def testPendingParameterNames(self):
         '''Test we have to respect parameter names when adding pending jobs.'''
@@ -585,8 +597,15 @@ class ResultSetTests(unittest.TestCase):
         self._rs.addSinglePendingResult(self._rc[Experiment.PARAMETERS], '4567')
         self.assertCountEqual(self._rs.pendingResults(), [ '1234', '4567' ])
 
+        # check job gets cancelled
         self._rs.cancelSinglePendingResult('1234')
         self.assertCountEqual(self._rs.pendingResults(), [ '4567' ])
+
+        # check the exception is correct
+        rcs = self._rs.resultsFor(dict(duplicate=10))
+        self.assertEqual(len(rcs), 1)
+        rc = rcs[0]
+        self.assertTrue(isinstance(rc[Experiment.METADATA][Experiment.EXCEPTION], CancelledException))
 
     def testFailedResult(self):
         '''Test we can save a failed result, i.e., with an exception and no results.'''
@@ -656,7 +675,7 @@ class ResultSetTests(unittest.TestCase):
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params1), rc1))
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params2), rc2))
         self.assertEqual(len(self._rs.dataframeFor(params3)), 0)
-        self.assertEqual(len(self._rs.results()), 2)
+        self.assertEqual(len(self._rs.results()), 3)
         self.assertCountEqual(self._rs.pendingResults(), [ '3' ])
         self.assertFalse(self._rs.ready())
 
@@ -664,8 +683,9 @@ class ResultSetTests(unittest.TestCase):
         self._rs.cancelSinglePendingResult('3')
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params1), rc1))
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params2), rc2))
-        self.assertEqual(len(self._rs.dataframeFor(params3)), 0)
-        self.assertEqual(len(self._rs.results()), 2)
+        self.assertEqual(len(self._rs.dataframeFor(params3)), 1)
+        self.assertEqual(len(self._rs.dataframeFor(params3, only_successful=True)), 0)
+        self.assertEqual(len(self._rs.results()), 4)
         self.assertCountEqual(self._rs.pendingResults(), [])
         self.assertTrue(self._rs.ready())
 
@@ -673,8 +693,8 @@ class ResultSetTests(unittest.TestCase):
         self._rs.addSinglePendingResult(params3, '3')
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params1), rc1))
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params2), rc2))
-        self.assertEqual(len(self._rs.dataframeFor(params3)), 0)
-        self.assertEqual(len(self._rs.results()), 2)
+        self.assertEqual(len(self._rs.dataframeFor(params3)), 1)
+        self.assertEqual(len(self._rs.results()), 4)
         self.assertCountEqual(self._rs.pendingResults(), [ '3' ])
         self.assertFalse(self._rs.ready())
 
@@ -682,10 +702,45 @@ class ResultSetTests(unittest.TestCase):
         self._rs.cancelSinglePendingResult('3')
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params1), rc1))
         self.assertTrue(self._resultsEqual(self._rs.dataframeFor(params2), rc2))
-        self.assertEqual(len(self._rs.dataframeFor(params3)), 0)
-        self.assertEqual(len(self._rs.results()), 2)
+        self.assertEqual(len(self._rs.dataframeFor(params3)), 2)
+        self.assertEqual(len(self._rs.results()), 5)
         self.assertCountEqual(self._rs.pendingResults(), [])
         self.assertTrue(self._rs.ready())
+
+    def testLocking(self):
+        '''Test we can lock result sets.'''
+        e = SampleExperiment()
+        
+        # create three results
+        params1 = dict(a  = 1, b = 2)
+        rc1 = e.set(params1).run()
+        params2 = dict(a  = 10, b = 12)
+        rc2 = e.set(params2).run()
+        params3 = dict(a  = 45, b = 11)
+        rc3 = e.set(params3).run()
+
+        # add first result, with second pending
+        self.assertFalse(self._rs.isLocked())
+        self._rs.addSingleResult(rc1)
+        self._rs.addSinglePendingResult(params2, '1234')
+
+        # finish and lock the result set
+        self._rs.finish()
+        self.assertEqual(self._rs.numberOfResults(), 2)
+        self.assertEqual(self._rs.numberOfPendingResults(), 0)
+        self.assertTrue(self._rs.isLocked())
+
+        # make sure we can't add further jobs or otherwise change the result set
+        with self.assertRaises(ResultSetLockedException):
+            self._rs.addSingleResult(rc3)
+        with self.assertRaises(ResultSetLockedException):
+            self._rs.addSinglePendingResult(rc3, '3456')
+        with self.assertRaises(ResultSetLockedException):
+            self._rs['attribute'] = 'not saved'
+
+        # make sure we still have access
+        self.assertEqual(len(self._rs.results()), 2)
+
 
 if __name__ == '__main__':
     unittest.main()
