@@ -45,6 +45,9 @@ experiment can be repeated and statistically summarised, for example.
 
 """
 
+# String written into every persistent notebook file
+PackageContactInfo = 'Created by epyc, computational experiment management for Python <https://pypi.org/project/epyc/>'
+
 from .experiment import Experiment, ResultsDict
 from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
