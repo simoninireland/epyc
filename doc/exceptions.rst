@@ -13,6 +13,14 @@
 .. autoclass :: ResultSetLockedException
 
 
+:class:`PendingResultException`: Unrecognised pending result job identifier
+===========================================================================
+
+.. autoclass :: PendingResultException
+
+.. automethod :: PendingResultException.jobid
+
+
 :class:`ResultsStructureException`: Badly-structured results dict (or dicts)
 ============================================================================
 
