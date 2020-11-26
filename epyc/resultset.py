@@ -46,6 +46,23 @@ class ResultSetLockedException(Exception):
         super(ResultSetLockedException, self).__init__('Result set locked')
 
 
+class PendingResultException(Exception):
+    '''An exception raised if an invalid pending result job identifier is used. A common
+    cause of this is a pending result that failed on submission and so was never actually started.
+
+    :param jobid: the job id'''
+
+    def __init__(self, jobid : str):
+        super(PendingResultException, self).__init__('Unrecognised pending result job identifier {j}'.format(j=jobid))
+        self._jobid = jobid
+
+    def jobid(self) -> str:
+        '''Return the uinrecopgnised job id.
+
+        :returns: the job id'''
+        return self._jobid
+
+
 class ResultSet(object):
     '''A "page" in a lab notebook for the results of a particular set
     of experiments. This will consist of metadata, notes, and a data table resulting from
@@ -90,6 +107,17 @@ class ResultSet(object):
                                      'U': '',
                                      'S': '',
                                    }                        #: Default ("zero") values for all the numpy type kinds we handle.
+
+    @classmethod
+    def _init_statics(cls):
+        '''Initialise the static members that need complex constructors.'''
+        cls.TypeMapping[int] = numpy.dtype(int)
+        cls.TypeMapping[float] = numpy.dtype(float)
+        cls.TypeMapping[complex] = numpy.dtype(complex)
+        cls.TypeMapping[bool] = numpy.dtype(bool)
+        cls.TypeMapping[str] = numpy.dtype(str)
+        cls.TypeMapping[datetime] = numpy.dtype(str)
+        cls.TypeMapping[Exception] = numpy.dtype(str)
 
     def __init__(self, description : str =None):
         # generate a description from today's date is none is provided 
@@ -326,7 +354,7 @@ class ResultSet(object):
         :returns: the dtype of the value'''
         if issubclass(t, numpy.number) or issubclass(t, numpy.ndarray):
             # numpy types are retained
-            return t
+            return numpy.dtype(t)
         else:
             # Python types are translated through the type mapping
             return self.TypeMapping[t]
@@ -480,7 +508,7 @@ class ResultSet(object):
                 for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                     for k in self._names[d]:
                         if k not in self._results:
-                            self._results[k] = [0] * nr
+                            self._results[k] = [self.zero(types[k])] * nr
             else:
                 # no results, create the table with the correct columns
                 self._results = DataFrame(columns=types.keys())
@@ -491,7 +519,7 @@ class ResultSet(object):
                 # add new columns to each element
                 for k in self._names[Experiment.PARAMETERS]:
                     if k not in self._pending:
-                        self._pending[k] = [0] * nr
+                        self._pending[k] = [self.zero(types[k])] * nr
 
             # our type has changed
             self.typechanged()
@@ -571,7 +599,7 @@ class ResultSet(object):
                 # add new columns to each element
                 for k in parameterNames:
                     if k not in self._results:
-                        self._results[k] = [0] * nr
+                        self._results[k] = [self.zero(types[k])] * nr
 
             # if we had pending results, add the new columns
             nr = len(self._pending)
@@ -579,7 +607,7 @@ class ResultSet(object):
                 # add new columns to each element
                 for k in parameterNames:
                     if k not in self._pending:
-                        self._pending[k] = [0] * nr
+                        self._pending[k] = [self.zero(types[k])] * nr
             else:
                 # no pending results, create the table with the correct columns
                 self._pending = DataFrame(columns=types.keys())
@@ -729,7 +757,8 @@ class ResultSet(object):
     def resolveSinglePendingResult(self, jobid : str):
         '''Resolve the given pending result. This drops the job from the
         pending results table. User code should call :meth:`LabNotebook.resolvePendingResult`
-        rather than using this method directly.
+        rather than using this method directly, since this method doesn't actually
+        store the completed pending result, it just manages its non-pending-ness.
 
         :param jobid: the job id'''
         self.assertUnlocked()
@@ -739,7 +768,7 @@ class ResultSet(object):
         ids = df[df[self.JOBID] == jobid].index
         if len(ids) == 0:
             # identified job doesn't exist
-            raise Exception('No pending result {j}'.format(j=jobid))
+            raise PendingResultException(jobid)
         elif len(ids) != 1:
             # shouldn't be more than one either....
             raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
@@ -779,7 +808,7 @@ class ResultSet(object):
         ids = df[df[self.JOBID] == jobid].index
         if len(ids) == 0:
             # identified job doesn't exist
-            raise Exception('No pending result {j}'.format(j=jobid))
+            raise PendingResultException(jobid)
         elif len(ids) != 1:
             # shouldn't be more than one either....
             raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
