@@ -744,7 +744,7 @@ class ResultSet(object):
             # shouldn't be more than one either....
             raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
         df.drop(index=ids, inplace=True)
-        print('Resolved {j}'.format(j=jobid), file=sys.stderr)
+        #print('Resolved {j}'.format(j=jobid), file=sys.stderr)
 
         # mark us as dirty
         self.dirty()
@@ -754,6 +754,8 @@ class ResultSet(object):
         :class:`CancelledException`, storing a traceback to show where the cancellation
         was triggered from. User code should call :meth:`LabNotebook.cancelPendingResult`
         rather than using this method directly.
+
+        Cancelling a result generates a message to standard output.
 
         :param jobid: the job id'''
         self.assertUnlocked()
