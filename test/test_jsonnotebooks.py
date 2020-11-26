@@ -45,16 +45,16 @@ class JSONLabNotebookTests(unittest.TestCase):
 
     def setUp( self ):
         '''Set up with a temporary file.'''
-        #tf = NamedTemporaryFile()
-        #tf.close()
-        #self._fn = tf.name
-        self._fn = 'test.json'
+        tf = NamedTemporaryFile()
+        tf.close()
+        self._fn = tf.name
+        #self._fn = 'test.json'
 
     def tearDown( self ):
         '''Delete the temporary file.'''
         try:
-            #os.remove(self._fn)
-            pass
+            os.remove(self._fn)
+            #pass
         except OSError:
             pass
         
@@ -229,6 +229,38 @@ class JSONLabNotebookTests(unittest.TestCase):
         self.assertEqual(len(js.resultsFor(dict(a=10))), 2)
         self.assertEqual(len(js.resultsFor(dict(b=20))), 1)
 
+    def testLocking(self):
+        '''Test that a locked result set stays locked.'''
+        e = SampleExperiment()
+        js = JSONLabNotebook(self._fn, create=True)
+
+        # put some results into the default result set
+        params1 = dict(a=10, b=20)
+        rc1 = e.set(params1).run()
+        js.addResult(rc1)
+        params1['b'] = 40
+        rc1 = e.set(params1).run()
+        js.addResult(rc1)
+        js.commit()
+
+        # put other results into another set and lock it
+        js.addResultSet('second')
+        params2 = dict(a=11, b=22)
+        rc2 = e.set(params2).run()
+        js.addResult(rc2)
+        params3 = dict(a=11, b=24)
+        js.addPendingResult(params3, '1234')
+        js.current().finish()
+        js.commit()
+
+        # load the notebook and makle sure it's got the correct structure
+        js1 = JSONLabNotebook(self._fn)
+        self.assertEqual(js1.currentTag(), 'second')
+        self.assertTrue(js1.current().isLocked())
+        self.assertEqual(js1.current().numberOfResults(), 2)
+        self.assertEqual(js1.current().numberOfPendingResults(), 0)
+        js1.select(LabNotebook.DEFAULT_RESULTSET)
+        self.assertFalse(js1.current().isLocked())
 
 if __name__ == '__main__':
     unittest.main()

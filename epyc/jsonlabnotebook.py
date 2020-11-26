@@ -18,7 +18,7 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from __future__ import annotations
-from epyc import LabNotebook, Experiment
+from epyc import LabNotebook, Experiment, PackageContactInfo
 import os
 import sys
 import json
@@ -192,8 +192,18 @@ class JSONLabNotebook(LabNotebook):
             res = j['resultsets'][tag]
 
             # attributes
+            locked = False
             for k in res.keys():
-                if k != 'results':
+                if k == 'results':
+                    # results, deal with them next
+                    pass
+                elif k == 'description':
+                    # description handled separately
+                    rs.setDescription(res[k])
+                elif k == 'locked':
+                    # locked flag
+                    locked = res[k]
+                else:
                     rs[k] = res[k]
 
             # results
@@ -202,7 +212,12 @@ class JSONLabNotebook(LabNotebook):
                 meta = rc[Experiment.METADATA]
                 for k in meta:
                     if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
-                        meta[k] = dateutil.parser.parse(meta[k])    # patch ISO-format strings to datetime objects
+                        try:
+                            # patch ISO-format strings to datetime objects
+                            meta[k] = dateutil.parser.parse(meta[k]) 
+                        except:
+                            # leave unchanged
+                            pass
                 self.addResult(rc, tag=tag)
 
             # pending results
@@ -210,6 +225,10 @@ class JSONLabNotebook(LabNotebook):
             for jobid in pendings:
                 params = dict(pendings[jobid])
                 self.addPendingResult(params, jobid, tag=tag)
+
+            # lock the result set if flagged
+            if locked:
+                rs.finish()
 
         # select the correct result set
         self.select(currentTag)
@@ -240,11 +259,18 @@ class JSONLabNotebook(LabNotebook):
             for k in rs.keys():
                 rsres[k] = rs[k]
 
+            # description
+            rsres['description'] = rs.description()
+
+            # lock
+            rsres['locked'] = rs.isLocked()
+
             # store the whole result set
             rsrcs[tag] = rsres
 
         # create the JSON object
-        j = json.dumps({ 'version': '2',
+        j = json.dumps({ 'creator': PackageContactInfo,
+                         'version': '2',
                          'description': self.description(),
                          'current' : self.currentTag(),
                          'resultsets': rsrcs },

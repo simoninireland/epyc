@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import ResultSet, Experiment, LabNotebook, ResultsDict
+from epyc import ResultSet, Experiment, LabNotebook, NotebookVersionException, PackageContactInfo
 import os
 import h5py                    # type: ignore
 import numpy                   # type: ignore
@@ -55,10 +55,13 @@ class HDF5LabNotebook(LabNotebook):
     PENDINGRESULTS_DATASET : Final[str] = 'pending'  #: Name of pending results dataset within the HDF5 group for a result set.
 
     # Metadata for the notebook
+    CREATOR : Final[str] = 'creator'                 #: Attribute holding library information and URL.
     VERSION : Final[str] = 'version'                 #: Attribute holding the version of file structure used.
     DESCRIPTION : Final[str] = 'description'         #: Attribute holding the notebook and result set descriptions.
     CURRENT : Final[str] = 'current-resultset'       #: Attribute holding the tag of the current result set.
 
+    # Metadata for result sets
+    LOCKED : Final[str] = 'locked'                   #: Attribute flagging as result set as being locked to further changes.
 
     def __init__(self, name : str, create : bool =False, description : str =None):
         # create an empty file structure
@@ -172,6 +175,9 @@ class HDF5LabNotebook(LabNotebook):
             v = rs[k]
             g.attrs.create(k, v, (1,), h5py.string_dtype())
 
+        # write out the locked flag
+        g.attrs.create(self.LOCKED, rs.isLocked(), (1,), numpy.bool)
+
         if rs.numberOfResults() > 0:
             # ---- PART 1: write structure ---
 
@@ -270,13 +276,17 @@ class HDF5LabNotebook(LabNotebook):
         g = self._file[tag]
 
         # read the attributes
+        locked = False
         for k in g.attrs.keys():
             if k == self.DESCRIPTION:
                 # description held separately from attributes
                 rs.setDescription(g.attrs[self.DESCRIPTION])
+            elif k == self.LOCKED:
+                # locked flag
+                locked = g.attrs[self.LOCKED]
             else:
                 rs[k] = g.attrs[k]
-  
+
         if self.RESULTS_DATASET in g:   
             # ---- PART 1: read structure ---
 
@@ -301,9 +311,13 @@ class HDF5LabNotebook(LabNotebook):
                 for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                     for k in names[d]:
                         if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
-                            # patch known datestamps to datetime objects
-                            dt = dateutil.parser.parse(entry[j])
-                            entry[j] = dt
+                            try:
+                                # patch known datestamps to datetime objects
+                                dt = dateutil.parser.parse(entry[j])
+                                entry[j] = dt
+                            except:
+                                # leave unchanged if we can't patch
+                                pass
                         rc[d][k] = entry[j]
                         j += 1
                 self.addResult(rc, tag)
@@ -328,8 +342,16 @@ class HDF5LabNotebook(LabNotebook):
                     params[pdfnames[j]] = elements[j]
                 jobid = elements[-1]                      # job id must be the last column!
 
+                # some backends force strings, not bytes, for job ids
+                if isinstance(jobid, bytes):
+                    jobid = jobid.decode()
+
                 # record the pending result
                 self.addPendingResult(params, jobid, tag)
+
+        # lock the result set if flagged
+        if locked:
+            rs.finish()
 
         # mark the result set as clean
         rs.dirty(False)
@@ -345,8 +367,9 @@ class HDF5LabNotebook(LabNotebook):
 
         # write out the housekeeping information for the notebook
         meta = self._file.attrs
-        self._file.attrs[self.VERSION] = self.Version
-        self._file.attrs[self.DESCRIPTION] = self.description()
+        meta[self.CREATOR] = PackageContactInfo
+        meta[self.VERSION] = self.Version
+        meta[self.DESCRIPTION] = self.description()
         meta[self.CURRENT] = self.resultSetTag(self.current())
 
     def _load(self):
@@ -356,7 +379,7 @@ class HDF5LabNotebook(LabNotebook):
         v = self._file.attrs[self.VERSION]
         if v != self.Version:
             # at present can't handle different file structure versions
-            raise Exception('Expected version {v} file structure, got version {v2}'.format(v=self.Version, v2=v))
+            raise NotebookVersionException(self.Version, v)
 
         # read the tags of all result sets and create empty sets for them
         tags = list(self._file.keys())

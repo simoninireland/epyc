@@ -256,6 +256,10 @@ class HDF5LabNotebookTests(unittest.TestCase):
                 # the successful result, check we have all result fields
                 self.assertCountEqual(rc[Experiment.RESULTS].keys(), ['total'])
                 self.assertEqual(rc[Experiment.RESULTS]['total'], t)
+
+                # make sure the missing exception and traceback fields were properly zeroed
+                self.assertEqual(rc[Experiment.METADATA][Experiment.EXCEPTION], '')
+                self.assertEqual(rc[Experiment.METADATA][Experiment.TRACEBACK], '')
             else:
                 # failed result, shouldn't be any result fields
                 self.assertCountEqual(rc[Experiment.RESULTS].keys(), [])
@@ -572,6 +576,38 @@ class HDF5LabNotebookTests(unittest.TestCase):
             self.assertEqual(nb.numberOfResults(), 0)
             self.assertEqual(nb.numberOfPendingResults(), 0)
 
+    def testLocking(self):
+        '''Test that a locked result set stays locked.'''
+        e = SampleExperiment()
+        nb = HDF5LabNotebook(self._fn, create=True)
+
+        # put some results into the default result set
+        params1 = dict(k=10)
+        rc1 = e.set(params1).run()
+        nb.addResult(rc1)
+        params1['k'] = 40
+        rc1 = e.set(params1).run()
+        nb.addResult(rc1)
+        nb.commit()
+
+        # put other results into another set and lock it
+        nb.addResultSet('second')
+        params2 = dict(k=11)
+        rc2 = e.set(params2).run()
+        nb.addResult(rc2)
+        params3 = dict(k=16)
+        nb.addPendingResult(params3, '1234')
+        nb.current().finish()
+        nb.commit()
+
+        # load the notebook and make sure it's got the correct structure
+        nb1 = HDF5LabNotebook(self._fn)
+        self.assertEqual(nb1.currentTag(), 'second')
+        self.assertTrue(nb1.current().isLocked())
+        self.assertEqual(nb1.current().numberOfResults(), 2)
+        self.assertEqual(nb1.current().numberOfPendingResults(), 0)
+        nb1.select(LabNotebook.DEFAULT_RESULTSET)
+        self.assertFalse(nb1.current().isLocked())
 
 if __name__ == '__main__':
     unittest.main()
