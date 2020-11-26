@@ -111,6 +111,13 @@ class ResultSetTests(unittest.TestCase):
         self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata.union(set(['additional'])))
         self.assertEqual(dtype.fields['additional'][0], numpy.dtype(ResultSet.TypeMapping[bool]))
 
+        # check we can now extend the
+        #  metadata
+        self._rc[Experiment.METADATA]['andagain'] = 'here we go'
+        dtype = self._rs.inferDtype(self._rc)
+        self.assertCountEqual(self._rs.metadataNames(), Experiment.StandardMetadata.union(set(['additional', 'andagain'])))
+        self.assertEqual(dtype.fields['andagain'][0], numpy.dtype(ResultSet.TypeMapping[str]))
+
     def testAddResults(self):
         '''Test we can add more results.'''
 
@@ -196,7 +203,7 @@ class ResultSetTests(unittest.TestCase):
         self._rc[Experiment.RESULTS]['extra'] = 'hello'
         self._rs.addSingleResult(self._rc)
         df = self._rs.dataframe()
-        self.assertTrue((df[df['k'] == 1]['extra'] == 0).all())
+        self.assertTrue((df[df['k'] == 1]['extra'] == '').all())
         self.assertTrue((df[df['k'] == 2]['extra'] == 'hello').all())
         self.assertTrue(self._rs.isDirty())
 
@@ -322,7 +329,7 @@ class ResultSetTests(unittest.TestCase):
         self._rs.addSingleResult(self._rc)
         df = self._rs.dataframe()
         self.assertTrue((df[df['singleton'] == 3]['radically'] == 'wrong').all())
-        self.assertTrue((df[df['singleton'] != 3]['radically'] == 0).all())
+        self.assertTrue((df[df['singleton'] != 3]['radically'] == '').all())
  
     def testSingleResult(self):
         '''Test retrieval of a single result.'''
@@ -356,7 +363,7 @@ class ResultSetTests(unittest.TestCase):
         df = self._rs.dataframeFor(params1)
         self.assertEqual(len(df.index), 1)
         self.assertTrue((df[df['singleton'] == params1['singleton']]['first'] == 1).all())
-        self.assertTrue((df[df['singleton'] == params1['singleton']]['radically'] == 0).all())
+        self.assertTrue((df[df['singleton'] == params1['singleton']]['radically'] == '').all())
         self.assertTrue((df[df['singleton'] == 3]['first'] == 1).all())
         self.assertTrue((df[df['singleton'] == 3]['radically'] == 'wrong').all())
 
@@ -521,6 +528,26 @@ class ResultSetTests(unittest.TestCase):
         self.assertEqual(len(rss), 1)
         self.assertEqual(rss['first'][0], 1)
 
+    def testPendingResultsFor(self):
+        '''Test we can retrieve pending results for a sub-set of parameters.'''
+        params = dict()
+        params['a'] = 10
+        params['b'] = 50
+        params['c'] = 'fifty'
+        self.assertEqual(len(self._rs.pendingResultsFor(params)), 0)
+        self._rs.addSinglePendingResult(params, '1234')
+        self.assertEqual(len(self._rs.pendingResultsFor(params)), 1)
+        params['b'] = 90
+        params['c'] = 'ninety'
+        self._rs.addSinglePendingResult(params, '5678')
+        params['b'] = 90
+        params['c'] = 'ninety'
+        self._rs.addSinglePendingResult(params, '91011')
+        self.assertEqual(len(self._rs.pendingResultsFor(dict(a=10))), 3)
+        self.assertEqual(len(self._rs.pendingResultsFor(dict(b=50))), 1)
+        self.assertEqual(len(self._rs.pendingResultsFor(dict(a=10, b=50))), 1)
+        self.assertEqual(len(self._rs.pendingResultsFor(dict(a=15, b=50))), 0)
+
     def testNumberOfPendingResultsZero(self):
         '''Test we can handle zero pending results.'''
         self.assertEqual(self._rs.numberOfPendingResults(), 0)        
@@ -529,6 +556,14 @@ class ResultSetTests(unittest.TestCase):
         '''Test we can count pending results.'''
         self._rs.addSinglePendingResult(self._rc[Experiment.PARAMETERS], '1234')
         self.assertEqual(self._rs.numberOfPendingResults(), 1)        
+
+    def testJobId(self):
+        '''Test we raise exceptions for unrecognised job ids.'''
+        self._rs.addSinglePendingResult(self._rc[Experiment.PARAMETERS], '1234')
+        with self.assertRaises(PendingResultException):
+            self._rs.cancelSinglePendingResult('4567')
+        with self.assertRaises(PendingResultException):
+            self._rs.resolveSinglePendingResult('4567')
 
     def testDuplicateJobs(self):
         '''Test we catch addition of duplicate job ids.'''

@@ -57,6 +57,8 @@ class LabNotebookTests(unittest.TestCase):
         '''Test we can add result sets .'''
         self._nb.addResultSet('second')
         self.assertCountEqual(self._nb.resultSets(), [ LabNotebook.DEFAULT_RESULTSET, 'second' ])
+        self.assertEqual(self._nb.numberOfResultSets(), 2)
+        self.assertEqual(len(self._nb), 2)
 
     def _resultsEqual(self, df, rc):
         '''Check that the dataframe contains a row with the given results.
@@ -136,6 +138,120 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(self._nb.dataframe(only_successful=False)), 3)
         self.assertEqual(len(self._nb.dataframe()), 2)
 
+    def testResultFraction(self):
+        '''Test we compute the result fractions properly.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+
+        # check with only results
+        self._nb.addResult(rc1)
+        self.assertEqual(self._nb.readyFraction(), 1.0)
+
+        # check with a pending result as well
+        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '1234')
+        self.assertEqual(self._nb.readyFraction(), 0.5)
+
+        # check per-result set behaviour
+        self._nb.addResultSet('second')
+        self.assertEqual(self._nb.readyFraction(), 1.0)
+        self._nb.addResult(rc3)
+        self._nb.select(LabNotebook.DEFAULT_RESULTSET)
+        self.assertEqual(self._nb.readyFraction(), 0.5)
+
+    def testPendingResultsByTag(self):
+        '''Test we can identify a result set by tag when querying.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+
+        # first result set
+        self._nb.addResultSet('first')
+        self._nb.addResult(rc1)
+        self._nb.addResult(rc2)
+        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '1234')
+
+        # second
+        self._nb.addResultSet('second')
+        self._nb.addResult(rc3)
+
+        # test default and tagged behaviour
+        self.assertEqual(self._nb.numberOfResults(), 1)
+        self.assertEqual(self._nb.numberOfPendingResults(), 0)
+        self.assertEqual(self._nb.numberOfResults('first'), 2)
+        self.assertEqual(self._nb.numberOfPendingResults('first'), 1)
+        self.assertEqual(self._nb.numberOfResults('second'), 1)
+        self.assertEqual(self._nb.numberOfPendingResults('second'), 0)
+        self.assertEqual(len(self._nb.pendingResults()), 0)
+        self.assertEqual(len(self._nb.pendingResults('first')), 1)
+
+    def testAllPendingResults(self):
+        '''Test we can retrieve all the penging results from across a notebook.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+        rc4 = self._resultsdict()
+        rc4[Experiment.PARAMETERS]['a'] = 40
+
+        # first result set
+        self._nb.addResultSet('first')
+        self._nb.addResult(rc1)
+        self._nb.addResult(rc2)
+        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '1234')
+
+        # second
+        self._nb.addResultSet('second')
+        self._nb.addResult(rc3)
+        self._nb.addPendingResult(rc4[Experiment.PARAMETERS], '2345')
+
+        # check we get them all
+        self.assertCountEqual(self._nb.allPendingResults(), ['1234', '2345'])
+        self.assertEqual(self._nb.numberOfAllPendingResults(), 2)
+
+    def testTaggedResultsAndDataframes(self):
+        '''Test we can retrieve correctly from different result sets.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+        rc4 = self._resultsdict()
+        rc4[Experiment.PARAMETERS]['a'] = 40
+
+        # first result set
+        self._nb.addResultSet('first')
+        self._nb.addResult(rc1)
+        self._nb.addResult(rc2)
+        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '1234')
+
+        # second
+        self._nb.addResultSet('second')
+        self._nb.addResult(rc3)
+        self._nb.addPendingResult(rc4[Experiment.PARAMETERS], '2345')
+
+        # check retrieval
+        self._nb.select(LabNotebook.DEFAULT_RESULTSET)
+        self.assertEqual(len(self._nb.dataframe()), 0)
+        self.assertEqual(len(self._nb.dataframe(tag=LabNotebook.DEFAULT_RESULTSET)), 0)
+        self.assertEqual(len(self._nb.dataframe(tag='first')), 2)
+        self.assertEqual(len(self._nb.dataframe(tag='second')), 1)
+        self.assertEqual(len(self._nb.dataframeFor(dict(a=10), tag='first')), 1)
+        self.assertEqual(len(self._nb.dataframeFor(dict(a=40), tag='first')), 0)
+        self.assertEqual(len(self._nb.results(tag='first')), 2)
+        self.assertEqual(len(self._nb.results(tag='second')), 1)
+        self.assertEqual(len(self._nb.resultsFor(dict(a=20), tag='first')), 1)
+        self.assertEqual(len(self._nb.resultsFor(dict(a=30), tag='first')), 0)
+
     def testAddList(self):
         '''Test we can add a list of results dicts.'''
         rc1 = self._resultsdict()
@@ -168,9 +284,6 @@ class LabNotebookTests(unittest.TestCase):
         df = self._nb.dataframe()
         vals = df['a']
         self.assertCountEqual(vals, [10, 20, 30])
-
-
-
 
 # TODO: Test we can add metadata
 

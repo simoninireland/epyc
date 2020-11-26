@@ -104,6 +104,17 @@ class LabTests(unittest.TestCase):
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'] + p[Experiment.PARAMETERS]['b'], p[Experiment.RESULTS]['total'])
  
+    def testReady(self):
+        '''Test we can check readiness correctly.'''
+        n = 10
+
+        r = numpy.arange(0, n)
+        self._lab['a'] = r
+        self._lab['b'] = r
+        self._lab.runExperiment(SampleExperiment())
+        self.assertTrue(self._lab.ready())
+        self.assertEqual(self._lab.readyFraction(), 1.0)
+
     def testSinglePoint( self ):
         '''Test that using a single point as a range still works.'''
         n = 100
