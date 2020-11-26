@@ -194,7 +194,7 @@ class LabNotebook(object):
     def numberOfResultSets(self) -> int:
         '''Return the number of result sets in this notebook.
 
-        :returns: the numbernof result sets'''
+        :returns: the number of result sets'''
         return len(self._resultSets)
 
     def __len__(self) -> int:
@@ -349,7 +349,7 @@ class LabNotebook(object):
     # --------- Managing results ----------
 
     def _addResult(self, result : ResultsDict, tag : str =None):
-        '''Add a single result.
+        '''Private method to add a single result.
 
         :param tag: (optional) the result set to add to (defaults to the current result set)
         :param result: the results dict'''
