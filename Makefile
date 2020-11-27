@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.0.2
+VERSION = 1.1.1
 
 
 # ----- Sources -----
@@ -78,10 +78,13 @@ SOURCES_DOCUMENTATION = \
     doc/tutorial/unicore-parallel.rst \
     doc/tutorial/multicore-parallel.rst \
     doc/tutorial/sharedfs-parallel.rst \
+	doc/tutorial/cluster.rst \
+	doc/tutorial/cluster-problems.rst \
 	doc/tutorial/third.rst \
 	doc/tutorial/large.rst \
 	doc/tutorial/persistent.rst \
 	doc/tutorial/pending.rst \
+	doc/tutorial/locking.rst \
 	doc/tutorial/fourth.rst \
 	doc/tutorial/jupyter.rst \
 	doc/tutorial/disconnected.rst \
@@ -99,7 +102,8 @@ SOURCES_DOCUMENTATION = \
 	doc/summaryexperiment.rst \
 	doc/jsonlabnotebook.rst \
 	doc/hdf5labnotebook.rst \
-	doc/clusterlab.rst
+	doc/clusterlab.rst \
+	doc/exceptions.rst
 
 # Extras for building diagrams etc
 SOURCES_UTILS = \
