@@ -337,6 +337,7 @@ class HDF5LabNotebook(LabNotebook):
             pdfnames = list(pds.dtype.names)
             jobidcol = pdfnames.index(ResultSet.JOBID)
             for i in range(len(pds)):
+                jobid = ''
                 elements = list(pds[i])
                 params = dict()
                 for j in range(len(pdfnames)):
