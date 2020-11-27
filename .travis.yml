@@ -1,0 +1,27 @@
+language: python
+
+python:
+  - "3.6"
+  - "3.7"
+  - "3.8"
+
+env:
+  - TEST_SUITE="experiments"
+  - TEST_SUITE="resultsets"
+  - TEST_SUITE="notebooks"
+  - TEST_SUITE="hdf5notebooks"
+  - TEST_SUITE="jsonnotebooks"
+  - TEST_SUITE="labs"
+  - TEST_SUITE="repeatedexperiments"
+  - TEST_SUITE="summaryexperiments"
+
+install:
+    - pip install -r requirements.txt
+    - pip install coveralls
+  
+script:
+  - python setup.py install
+  - coverage run --include './epyc/*' -m nose test/test_${TEST_SUITE}.py
+
+after_success:
+  - coveralls
