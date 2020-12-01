@@ -92,7 +92,7 @@ class ResultSet(object):
     JOBID : Final[str] = 'epyc.resultset.pending-jobid'     #: Column name for pending result job identifier.
 
     # Typing
-    TypeMapping : Dict[Type, numpy.dtype]                   #: Default type mapping from Python types to ``numpy`` ``dtypes``.
+    TypeMapping : Dict[Type, numpy.dtype] = dict()          #: Default type mapping from Python types to ``numpy`` ``dtypes``.
     ZeroMapping : Dict[str, Any] = { 'i': 0,
                                      'f': 0.0,
                                      'c': 0 + 0j,
