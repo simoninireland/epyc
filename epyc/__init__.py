@@ -59,6 +59,7 @@ from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
 
 from .lab import Lab
+from .parallellab import ParallelLab
 from .clusterlab import ClusterLab
 
 # Late and/or complex initialisation

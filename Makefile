@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.1.1
+VERSION = 1.1.2
 
 
 # ----- Sources -----
@@ -45,6 +45,7 @@ SOURCES_TESTS = \
 	test/test_repeatedexperiments.py \
 	test/test_summaryexperiments.py \
 	test/test_labs.py \
+	test/test_parallellabs.py \
 	test/test_clusterlabs.py \
 	test/test_resultsets.py \
 	test/test_notebooks.py \
