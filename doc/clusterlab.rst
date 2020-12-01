@@ -1,5 +1,5 @@
-:class:`ClusterLab`: Managing experiments in parallel
-=====================================================
+:class:`ClusterLab`: Flexible, parallel, asynchronous experiments
+=================================================================
 
 .. currentmodule :: epyc
    
