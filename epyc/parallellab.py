@@ -30,7 +30,8 @@ class ParallelLab(Lab):
     in parallel to accelerate throughput. Unlike a :class:`ClusterLab` it
     runs all jobs synchronously and locally, and so can't make use of a larger
     compute cluster infrastructure and can't run tasks in the background
-    to be collected later.
+    to be collected later. This does however mean that ``epyc`` can make
+    full use of a multicore machine quite trivially.
 
     The optional ``cores`` parameter selects the number of cores to use
     according to the conventions of ``joblib``:
@@ -38,11 +39,17 @@ class ParallelLab(Lab):
     - a value of 1 uses 1 core (sequential mode);
     - a value of +n uses n cores;
     - a value of -1 uses all available cores; and
-    - a value of -2 or below uses (available + 1 + cores).
+    - a value of -2 or below uses (available + 1 + cores) cores.
 
     So a value of ``cores=-2`` will run on 1 fewer cores than the total number
-    available. Note that you can specify more cores to use
-    than there are cores on the machine: this will have no positive effects.
+    of physical cores available on the machine.
+    
+    Note that you can specify more cores to use
+    than there are physical cores on the machine: this will have no positive effects.
+    Note also that using all the cores on a machine may result in you being
+    locked out of the user interface as your experiments consume all available
+    computational resources, and may also be regarded as an unfriendly act by
+    any other users with whom you share the machine.
 
     :param notebook: (optional) the notebook used to store results
     :param cores: (optional) number of cores to use (defaults to all available)
@@ -61,7 +68,7 @@ class ParallelLab(Lab):
         self._cores = cores
 
     def numberOfCores(self) -> int:
-        '''Return the number of cores we will use.
+        '''Return the number of cores we will use to run experiments.
 
         :returns: maximum number of concurrent experiments'''
         return self._cores
@@ -77,22 +84,29 @@ class ParallelLab(Lab):
 
         # create the parameter space
         space = self.parameterSpace()
+        nps = len(space)
 
         # only proceed if there's work to do
         if len(space) > 0:
             nb = self.notebook()
 
             # randomise the order of the parameter space so that we reduce the
-            # risk of computational imbalance
+            # risk of computational imbalance, as there's a barrier synchronisation
+            # between chunks of experiments]
             ps = space.copy()
             numpy.random.shuffle(ps)
 
             # run the experiments
             try:
-                i = 0
                 chunk = self.numberOfCores()
                 with Parallel(n_jobs=chunk) as processes:
-                    nchunks = int(len(ps) / self._cores)
+                    # compute number of parallel chunks we'll run
+                    nchunks = int(nps / chunk)
+                    if nps % chunk > 0:
+                        nchunks += 1
+
+                    # run the experiments in chunks
+                    i = 0
                     for _ in range(nchunks):
                         # determine and extract the next chunk of parameter space
                         di = min(chunk, len(ps) - i)
