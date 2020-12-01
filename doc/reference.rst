@@ -39,6 +39,7 @@ Parallel experiments
 .. toctree ::
    :maxdepth: 2
 
+   parallellab
    clusterlab
 
 Exceptions
