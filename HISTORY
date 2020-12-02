@@ -1,3 +1,6 @@
+Version 1.1.2
+   - Addad ParallelLab for simpler multicore operation
+
 Version 1.1.1 2020-11-27
 
    - Fixed ClusterLab.updateResults() not to bail out completely in response
