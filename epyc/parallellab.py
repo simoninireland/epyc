@@ -83,43 +83,25 @@ class ParallelLab(Lab):
         :param e: the experiment"""
 
         # create the parameter space
-        space = self.parameterSpace()
-        nps = len(space)
+        ps = self.parameterSpace()
+        nps = len(ps)
 
         # only proceed if there's work to do
-        if len(space) > 0:
+        if nps > 0:
             nb = self.notebook()
-
-            # randomise the order of the parameter space so that we reduce the
-            # risk of computational imbalance, as there's a barrier synchronisation
-            # between chunks of experiments]
-            ps = space.copy()
-            numpy.random.shuffle(ps)
 
             # run the experiments
             try:
-                chunk = self.numberOfCores()
-                with Parallel(n_jobs=chunk) as processes:
-                    # compute number of parallel chunks we'll run
-                    nchunks = int(nps / chunk)
-                    if nps % chunk > 0:
-                        nchunks += 1
+                with Parallel(n_jobs=self.numberOfCores()) as processes:
+                    # form experiments with parameters
+                    eps = zip([e] * nps, ps)
 
-                    # run the experiments in chunks
-                    i = 0
-                    for _ in range(nchunks):
-                        # determine and extract the next chunk of parameter space
-                        di = min(chunk, len(ps) - i)
-                        eps = list(zip([e] * di, ps[i:i + di]))
+                    # run over the chunk
+                    rcs = processes(delayed(lambda ep: ep[0].set(ep[1]).run())(ep) for ep in eps)
 
-                        # run over the chunk
-                        rcs = processes(delayed(lambda ep: ep[0].set(ep[1]).run())(ep) for ep in eps)
-
-                        # add the results as they come back
-                        for rc in rcs:
-                            nb.addResult(rc)
-
-                        i += di
+                    # add the results as they come back
+                    for rc in rcs:
+                        nb.addResult(rc)
             finally:
                 # commit our pending results in the notebook
                 nb.commit()
