@@ -7,8 +7,8 @@ epyc: Python computational experiment management
 .. image:: https://readthedocs.org/projects/epyc/badge/?version=latest
     :target: https://epyc.readthedocs.io/en/latest/index.html
 
-.. image:: https://api.travis-ci.org/simoninireland/epyc.svg?branch=master
-    :target: http://travis-ci.org/github/simoninireland/epyc
+.. image:: https://api.travis-ci.com/simoninireland/epyc.svg?branch=master
+    :target: https://travis-ci.com/github/simoninireland/epyc
 
 .. image:: https://coveralls.io/repos/github/simoninireland/epyc/badge.svg?branch=master
     :target: https://coveralls.io/github/simoninireland/epyc?branch=master
