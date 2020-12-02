@@ -25,7 +25,7 @@ with open('README.rst') as f:
     longDescription = f.read()
 
 setup(name = 'epyc',
-      version = '1.1.1',
+      version = '1.1.2',
       description = 'Python computational experiment management',
       long_description = longDescription,
       url = 'http://github.com/simoninireland/epyc',
@@ -42,6 +42,6 @@ setup(name = 'epyc',
       packages = [ 'epyc' ],
       package_data = { 'epyc': [ 'py.typed' ] },
       zip_safe = False,
-      install_requires = [ "numpy", "pyzmq", "ipyparallel >= 6.2.4", "cloudpickle", "pandas", "h5py",  ])
+      install_requires = [ "numpy", "pyzmq", "ipyparallel >= 6.2.4", "cloudpickle", "pandas", "h5py", "joblib",  ])
 
 
