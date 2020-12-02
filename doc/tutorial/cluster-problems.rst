@@ -15,10 +15,10 @@ cluster controller. It's possible that too many engines crowd-out something
 essential, which often manifests itself in one of two ways:
 
 1. You can't log-in to the machine or run simple processes; or
-2. You cant retrieve results.
+2. You can't retrieve results.
 
 The solution is actually quite straightforward: don't run as much work! This
-can easilyt be done by, for example, always leaving one or two cores free on
+can easily be done by, for example, always leaving one or two cores free on
 each machine you use: so an eight-core machine would run six engines, leaving
 two free for other things.
  
