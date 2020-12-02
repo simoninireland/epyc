@@ -46,7 +46,7 @@ them all in parallel using the same syntax as before:
 
     clab.runExperiment(CurveExperiment())
 
-Control will rreturn immediately, as the computation is spun-up on the cluster.
+Control will return immediately, as the computation is spun-up on the cluster.
 
 How can we tell when we're finished? There are three ways. The first is to make
 the whole comp[utation synchronous by waiting for it to finish:
