@@ -233,7 +233,7 @@ class ClusterLabTests(unittest.TestCase):
 
     def testClusterAndHDF5(self):
         '''Test that a cluster works with HDF5 properly.'''
-        self._lab = ClusterLab(url_file='ipcontroller-client.json',
+        self._lab = ClusterLab(profile=profile,
                                notebook=HDF5LabNotebook('test.h5', create=True))
         self._lab.notebook().addResultSet('mydata')
 
@@ -246,7 +246,10 @@ class ClusterLabTests(unittest.TestCase):
         self._lab.notebook().commit()
 
         with self._lab.notebook().open() as nb:
-            self.assertEqual(len(nb), nb)
+            self.assertEqual(len(nb), 2)         # number of result sets
+            self.assertEqual(len(nb.current()), n)
+            self.assertEqual(nb.numberOfResults(), n)
+            self.assertEqual(nb.numberOfPendingResults(), 0)
 
 
 # TODO: Test we can run pending jobs from different result sets
