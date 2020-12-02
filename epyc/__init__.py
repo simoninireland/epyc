@@ -54,7 +54,7 @@ from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
 
 from .resultset import ResultSet, ResultSetLockedException, CancelledException, PendingResultException
-from .labnotebook import LabNotebook, ResultsStructureException, NotebookVersionException
+from .labnotebook import LabNotebook, ResultsStructureException, NotebookVersionException, LabNotebookLockedException
 from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
 

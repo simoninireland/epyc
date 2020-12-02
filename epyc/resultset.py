@@ -199,13 +199,13 @@ class ResultSet(object):
         and locks the result set against future additions. This is useful to tidy up 
         after experiments are finished, and protects against accidentally re-using
         a result set for something else.'''
+        if not self.isLocked():
+            # cancel any peiding results
+            for j in self.pendingResults():
+                self.cancelSinglePendingResult(j)
 
-        # cancel any peiding results
-        for j in self.pendingResults():
-            self.cancelSinglePendingResult(j)
-
-        # lock the result set
-        self._locked = True
+            # lock the result set
+            self._locked = True
 
     def isLocked(self) -> bool:
         '''Returns true if the result set is locked.

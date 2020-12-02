@@ -60,14 +60,12 @@ class HDF5LabNotebook(LabNotebook):
     RESULTS_DATASET : Final[str] = 'results'         #: Name of results dataset within the HDF5 group for a result set.
     PENDINGRESULTS_DATASET : Final[str] = 'pending'  #: Name of pending results dataset within the HDF5 group for a result set.
 
-    # Metadata for the notebook
+    # Metadata for the notebook and/or result sets
     CREATOR : Final[str] = 'creator'                 #: Attribute holding library information and URL.
     VERSION : Final[str] = 'version'                 #: Attribute holding the version of file structure used.
     DESCRIPTION : Final[str] = 'description'         #: Attribute holding the notebook and result set descriptions.
     CURRENT : Final[str] = 'current-resultset'       #: Attribute holding the tag of the current result set.
-
-    # Metadata for result sets
-    LOCKED : Final[str] = 'locked'                   #: Attribute flagging as result set as being locked to further changes.
+    LOCKED : Final[str] = 'locked'                   #: Attribute flagging as result set or notebook as being locked to further changes.
 
     def __init__(self, name : str, create : bool =False, description : str =None):
         # create an empty file structure
@@ -390,12 +388,14 @@ class HDF5LabNotebook(LabNotebook):
         meta[self.VERSION] = self.Version
         meta[self.DESCRIPTION] = self.description()
         meta[self.CURRENT] = self.resultSetTag(self.current())
+        meta[self.LOCKED] = self.isLocked()
 
     def _load(self):
         '''Load the notebook and all result sets.'''
+        meta = self._file.attrs
 
         # version check
-        v = self._file.attrs[self.VERSION]
+        v = meta[self.VERSION]
         if v != self.Version:
             # at present can't handle different file structure versions
             raise NotebookVersionException(self.Version, v)
@@ -410,11 +410,15 @@ class HDF5LabNotebook(LabNotebook):
             self._read(tag)
 
         # read the current result set and select it
-        c = self._file.attrs[self.CURRENT]
+        c = meta[self.CURRENT]
         super(HDF5LabNotebook, self).select(c)
 
         # read other attributes
-        self._description = self._file.attrs[self.DESCRIPTION]
+        self._description = meta[self.DESCRIPTION]
+
+        # lock if necessary
+        if meta[self.LOCKED]:
+            self.finish()
 
 
     # ---------- Type conversion ----------

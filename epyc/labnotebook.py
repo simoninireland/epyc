@@ -70,6 +70,15 @@ class NotebookVersionException(Exception):
         :returns: the actual version'''
         return self._expected
 
+class LabNotebookLockedException(Exception):
+    '''An exception raised if an attempt is made to write to a notebook
+    that's been locked by a call to :meth:`LabNotebook.finish`. This includes
+    attemoting to add result sets.'''
+
+    def __init__(self):
+        super(LabNotebookLockedException, self).__init__('Lab notebook locked')
+
+
 
 class LabNotebook(object):
     '''A "laboratory notebook" collecting together the results obtained from
@@ -96,6 +105,7 @@ class LabNotebook(object):
         self._resultSets: Dict[str, ResultSet] = dict()      # tag to result set
         self._resultSetTags : Dict[ResultSet, str] = dict()  # result set to tag
         self._pending : Dict[str, ResultSet] = dict()        # pending results job ids to result sets
+        self._locked : bool = False                          # locked flag
 
         # add a result set with the default tag, and make it current
         defrc = self.addResultSet(self.DEFAULT_RESULTSET)
@@ -123,6 +133,7 @@ class LabNotebook(object):
         '''Set the free text description of the notebook.
 
         :param d: the description'''
+        self.assertUnlocked()
         self._description = d
 
 
@@ -150,6 +161,7 @@ class LabNotebook(object):
         :param tag: unique tag for this result set
         :param: (optional) free text description of the result set
         :returns: the result set'''
+        self.assertUnlocked()
         rs = ResultSet(description)
         self._resultSets[tag] = rs
         self._resultSetTags[rs] = tag
@@ -211,6 +223,31 @@ class LabNotebook(object):
         return self.numberOfResultSets()
 
 
+    # ---------- Finishing ----------
+
+    def finish(self):
+        '''Mark the entire notebook as finished, closing and locking all result sets
+        against further changes. Finishing a persistent notebook commits it.'''
+        if not self.isLocked():
+            for tag in self.resultSets():
+                rs = self.resultSet(tag)
+                rs.finish()
+            self._locked = True
+            self.commit()
+
+    def isLocked(self) -> bool:
+        '''Returns true if the notebook is locked.
+
+        :returns: True if the notebook is locked'''
+        return self._locked
+
+    def assertUnlocked(self):
+        '''Tests whether the notebook is locked, and raises a :class:`LabNotebookLockedException`
+        if so.'''
+        if self.isLocked():
+            raise LabNotebookLockedException()
+
+
     # ---------- Managing pending results in the current result set ----------
 
     def addPendingResult(self, params : Dict[str, Any], jobid : str, tag : str =None):
@@ -222,6 +259,7 @@ class LabNotebook(object):
         :param params: the experimental parameters
         :param jobid: the job id
         :param tag: (optional) the tag of the result set receiving the pending result (defaults to the current result set)'''
+        self.assertUnlocked()
         if tag is None:
             rs = self._current
         else:
@@ -247,6 +285,7 @@ class LabNotebook(object):
 
         :param rc: the results dict
         :param jobid: the job id'''
+        self.assertUnlocked()
 
         # add the result to the correct result set
         tag = self._resultSetTags[self._pending[jobid]]
@@ -267,6 +306,7 @@ class LabNotebook(object):
         the result set that is selected as current.
 
         :param jobid: the job id'''
+        self.assertUnlocked()
 
         # find the result set for the job
         rs = self._pending[jobid]

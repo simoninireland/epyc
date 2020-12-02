@@ -231,6 +231,10 @@ class JSONLabNotebook(LabNotebook):
         # select the correct result set
         self.select(currentTag)
 
+        # lock the notebook if needed
+        if j['locked']:
+            self.finish()
+
     def _save( self, fn ):
         """Persist the notebook to the given file. Note that, while we can load
         both old and new formats, we only save in the new format.  
@@ -271,6 +275,7 @@ class JSONLabNotebook(LabNotebook):
                          'version': '2',
                          'description': self.description(),
                          'current' : self.currentTag(),
+                         'locked' : self.isLocked(),
                          'resultsets': rsrcs },
                        indent = 4,
                        cls = MetadataEncoder)

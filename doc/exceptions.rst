@@ -13,6 +13,12 @@
 .. autoclass :: ResultSetLockedException
 
 
+:class:`LabNotebookLockedException`: Trying to change a locked lab notebook
+===========================================================================
+
+.. autoclass :: LabNotebookLockedException
+
+
 :class:`PendingResultException`: Unrecognised pending result job identifier
 ===========================================================================
 
