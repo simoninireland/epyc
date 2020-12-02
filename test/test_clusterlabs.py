@@ -50,8 +50,8 @@ class SampleExperiment2(Experiment):
         return dict(total = total)
 
     
-# use the existence of an ipcluster.pid file in the IPython
-# default profile's directory as a proxy for there being a cluster running
+# use the existence of an ipcluster.pid file in the epyctest IPython
+# profile directory as a proxy for there being a cluster running
 # that we can use for our tests
 # (cluster is created by running `make cluster` in the project Makefile)
 profile = 'epyctest'
@@ -62,14 +62,23 @@ pid_file = os.path.join(profile_dir, 'pid/ipcluster.pid')
 class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):
-        '''Create a lab in which to perform tests.'''
+        '''Create a lab in which to perform tests and a tempfile for HDF5 tests.'''
         self._lab = ClusterLab(profile=profile)
         #self._lab = ClusterLab(url_file='ipcontroller-client.json')
+        tf = NamedTemporaryFile()
+        tf.close()
+        self._fn = tf.name
+        #self._fn = 'test.h5'
 
     def tearDown( self ):
-        '''Close the conection to the cluster.'''
+        '''Close the conection to the cluster and delete the test HDF5 file.'''
         self._lab.close()
         self._lab = None
+        try:
+            os.remove(self._fn)
+            #pass
+        except OSError:
+            pass
 
     def _results(self):
         '''Retrieve results as a list of dicts, for easier comparisons.'''
@@ -234,7 +243,7 @@ class ClusterLabTests(unittest.TestCase):
     def testClusterAndHDF5(self):
         '''Test that a cluster works with HDF5 properly.'''
         self._lab = ClusterLab(profile=profile,
-                               notebook=HDF5LabNotebook('test.h5', create=True))
+                               notebook=HDF5LabNotebook(self._fn, create=True))
         self._lab.notebook().addResultSet('mydata')
 
         # run an experiment, with all the trimmings
