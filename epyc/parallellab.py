@@ -33,17 +33,21 @@ class ParallelLab(Lab):
     to be collected later. This does however mean that ``epyc`` can make
     full use of a multicore machine quite trivially.
 
-    The optional ``cores`` parameter selects the number of cores to use
-    according to the conventions of ``joblib``:
+    The optional ``cores`` parameter selects the number of cores to use:
 
     - a value of 1 uses 1 core (sequential mode);
     - a value of +n uses n cores;
-    - a value of -1 uses all available cores; and
-    - a value of -2 or below uses (available + 1 + cores) cores.
+    - a value of 0 uses all available cores; and
+    - a value of -n uses (available - n) cores.
 
-    So a value of ``cores=-2`` will run on 1 fewer cores than the total number
+    So a value of ``cores=-1`` will run on 1 fewer cores than the total number
     of physical cores available on the machine.
     
+    .. important ::
+
+        This behaviour is slightly different to that of ``joblib``
+        as described `here <https://joblib.readthedocs.io/en/latest/generated/joblib.Parallel.html>`_.
+
     Note that you can specify more cores to use
     than there are physical cores on the machine: this will have no positive effects.
     Note also that using all the cores on a machine may result in you being
@@ -55,16 +59,16 @@ class ParallelLab(Lab):
     :param cores: (optional) number of cores to use (defaults to all available)
     '''
 
-    def __init__(self, notebook : LabNotebook =None, cores : int =-1):
+    def __init__(self, notebook : LabNotebook =None, cores : int =0):
         super(ParallelLab, self).__init__(notebook)
 
         # compute the nunber of cores to use and store for later
-        if cores == -1:
+        if cores == 0:
             # use all available
             cores = cpu_count()
-        elif cores < -1:
+        elif cores < 0:
             # use fewer than available, down to a minimum of 1
-            cores = max(cpu_count() + 1 + cores, 1)
+            cores = max(cpu_count() + cores, 1)
         self._cores = cores
 
     def numberOfCores(self) -> int:

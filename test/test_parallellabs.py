@@ -42,6 +42,10 @@ class ParallelLabTests(unittest.TestCase):
         self._lab = ParallelLab()
         self.assertEqual(self._lab.numberOfCores(), cpu_count())
 
+        # zero is the same
+        self._lab = ParallelLab(cores=0)
+        self.assertEqual(self._lab.numberOfCores(), cpu_count())
+
         # fixed numbers, possibly more than we have physical cores (which is fine)
         for i in range(1, cpu_count() + 2):
             self._lab = ParallelLab(cores=i)
@@ -54,7 +58,7 @@ class ParallelLabTests(unittest.TestCase):
 
         # check we leave cores free
         for i in range(1, maxcores - 1):
-            self._lab = ParallelLab(cores=-(i + 1))    # leave i cores free
+            self._lab = ParallelLab(cores=-i)    # leave i cores free
             self.assertEqual(self._lab.numberOfCores(), maxcores - i)
 
         # check we always have at least 1
