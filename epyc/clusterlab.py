@@ -247,7 +247,7 @@ class ClusterLab(Lab):
         have crashed, which can be due to engine failure within the
         cluster. This prevents individual crashes blocking the retrieval of other jobs.
 
-        :param purge: (optional) purge any jobs that have crashed (defaults to False)
+        :param purge: (optional) cancel any jobs that have crashed (defaults to False)
         :returns: the number of pending results completed at this call"""
         nb = self.notebook()
 
