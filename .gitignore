@@ -46,11 +46,18 @@ $RECYCLE.BIN/
 # Windows shortcuts
 *.lnk
 
+
+# Python
+# ======
+
 # Python bytecode
 *.pyc
 
 # Emacs backups
 *~
+
+# VS-Code
+.vscode
 
 # Tox, nose, and venv
 .tox
@@ -64,3 +71,5 @@ doc/_build
 # Package builds
 dist
 build
+*.egg-info
+.coverage
