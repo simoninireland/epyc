@@ -1,8 +1,6 @@
 language: python
 
 python:
-  - "3.6"
-  - "3.7"
   - "3.8"
 
 env:
@@ -12,6 +10,7 @@ env:
   - TEST_SUITE="hdf5notebooks"
   - TEST_SUITE="jsonnotebooks"
   - TEST_SUITE="labs"
+  - TEST_SUITE="parallellabs"
   - TEST_SUITE="repeatedexperiments"
   - TEST_SUITE="summaryexperiments"
 
