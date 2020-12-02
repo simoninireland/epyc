@@ -7,6 +7,12 @@ epyc: Python computational experiment management
 .. image:: https://readthedocs.org/projects/epyc/badge/?version=latest
     :target: https://epyc.readthedocs.io/en/latest/index.html
 
+.. image:: https://api.travis-ci.org/simoninireland/epyc.svg?branch=master
+    :target: http://travis-ci.org/github/simoninireland/epyc
+
+.. image:: https://coveralls.io/repos/github/simoninireland/epyc/badge.svg?branch=master
+    :target: https://coveralls.io/github/simoninireland/epyc?branch=master
+
 
 Overview
 --------
@@ -23,7 +29,8 @@ experiments simultaneously.
 
 Managing all these tasks is complicated, so ``epyc`` tries to automate
 it. It provides a way to define a "laboratory" performing a collection
-of "experiments" whose parameters and results are recorded in a "lab
+of "experiments" whose parameters and results are collected togethr into "result
+sets" and recorded in a "lab
 notebook" for later retrieval. Laboratories can be sequential (for a
 single machine) or parallel (to use a multicore or cluster of
 machines); lab notebooks can be persistent to allow experiments to be
@@ -41,7 +48,7 @@ example.
 Installation
 ------------
 
-``epyc`` works with both Python 2.7 and Python 3. You can install it directly from PyPi using ``pip``:
+``epyc`` works with Python 3.8 and above. You can install it directly from PyPi using ``pip``:
 
 ::
 
@@ -61,15 +68,15 @@ copy, just clone the repo:
 Documentation
 -------------
 
-API documentation for `epyc` can be found on `ReadTheDocs <https://epyc.readthedocs.io/en/latest/>`.
-You can also read a Jupyter notebook describing several `epyc` use
+API documentation for ``epyc`` can be found on `ReadTheDocs <https://epyc.readthedocs.io/en/latest/>`.
+You can also read a Jupyter notebook describing several ``epyc`` use
 cases online at <https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb>.
 
 
 Author and license
 ------------------
 
-Copyright (c) 2016-2018, Simon Dobson <simon.dobson@computer.org>
+Copyright (c) 2016-2020, Simon Dobson <simon.dobson@computer.org>
 
 Licensed under the `GNU General Public Licence v.2.0 <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`.
 
