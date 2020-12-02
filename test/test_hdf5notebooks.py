@@ -17,10 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from os import sendfile
 from epyc import *
 import unittest
-import tables
 import os
 from tempfile import NamedTemporaryFile
 
