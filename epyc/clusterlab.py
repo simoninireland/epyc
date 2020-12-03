@@ -125,7 +125,7 @@ class ClusterLab(Lab):
             # if we get here, we're definitely disconnected, so try
             # to re-connect the requisite number of times
             for i in range(self.Reconnections):
-                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i + 1, n=self.Reconnections), file=sys.stderr)
+                print('Connection to cluster failed, reconnecring ({i}/{n})'.format(i=i + 1, n=self.Reconnections), file=sys.stderr)
                 try:
                     # try to connect
                     self.connect()
