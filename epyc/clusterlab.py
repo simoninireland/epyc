@@ -42,7 +42,8 @@ class ClusterLab(Lab):
 
     # Tuning parameters
     WaitingTime : int = 30           #: Waiting time for checking for job completion. Lower values increase network traffic.
-    Retries : int = 5                #: Number of re-tries when re-connecting to a cluster.
+    Reconnections : int = 5          #: Number of attempts when re-connecting to a cluster.
+    Retries : int = 3                #: Number of re-tries for failed jobs.
     
     def __init__( self, notebook : LabNotebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
         """Create an empty lab attached to the given cluster. Most of the arguments
@@ -123,8 +124,8 @@ class ClusterLab(Lab):
         except Exception as exc:
             # if we get here, we're definitely disconnected, so try
             # to re-connect the requisite number of times
-            for i in range(self.Retries):
-                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i + 1, n=self.Retries), file=sys.stderr)
+            for i in range(self.Reconnections):
+                print('Connection to cluster failed, retrying ({i}/{n})'.format(i=i + 1, n=self.Reconnections), file=sys.stderr)
                 try:
                     # try to connect
                     self.connect()
@@ -219,8 +220,11 @@ class ClusterLab(Lab):
                 # connect to the cluster
                 self.open()
 
-                # submit an experiment at each point in the parameter space to the cluster
+                # configure a load balanced view of the cluster
                 view = self._client.load_balanced_view()
+                view.set_flags(retries=self.Retries)
+
+                # submit an experiment at each point in the parameter space to the cluster
                 jobs = []
                 for p in ps:
                     rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (e, p))

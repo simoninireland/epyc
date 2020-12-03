@@ -89,3 +89,15 @@ other helped methods.
 .. automethod :: ClusterLab.activate
 
 
+Tuning parameters
+-----------------
+
+There are a small set of tuning parameters that can be adjusted to cope with
+particular circumstances.
+
+.. autoattribute :: ClusterLab.WaitingTime
+
+.. autoattribute :: ClusterLab.Reconnections
+
+.. autoattribute :: ClusterLab.Retries
+
