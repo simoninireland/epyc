@@ -619,6 +619,7 @@ class ResultSet(object):
         if dtype.kind in self.ZeroMapping:
             return self.ZeroMapping[dtype.kind]
         else:
+            print('No zero value for type {dt}, using 0.0'.format(dt=dtype), file=sys.stderr)
             return 0.0     # and hope for the best
 
 
