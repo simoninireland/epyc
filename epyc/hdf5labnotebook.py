@@ -104,16 +104,16 @@ class HDF5LabNotebook(LabNotebook):
 
     # ---------- Managing result sets ----------
 
-    def addResultSet(self, tag : str, title : str =None) -> ResultSet:
+    def addResultSet(self, tag : str, description : str =None) -> ResultSet:
         '''Add the necessary structure to the underlying file when creating the
         new result set. This ensures that, even if no results are added,
         there will be structure in the persistent store to indicate that the result
         set was created.
 
         :param tag: the tag
-        :param title: (optional) the title
+        :param description: (optional) the description
         :returns: the result set'''
-        rs = super(HDF5LabNotebook, self).addResultSet(tag, title)
+        rs = super(HDF5LabNotebook, self).addResultSet(tag, description)
 
         # add the appropriate group to the HDF5 file
         self._open()
