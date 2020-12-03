@@ -71,12 +71,12 @@ class ResultSet(object):
     the specific values being stored alongside each result. There
     may be multiple results for the same parameters, to allow for
     repetition of experiments at a data point.
+    Results committ5ed to result sets are immutable: once entered, a result can't be deleted
+    or changed.
+
     Result sets also record "pending" results, allowing us to record experiments
     in progress. A pending result can be finalised by providing it with a
-    value, or can be deleted.
-
-    Result sets are immutable: once entered, a result can't be deleted
-    or changed. Pending results can however be cancelled.
+    value, or can be cancelled.
 
     A result set can be used very Pythonically using a :term:`results dict` holding
     the metadata, parameters, and results of experiments. For larger experiment
