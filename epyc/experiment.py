@@ -21,7 +21,7 @@
 from datetime import datetime
 import traceback
 import sys
-if sys.version_info >= (3, 7):
+if sys.version_info >= (3, 8):
     from typing import Set, Dict, Any, Final
 else:
     # backwards compatibility with Python 35, Python36, and Python37 
@@ -119,7 +119,7 @@ class Experiment(object):
 
     # ---------- Configuration ----------
 
-    def set(self, params: Dict[str, Any]):  # should be -> Experiment, but that's hard to make back-compatible
+    def set(self, params: Dict[str, Any]) -> 'Experiment':
         """Set the parameters for the experiment, returning the
         now-configured experiment.
 
