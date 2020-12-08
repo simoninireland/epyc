@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.1.2
+VERSION = 1.2.1
 
 
 # ----- Sources -----
@@ -159,8 +159,11 @@ VENV = .venv
 REQUIREMENTS = requirements.txt
 DEV_REQUIREMENTS = dev-requirements.txt
 
+# Requirements for setup.py
+# We filter out any requirements for backporting before Python38
+PY_REQUIREMENTS = $(shell $(SED) -e '/^typing_extensions/d' -e 's/^\(.*\)/"\1",/g' $(REQUIREMENTS) | $(TR) '\n' ' ')
+
 # Constructed commands
-PY_REQUIREMENTS = $(shell $(SED) -e 's/^\(.*\)/"\1",/g' $(REQUIREMENTS) | $(TR) '\n' ' ')
 RUN_TESTS = $(TOX)
 RUN_COVERAGE = $(COVERAGE) erase && $(COVERAGE) run -a setup.py test && $(COVERAGE) report -m --include '$(PACKAGENAME)*'
 RUN_NOTEBOOK = $(JUPYTER) notebook

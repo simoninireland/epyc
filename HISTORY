@@ -1,3 +1,8 @@
+Version 1.2.1
+
+   - Back-ported to work with Python 3.5 and later, and therefore
+     with PyPy3
+
 Version 1.1.2 2020-12-02
 
    - Fixed issue with TypeMapping initialisation
@@ -48,7 +53,7 @@ Version 1.0.1 2020-11-16
    - Added type annotations 
    - Changed some methods to return empty lists or dicts rather than None
    - Added tutorials on large datasets and Jupyter integration
-   - Added new format for JSCON storage that handles result sets (while maintaining
+   - Added new format for JSON storage that handles result sets (while maintaining
      the ability to read the old, flat format)
    - Log information messages to sys.stderr rather than standard output
    - Changed recording of timing information to capture as much as possible
