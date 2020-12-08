@@ -24,7 +24,13 @@ import numpy                   # type: ignore
 from datetime import datetime
 from pandas import DataFrame   # type: ignore
 import dateutil.parser
-from typing import Final
+import sys
+if sys.version_info >= (3, 7):
+    from typing import Final, Any
+else:
+    # backwards compatibility with Python 35, Python36, and Python37 
+    from typing import Any
+    from typing_extensions import Final
 
 class HDF5LabNotebook(LabNotebook):
     '''A lab notebook that persists itself to an HDF5 file.
@@ -168,15 +174,15 @@ class HDF5LabNotebook(LabNotebook):
                 del g[self.PENDINGRESULTS_DATASET]
 
         # write out the description
-        g.attrs.create(self.DESCRIPTION, rs.description(), (1,), h5py.string_dtype())
+        g.attrs.create(self.DESCRIPTION, rs.description(), dtype=h5py.string_dtype())
 
         # write out all attributes (as strings)
         for k in rs.keys():
             v = rs[k]
-            g.attrs.create(k, v, (1,), h5py.string_dtype())
+            g.attrs.create(k, self._asString(v), dtype=h5py.string_dtype())
 
         # write out the locked flag
-        g.attrs.create(self.LOCKED, rs.isLocked(), (1,), numpy.bool)
+        g.attrs.create(self.LOCKED, rs.isLocked(), dtype=numpy.bool)
 
         if rs.numberOfResults() > 0:
             # ---- PART 1: write structure ---
@@ -194,7 +200,7 @@ class HDF5LabNotebook(LabNotebook):
                 for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                     ns = names[d]
                     if ns is not None:
-                        g[self.RESULTS_DATASET].attrs.create(d, ns, (len(ns),), h5py.string_dtype())
+                        g[self.RESULTS_DATASET].attrs.create(d, ns, dtype=h5py.string_dtype())
 
             # get the HDF5 dataset associated with this result set
             ds = g[self.RESULTS_DATASET]
@@ -208,7 +214,8 @@ class HDF5LabNotebook(LabNotebook):
 
             # write out each result
             df = rs.dataframe()
-            dfnames = rs.dtype().names
+            dtype = ds.dtype
+            dfnames = dtype.names
             for i in range(len(df.index)):
                 # get the row to write
                 res = df.iloc[i]
@@ -220,6 +227,8 @@ class HDF5LabNotebook(LabNotebook):
                         # patch known datestamps ISO-format strings in metadata
                         dt = res[k].isoformat()
                         entry.append(dt)
+                    elif dtype[k] == h5py.string_dtype():
+                        entry.append(self._asString(res[k]))
                     else:
                         entry.append(res[k])
 
@@ -233,12 +242,12 @@ class HDF5LabNotebook(LabNotebook):
                 # table isn't needed any more, so delete it to keep things tidy
                 del g[self.PENDINGRESULTS_DATASET]
         else:
+            pdtype = rs.pendingdtype() 
+            hdf5pdtype = self._HDF5dtype(pdtype)
+
             # create results dataset if there isn't one
             if self.PENDINGRESULTS_DATASET not in g:        
                 # construct the HDF5 type of the pending results
-                pdtype = rs.pendingdtype() 
-                hdf5pdtype = self._HDF5dtype(pdtype)
-
                 # create the pending results dataset
                 g.create_dataset(self.PENDINGRESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=hdf5pdtype)
 
@@ -257,7 +266,10 @@ class HDF5LabNotebook(LabNotebook):
                     res = pdf.iloc[i]
                     entry = []
                     for k in pdfnames:
-                        entry.append(res[k])
+                        if hdf5pdtype[k] == h5py.string_dtype():
+                            entry.append(self._asString(res[k]))
+                        else:
+                            entry.append(res[k])
                     entry.append(res[ResultSet.JOBID])
 
                     # write out the row
@@ -275,17 +287,17 @@ class HDF5LabNotebook(LabNotebook):
         names = dict()
         g = self._file[tag]
 
-        # read the attributes
+        # read the attributes, all treated as strings
         locked = False
         for k in g.attrs.keys():
             if k == self.DESCRIPTION:
                 # description held separately from attributes
-                rs.setDescription(g.attrs[self.DESCRIPTION])
+                rs.setDescription(str(g.attrs[self.DESCRIPTION]))
             elif k == self.LOCKED:
                 # locked flag
                 locked = g.attrs[self.LOCKED]
             else:
-                rs[k] = g.attrs[k]
+                rs[k] = self._asString(g.attrs[k])
 
         if self.RESULTS_DATASET in g:   
             # ---- PART 1: read structure ---
@@ -304,12 +316,15 @@ class HDF5LabNotebook(LabNotebook):
 
             # read each line of the dataset into the result set
             # sd: this uses the results dict API and so is quite wasteful
+            dtype = ds.dtype
             for i in range(len(ds)):
                 entry = list(ds[i])
                 rc = Experiment.resultsdict()
                 j = 0
                 for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                     for k in names[d]:
+                        if dtype[k] == h5py.string_dtype():
+                            entry[j] = self._asString(entry[j])
                         if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
                             try:
                                 # patch known datestamps to datetime objects
@@ -431,3 +446,17 @@ class HDF5LabNotebook(LabNotebook):
             # a simple dtype, patch it
             return self._HDF5simpledtype(dtype)
 
+    def _asString(self, o : Any) -> str:
+        '''Coerce the given value to a string. This is needed to handle
+        occasional (and Python-version-dependent) weirdness in the 
+        representation of strings as raw sequences when going to and from
+        HDF5. 
+
+        :param o: the object
+        :returns: the string'''
+        if isinstance(o, bytes):
+            return o.decode()
+        elif isinstance(o, str):
+            return o
+        else:
+            return str(o)
