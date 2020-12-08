@@ -20,7 +20,13 @@
 from epyc import Experiment, ResultSet, ResultsDict
 from pandas import DataFrame                               # type: ignore
 from contextlib import contextmanager
-from typing import List, Set, Dict, Any, Optional, Union, Final, cast
+import sys
+if sys.version_info >= (3, 7):
+    from typing import List, Set, Dict, Any, Optional, Union, Final, cast
+else:
+    # backwards compatibility with Python 35, Python36, and Python37 
+    from typing import List, Set, Dict, Any, Optional, Union, cast
+    from typing_extensions import Final
 
 
 class ResultsStructureException(Exception):

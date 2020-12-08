@@ -23,7 +23,6 @@ import time
 import sys
 from ipyparallel import Client, DirectView    # type: ignore
 from contextlib import AbstractContextManager
-from typing import List,  Any, cast
 
 class ClusterLab(Lab):
     """A :class:`Lab` running on an ``pyparallel`` compute cluster.

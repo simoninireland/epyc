@@ -23,7 +23,12 @@ from pandas import DataFrame       # type: ignore
 import sys
 import traceback
 from datetime import datetime
-from typing import Final, List, Dict, Set, Any, Type, Optional
+if sys.version_info >= (3, 7):
+    from typing import Final, List, Dict, Set, Any, Type, Optional
+else:
+    # backwards compatibility with Python 35, Python36, and Python37 
+    from typing import List, Dict, Set, Any, Type, Optional
+    from typing_extensions import Final
 
 
 class CancelledException(Exception):

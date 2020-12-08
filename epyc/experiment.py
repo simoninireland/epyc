@@ -17,11 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from __future__ import annotations               # so we can type instances of Experiment returned from its methods
+#from __future__ import annotations               # so we can type instances of Experiment returned from its methods
 from datetime import datetime
 import traceback
 import sys
-from typing import Set, Dict, Any, Final
+if sys.version_info >= (3, 7):
+    from typing import Set, Dict, Any, Final
+else:
+    # backwards compatibility with Python 35, Python36, and Python37 
+    from typing import Set, Dict, Any
+    from typing_extensions import Final
 
 # The type of results dicts
 ResultsDict = Dict[str, Dict[str, Any]]     #: Type of results dicts.
@@ -114,7 +119,7 @@ class Experiment(object):
 
     # ---------- Configuration ----------
 
-    def set(self, params: Dict[str, Any]) -> Experiment:
+    def set(self, params: Dict[str, Any]):  # should be -> Experiment, but that's hard to make back-compatible
         """Set the parameters for the experiment, returning the
         now-configured experiment.
 

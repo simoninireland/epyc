@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from __future__ import annotations
 from epyc import LabNotebook, Experiment, PackageContactInfo
 import os
 import sys
@@ -26,7 +25,6 @@ import re
 import numpy
 from datetime import datetime
 import dateutil.parser
-from contextlib import contextmanager
 from typing import Any, Dict
 
 

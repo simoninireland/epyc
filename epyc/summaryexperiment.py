@@ -19,7 +19,12 @@
 from epyc import ExperimentCombinator, Experiment, ResultsDict
 import numpy                     # type: ignore
 import sys
-from typing import List, Dict, Any, Final
+if sys.version_info >= (3, 7):
+    from typing import List, Dict, Any, Final
+else:
+    # backwards compatibility with Python 35, Python36, and Python37 
+    from typing import List, Dict, Any
+    from typing_extensions import Final
 
 
 class SummaryExperiment(ExperimentCombinator):
@@ -56,7 +61,7 @@ class SummaryExperiment(ExperimentCombinator):
     MAX_SUFFIX : Final[str] = '_max'                #: Suffix for the maximum of the underlying values.
     
     
-    def __init__( self, ex : Experiment, summarised_results = None ):
+    def __init__(self, ex : Experiment, summarised_results : List[str] =None):
         """Create a summarised version of the given experiment. The given
         fields in the experimental results will be summarised, defaulting to all.
         If there are fields that can't be summarised (because they're not
@@ -67,27 +72,27 @@ class SummaryExperiment(ExperimentCombinator):
         super(SummaryExperiment, self).__init__(ex)
         self._summarised_results = summarised_results
 
-    def _mean( self, k : str) -> str:
+    def _mean(self, k : str) -> str:
         """Return the tag associated with the mean of k."""
         return k + self.MEAN_SUFFIX
 
-    def _median( self, k : str) -> str:
+    def _median(self, k : str) -> str:
         """Return the tag associated with the median of k."""
         return k + self.MEDIAN_SUFFIX
 
-    def _variance( self, k : str) -> str:
+    def _variance(self, k : str) -> str:
         """Return the tag associated with the variance of k."""
         return k + self.VARIANCE_SUFFIX
     
-    def _min( self, k : str) -> str:
+    def _min(self, k : str) -> str:
         """Return the tag associated with the minimum of k."""
         return k + self.MIN_SUFFIX
     
-    def _max( self, k : str) -> str:
+    def _max(self, k : str) -> str:
         """Return the tag associated with the maximum of k."""
         return k + self.MAX_SUFFIX
     
-    def summarise( self, results : List[ResultsDict] ) -> ResultsDict:
+    def summarise(self, results : List[ResultsDict]) -> ResultsDict:
         """Generate a summary of results from a list of result dicts
         returned by running the underlying experiment. By default we generate
         mean, median, variance, and extrema for each value recorded.
@@ -127,7 +132,7 @@ class SummaryExperiment(ExperimentCombinator):
                     
             return summary   
 
-    def do( self, params : Dict[str, Any] ) -> ResultsDict:
+    def do(self, params : Dict[str, Any]) -> ResultsDict:
         """Perform the underlying experiment and summarise its results.
         Our results are the summary statistics extracted from the results of
         the instances of the underlying experiment that we performed.

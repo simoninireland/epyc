@@ -18,7 +18,13 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import ExperimentCombinator, Experiment, ResultsDict
-from typing import Any, Dict, List, Final
+import sys
+if sys.version_info >= (3, 7):
+    from typing import Any, Dict, List, Final
+else:
+    # backwards compatibility with Python 35, Python36, and Python37 
+    from typing import Any, Dict, List
+    from typing_extensions import Final
 
 class RepeatedExperiment(ExperimentCombinator):
     """A experiment combinator that takes a "base" experiment and runs it

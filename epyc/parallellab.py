@@ -18,7 +18,6 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import Lab, LabNotebook, Experiment
-import numpy                                     # type: ignore
 from joblib import Parallel, delayed
 from multiprocessing import cpu_count
 
