@@ -1,4 +1,4 @@
-typing_extensions; python_version < '3.7'
+typing_extensions; python_version <= '3.7'
 numpy >= 1.17.5
 pyzmq
 ipyparallel >= 6.2.4

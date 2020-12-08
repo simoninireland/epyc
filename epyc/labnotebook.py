@@ -21,7 +21,7 @@ from epyc import Experiment, ResultSet, ResultsDict
 from pandas import DataFrame                               # type: ignore
 from contextlib import contextmanager
 import sys
-if sys.version_info >= (3, 7):
+if sys.version_info >= (3, 8):
     from typing import List, Set, Dict, Any, Optional, Union, Final, cast
 else:
     # backwards compatibility with Python 35, Python36, and Python37 

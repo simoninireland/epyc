@@ -25,7 +25,7 @@ from datetime import datetime
 from pandas import DataFrame   # type: ignore
 import dateutil.parser
 import sys
-if sys.version_info >= (3, 7):
+if sys.version_info >= (3, 8):
     from typing import Final, Any
 else:
     # backwards compatibility with Python 35, Python36, and Python37 

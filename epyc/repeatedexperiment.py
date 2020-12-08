@@ -19,7 +19,7 @@
 
 from epyc import ExperimentCombinator, Experiment, ResultsDict
 import sys
-if sys.version_info >= (3, 7):
+if sys.version_info >= (3, 8):
     from typing import Any, Dict, List, Final
 else:
     # backwards compatibility with Python 35, Python36, and Python37 

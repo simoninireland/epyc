@@ -23,7 +23,7 @@ from pandas import DataFrame       # type: ignore
 import sys
 import traceback
 from datetime import datetime
-if sys.version_info >= (3, 7):
+if sys.version_info >= (3, 8):
     from typing import Final, List, Dict, Set, Any, Type, Optional
 else:
     # backwards compatibility with Python 35, Python36, and Python37 
