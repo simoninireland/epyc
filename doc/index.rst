@@ -43,14 +43,17 @@ Current features
 
 * Experiments can run locally, remotely, and in parallel
 
-* Fully integrated with ``ipython`` and ``ipyparallel`` for parallel and distributed simulation
-
-* Fully compatible with ``jupyter`` notebooks and labs
+* Works with Python 3.5 and later, and with PyPy3
 
 * Remote simulation jobs run asynchronously
 
 * Start and walk away from remote simulations, collect results as they become available
 
+* Fully integrated with ``ipython`` and ``ipyparallel`` for parallel and distributed simulation
+
+* Fully compatible with ``jupyter`` notebooks and labs
+
+* Annotated with ``typing`` type annotations
 
 .. toctree ::
    :hidden:
