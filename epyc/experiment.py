@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-#from __future__ import annotations               # so we can type instances of Experiment returned from its methods
 from datetime import datetime
 import traceback
 import sys
