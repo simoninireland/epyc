@@ -35,7 +35,6 @@ setup(name = 'epyc',
       classifiers = [ 'Development Status :: 4 - Beta',
                       'Intended Audience :: Science/Research',
                       'Intended Audience :: Developers',
-                      'Programming Language :: Python :: 3.5',
                       'Programming Language :: Python :: 3.6',
                       'Programming Language :: Python :: 3.7',
                       'Programming Language :: Python :: 3.8',
@@ -45,7 +44,7 @@ setup(name = 'epyc',
       package_data = { 'epyc': [ 'py.typed' ] },
       zip_safe = False,
       install_requires = [ "numpy >= 1.17.5", "pyzmq", "ipyparallel >= 6.2.4", "cloudpickle", "pandas", "h5py", "joblib",  ],
-      extra_requires = { ':python_version < 3.7': [ 'typing_extensions' ] },
+      extra_requires = { ':python_version < 3.8': [ 'typing_extensions' ] },
 )
 
 
