@@ -1,4 +1,4 @@
-Version 1.2.1
+Version 1.2.1 2020-12-09
 
    - Back-ported to work with Python 3.6 and later, and therefore
      with PyPy3
@@ -26,7 +26,7 @@ Version 1.1.1 2020-11-27
    - Added epyc-specific exceptions in places where a programmatic response might
      be appropriate
    - Modified cancellation behaviour to record the job as cancelled rather than
-     silently dropping it, to maintain the audit tutorial
+     silently dropping it, to maintain the audit trail
    - Added locking of result sets to prevent further changes
    - Added Travis CI integration
 
