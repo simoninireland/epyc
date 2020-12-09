@@ -48,7 +48,7 @@ example.
 Installation
 ------------
 
-``epyc`` works with Python 3.5 and above, and with PyPy3. You can install
+``epyc`` works with Python 3.6 and above, and with PyPy3. You can install
 it directly from PyPi using ``pip``:
 
 ::
