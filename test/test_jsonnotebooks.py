@@ -262,5 +262,48 @@ class JSONLabNotebookTests(unittest.TestCase):
         js1.select(LabNotebook.DEFAULT_RESULTSET)
         self.assertFalse(js1.current().isLocked())
 
+    def testLockingNotebook(self):
+        '''Test notebook locking.'''
+        e = SampleExperiment()
+        nb = JSONLabNotebook(self._fn, create=True)
+
+        rc1 = e.set(dict(k=10)).run()
+        rc2 = e.set(dict(k=20)).run()
+        rc3 = e.set(dict(k=30)).run()
+        rc4 = e.set(dict(k=40)).run()
+
+        # first result set
+        nb.addResultSet('first')
+        nb.addResult(rc1)
+        nb.addResult(rc2)
+
+        # second
+        nb.addResultSet('second')
+        nb.addResult(rc3)
+        nb.addPendingResult(rc4[Experiment.PARAMETERS], '2345')
+
+        # lock the notebook
+        nb.finish()
+
+        # check we can't add new result sets
+        with self.assertRaises(Exception):
+            nb.addResultSet('third')
+
+        # check the notebook in still  locked when reloaded
+        nb.commit()
+        with JSONLabNotebook(self._fn).open() as nb1:
+            self.assertTrue(nb1.isLocked())
+            with self.assertRaises(Exception):
+                nb.addResultSet('third')
+            rs = nb1.select('first')
+            self.assertTrue(rs.isLocked())
+            self.assertEqual(rs.numberOfResults(), 2)
+            rs = nb1.select('second')
+            self.assertTrue(rs.isLocked())
+            self.assertEqual(rs.numberOfPendingResults(), 0)
+            self.assertEqual(rs.numberOfResults(), 2)
+            rcs = nb1.resultsFor(rc4[Experiment.PARAMETERS])
+            self.assertEqual(len(rcs), 1)
+
 if __name__ == '__main__':
     unittest.main()

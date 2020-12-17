@@ -285,6 +285,46 @@ class LabNotebookTests(unittest.TestCase):
         vals = df['a']
         self.assertCountEqual(vals, [10, 20, 30])
 
+    def testFinish(self):
+        '''Test we can finish (lock) an entire notebook.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = 20
+        rc3 = self._resultsdict()
+        rc3[Experiment.PARAMETERS]['a'] = 30
+        rc4 = self._resultsdict()
+        rc4[Experiment.PARAMETERS]['a'] = 40
+
+        # first result set
+        self._nb.addResultSet('first')
+        self._nb.addResult(rc1)
+        self._nb.addResult(rc2)
+        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '1234')
+
+        # second
+        self._nb.addResultSet('second')
+        self._nb.addResult(rc3)
+        self._nb.addPendingResult(rc4[Experiment.PARAMETERS], '2345')
+
+        # lock the notebook
+        self._nb.finish()
+
+        # check we can't add new result sets
+        with self.assertRaises(Exception):
+            self._nb.addResultSet('third')
+
+        # check the result sets are locked and finished correctly
+        rs = self._nb.select('first')
+        self.assertTrue(rs.isLocked())
+        rs = self._nb.select('second')
+        self.assertTrue(rs.isLocked())
+        self.assertEqual(rs.numberOfPendingResults(), 0)
+        self.assertEqual(rs.numberOfResults(), 2)
+        rcs = self._nb.resultsFor(rc4[Experiment.PARAMETERS])
+        self.assertEqual(len(rcs), 1)
+        self.assertFalse(rcs[0][Experiment.METADATA][Experiment.STATUS])
+
 # TODO: Test we can add metadata
 
 if __name__ == '__main__':
