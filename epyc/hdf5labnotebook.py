@@ -23,7 +23,9 @@ import h5py                    # type: ignore
 import numpy                   # type: ignore
 from datetime import datetime
 from pandas import DataFrame   # type: ignore
-import dateutil.parser
+from dateutil.parser import parse
+from requests import get
+from requests.exceptions import InvalidSchema
 import sys
 if sys.version_info >= (3, 8):
     from typing import Final, Any
@@ -45,7 +47,18 @@ class HDF5LabNotebook(LabNotebook):
     different types when read than when acquired. (See :ref:`hdf5-type-management`
     for details.)
 
-    :param name: HDF5 file to persist the notebook to
+    The name of the notebook can be a file or a URL. Only files can be created
+    or updated: if a URL is provided then the notebook will be read and
+    immediately marked as locked. This implies that ``create=True`` won't
+    in conjunction with URLs.
+
+    .. important ::
+
+        Note that because of the design of the ``requests`` library used for
+        handling URLs, using a ``file:``-schema URL will result in an exception
+        being raised. Use filenames for accessing files.
+
+    :param name: HDF5 file or URL backing the notebook
     :param create: (optional) if True, erase any existing file (defaults to False)
     :param description: (optional) free text description of the notebook 
     '''
@@ -69,11 +82,12 @@ class HDF5LabNotebook(LabNotebook):
 
     def __init__(self, name : str, create : bool =False, description : str =None):
         # create an empty file structure
-        self._file : h5py.File = None          # file handle for underlying HDF5 file
+        self._file : h5py.File = None          # HDF5 file for underlying data
+        self._stream = None                    # stream for notebooks loaded from URLs
         self._group : h5py.Group = None        # group associated with the current result set
 
         # check for file needing creation
-        created = create or not os.path.isfile(name)
+        created = create # or not os.path.isfile(name)
         if created:
             self._create(name)                
 
@@ -144,13 +158,29 @@ class HDF5LabNotebook(LabNotebook):
     def _open(self):
         '''Open the HDF5 file that backs this notebook.'''
         if self._file is None:
-            self._file = h5py.File(self.name(), 'a')
+            try:
+                # attempt to open the name as a URL
+                response = get(self.name())
+                self._stream = response.raw
+                self._file = h5py.File(self._stream, 'rb')   # can only be read
+                self._isremote = True
+            except InvalidSchema:
+                # fall back to a file 
+                self._file = h5py.File(self.name(), 'a')
 
     def _close(self):
         '''Close the underlying HDF5 file.'''
         if self._file is not None:
             self._file.close()
             self._file = None
+
+            # close the underlying URL stream if there was one
+            if self._stream is not None:
+                self._stream.release_conn()
+                self._stream = None
+
+                # mark the notebook as locked
+                self.finish() 
 
     def _write(self, tag : str):
         '''Write the given result set to the file.
@@ -326,7 +356,7 @@ class HDF5LabNotebook(LabNotebook):
                         if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
                             try:
                                 # patch known datestamps to datetime objects
-                                dt = dateutil.parser.parse(entry[j])
+                                dt = parse(entry[j])
                                 entry[j] = dt
                             except:
                                 # leave unchanged if we can't patch

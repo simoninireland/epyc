@@ -22,6 +22,8 @@ import unittest
 import os
 from tempfile import NamedTemporaryFile
 
+# Remote HDF5 file for testiong URL behaviour
+testFileURL = 'https://raw.githubusercontent.com/simoninireland/epyc/dev/test/test.h5'
 
 class SampleExperiment(Experiment):
     '''A very simple experiment that adds up its parameters.'''
@@ -650,6 +652,12 @@ class HDF5LabNotebookTests(unittest.TestCase):
             rcs = nb1.resultsFor(rc4[Experiment.PARAMETERS])
             self.assertEqual(len(rcs), 1)
         
+    def testLoadingFromURL(self):
+        '''Test we can load a read-only notebook from a URL.'''
+        with HDF5LabNotebook(testFileURL).open() as nb1:
+            self.assertIn('first', nb1.resultSets())
+            self.assertTrue(nb1.isLocked())
+
 if __name__ == '__main__':
     unittest.main()
 
