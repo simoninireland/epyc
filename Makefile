@@ -108,7 +108,8 @@ SOURCES_DOCUMENTATION = \
 
 # Extras for building diagrams etc
 SOURCES_UTILS = \
-    utils/make-pointcloud.py
+    utils/make-pointcloud.py \
+	utils/make-hdf5-url-test.py
 
 # Extras for the build and packaging system
 SOURCES_EXTRA = \
@@ -223,9 +224,14 @@ upload: sdist wheel
 	$(GPG) --detach-sign -a dist/$(PACKAGENAME)-$(VERSION).tar.gz
 	$(ACTIVATE) && $(RUN_TWINE)
 
-# Build the diagrams for the documentation
+# Build the diagrams for the documentation and test files for URL testing
+diagrams-data: diagrams testdata
+
 diagrams:
 	$(ACTIVATE) && PYTHONPATH=$(ROOT) $(PYTHON) utils/make-pointcloud.py
+
+testdata:
+	$(ACTIVATE) && PYTHONPATH=$(ROOT) $(PYTHON) utils/make-hdf5-url-test.py
 
 # Clean up the distribution build 
 clean:
