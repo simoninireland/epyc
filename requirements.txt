@@ -6,3 +6,4 @@ cloudpickle
 pandas
 h5py
 joblib
+requests
