@@ -4,6 +4,7 @@ python:
   - "3.6"
   - "3.7"
   - "3.8"
+  - "3.9"
   # Can't include PyPy as there's no hdf5 library available on server
   # - "pypy3"
 
