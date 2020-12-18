@@ -1,3 +1,7 @@
+Version 1.2.2
+
+   - Added notebook-level locking
+
 Version 1.2.1 2020-12-09
 
    - Back-ported to work with Python 3.6 and later, and therefore
