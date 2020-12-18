@@ -97,7 +97,7 @@ class LabNotebook(object):
     # Defaults
     DEFAULT_RESULTSET : Final[str] = 'epyc.resultset.default'  #: Tag for the default result set.
 
-    def __init__(self, name : str =None, description : str =None):
+    def __init__(self, name : str ='', description : str =None):
         if description is None:
             description = 'A notebook' 
         self._name : Optional[str] = name                    # name
@@ -115,7 +115,7 @@ class LabNotebook(object):
 
     # ---------- Access ----------
 
-    def name(self) -> Optional[str]:
+    def name(self) -> str:
         """Return the name of the notebook. If the notebook is persistent,
         this likely relates to its storage in some way (for example a
         file name).
