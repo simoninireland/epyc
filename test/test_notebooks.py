@@ -300,7 +300,6 @@ class LabNotebookTests(unittest.TestCase):
         self._nb.addResultSet('first')
         self._nb.addResult(rc1)
         self._nb.addResult(rc2)
-        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '1234')
 
         # second
         self._nb.addResultSet('second')
@@ -311,12 +310,14 @@ class LabNotebookTests(unittest.TestCase):
         self._nb.finish()
 
         # check we can't add new result sets
-        with self.assertRaises(Exception):
+        with self.assertRaises(LabNotebookLockedException):
             self._nb.addResultSet('third')
 
-        # check the result sets are locked and finished correctly
+        # check the result sets are locked and finished correctly, with
+        # any pending results cancelled
         rs = self._nb.select('first')
         self.assertTrue(rs.isLocked())
+        self.assertEqual(rs.numberOfResults(), 2)
         rs = self._nb.select('second')
         self.assertTrue(rs.isLocked())
         self.assertEqual(rs.numberOfPendingResults(), 0)

@@ -631,14 +631,14 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb.finish()
 
         # check we can't add new result sets
-        with self.assertRaises(Exception):
+        with self.assertRaises(LabNotebookLockedException):
             nb.addResultSet('third')
 
         # check the notebook in still  locked when reloaded
         nb.commit()
         with HDF5LabNotebook(self._fn).open() as nb1:
             self.assertTrue(nb1.isLocked())
-            with self.assertRaises(Exception):
+            with self.assertRaises(LabNotebookLockedException):
                 nb.addResultSet('third')
             rs = nb1.select('first')
             self.assertTrue(rs.isLocked())
