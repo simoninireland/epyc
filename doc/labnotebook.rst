@@ -142,3 +142,16 @@ Thirdly, there are operations that work on all result sets.
 
 .. automethod :: LabNotebook.numberOfAllPendingResults
 
+
+Locking the notebook
+--------------------
+
+Locking a notebook prevents further updates: result sets cannot be added,
+all pending results are cancelled, and all individual result sets locked.
+Locking is preserved for persistent notebooks, so once locked a notebook is
+locked forever.
+
+.. automethod :: LabNotebook.finish
+
+.. automethod :: LabNotebook.isLocked
+
