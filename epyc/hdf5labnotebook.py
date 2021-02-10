@@ -50,7 +50,7 @@ class HDF5LabNotebook(LabNotebook):
     The name of the notebook can be a file or a URL. Only files can be created
     or updated: if a URL is provided then the notebook will be read and
     immediately marked as locked. This implies that ``create=True`` won't
-    in conjunction with URLs.
+    work in conjunction with URLs.
 
     .. important ::
 
@@ -162,7 +162,7 @@ class HDF5LabNotebook(LabNotebook):
                 # attempt to open the name as a URL
                 response = get(self.name())
                 self._stream = response.raw
-                self._file = h5py.File(self._stream, 'rb')   # can only be read
+                self._file = h5py.File(self._stream, 'r')   # can only be read
                 self._isremote = True
             except InvalidSchema:
                 # fall back to a file 
