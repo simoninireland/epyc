@@ -27,4 +27,4 @@ We first create a class describing our experiment. We do this by extending
             return dict(result = r)
 
 That's it: the code for the computational experiment, that will be executed at a point
-diven by the provided parameters dict.
+driven by the provided parameters dict.
