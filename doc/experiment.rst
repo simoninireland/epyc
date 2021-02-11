@@ -116,7 +116,7 @@ method. Note the division of responsibilities here: :meth:`Experiment.do` return
 of the experiment (as a dict), which are then wrapped in a further dict by
 :meth:`Experiment.report`.
 
-If the experiment returns a list of results instead of just a single set, then
+If the experiment returns a list of results dicts instead of just a single set, then
 by default they are each wrapped in the same parameters and metadata and returned
 as a list of results dicts.
 
