@@ -93,13 +93,13 @@ class SummaryExperiment(ExperimentCombinator):
         return k + self.MAX_SUFFIX
     
     def summarise(self, results : List[ResultsDict]) -> ResultsDict:
-        """Generate a summary of results from a list of result dicts
+        """Generate a summary of results from a list of experimental results dicts
         returned by running the underlying experiment. By default we generate
         mean, median, variance, and extrema for each value recorded.
 
         Override this method to create different or extra summary statistics.
 
-        :param results: an array of result dicts
+        :param results: an array of experimental results dicts
         :returns: a dict of summary statistics"""
         if len(results) == 0:
             return dict()
@@ -132,7 +132,24 @@ class SummaryExperiment(ExperimentCombinator):
                     
             return summary   
 
-    def do(self, params : Dict[str, Any]) -> ResultsDict:
+    def _flatten(self, rc : ResultsDict) -> List[ResultsDict]:
+        '''Flatten-out any nested results.
+
+        :param rc: a results dict, poissibly containing others nested as its results
+        :returns: a flat list of results dicts'''
+        rcs = []
+
+        def _doflat(prc):
+            if isinstance(prc[Experiment.RESULTS], list):
+                for nrc in prc[Experiment.RESULTS]:
+                    _doflat(nrc)
+            else:
+                rcs.append(prc)
+
+        _doflat(rc)
+        return rcs
+
+    def do(self, params : Dict[str, Any]) -> Dict[str, Any]:
         """Perform the underlying experiment and summarise its results.
         Our results are the summary statistics extracted from the results of
         the instances of the underlying experiment that we performed.
@@ -151,19 +168,16 @@ class SummaryExperiment(ExperimentCombinator):
         # perform the underlying experiment
         rc = self.experiment().run()
         
-        # extract the result dicts as a list
-        results = rc[Experiment.RESULTS]
-        if not isinstance(results, list):
-            # force to list
-            results = [ rc ]
+        # extract all the results as a single list
+        rcs = self._flatten(rc)
 
         # extract only the successful runs
-        sresults = [ res for res in results if res[Experiment.METADATA][Experiment.STATUS] ]
+        sres = [ rc for rc in rcs if rc[Experiment.METADATA][Experiment.STATUS] ]
       
         # add extra values to our metadata record
-        self._metadata[self.UNDERLYING_RESULTS]            = len(results)
-        self._metadata[self.UNDERLYING_SUCCESSFUL_RESULTS] = len(sresults)
-
+        self._metadata[self.UNDERLYING_RESULTS]            = len(rcs)
+        self._metadata[self.UNDERLYING_SUCCESSFUL_RESULTS] = len(sres)
+        
         # construct summary results
-        return self.summarise(sresults)
+        return self.summarise(sres)
 

@@ -1,6 +1,6 @@
 # Tests of experiments class
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2021 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -95,6 +95,18 @@ class SampleExperiment7(SampleExperiment0):
     def tearDown( self ):
         raise Exception('We failed (on purpose)')
 
+class SampleExperiment8(Experiment):
+    '''An experiment that returns a lot of results dicts.'''
+
+    def do(self, params):
+        res = []
+        rc = self.resultsdict()
+        rc[Experiment.RESULTS] = dict(a=1, c=params['c'])
+        res.append(rc)
+        rc = self.resultsdict()
+        rc[Experiment.RESULTS] = dict(a=2, c=params['c'])
+        res.append(rc)
+        return res
 
 class ExperimentTests(unittest.TestCase):
 
@@ -197,5 +209,18 @@ class ExperimentTests(unittest.TestCase):
         res = e.run()
         self.assertEqual(e['result'], params['a'] + params['b'])
 
+    def testListResults(self):
+        '''Test we wrap a list of experimental results properly.'''
+        e = SampleExperiment8()
+        params = dict(c='hello world')
+        e.set(params)
+        rc = e.run()
+        self.assertFalse(isinstance(rc, list))
+        self.assertTrue(isinstance(rc[Experiment.RESULTS], list))
+        res = rc[Experiment.RESULTS]
+        self.assertEqual(len(res), 2)
+        for rc in res:
+            self.assertEqual(rc[Experiment.RESULTS]['c'], params['c'])
+       
 if __name__ == '__main__':
     unittest.main()

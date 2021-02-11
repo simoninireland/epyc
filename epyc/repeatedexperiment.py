@@ -20,10 +20,10 @@
 from epyc import ExperimentCombinator, Experiment, ResultsDict
 import sys
 if sys.version_info >= (3, 8):
-    from typing import Any, Dict, List, Final
+    from typing import Any, Dict, List, Union, Final
 else:
     # backwards compatibility with Python 35, Python36, and Python37 
-    from typing import Any, Dict, List
+    from typing import Any, Dict, List, Union
     from typing_extensions import Final
 
 class RepeatedExperiment(ExperimentCombinator):
@@ -71,19 +71,17 @@ class RepeatedExperiment(ExperimentCombinator):
         e = self.experiment()
         results = []
         for i in range(N):
-            res = e.run()
+            rcs = e.run()
 
             # make sure we have a list to traverse
-            if not isinstance(res, list):
-                res = [ res ]
+            if not isinstance(rcs, list):
+                rcs = [ rcs ]
 
-            # add repetition metadata to each result
-            for r in res:
-                r[Experiment.METADATA][self.I] = i 
-                r[Experiment.METADATA][self.REPETITIONS] = N
-
-            # add the results to ours
-            results.extend(res)
+            # add repetition information to each results dict's metadata
+            for j in range(len(rcs)):
+                rc = rcs[j]
+                rc[Experiment.METADATA][self.I] = i 
+                rc[Experiment.METADATA][self.REPETITIONS] = N
+            results.extend(rcs)
         return results
 
-    

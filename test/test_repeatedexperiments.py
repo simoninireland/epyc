@@ -1,6 +1,6 @@
 # Tests of repeated experiments combinator
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2021 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -73,6 +73,7 @@ class RepeatedExperimentTests(unittest.TestCase):
             self.assertTrue(dfx[RepeatedExperiment.REPETITIONS].eq(N).all())
             self.assertCountEqual(dfx[RepeatedExperiment.I].values, range(N))
 
+    # TODO: check nesting for repeated repetitions
 
 if __name__ == '__main__':
     unittest.main()

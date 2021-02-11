@@ -1,6 +1,6 @@
 # Base class for experiments
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2021 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -21,10 +21,10 @@ from datetime import datetime
 import traceback
 import sys
 if sys.version_info >= (3, 8):
-    from typing import Set, Dict, Any, Final
+    from typing import Set, Dict, Union, List, Any, Final
 else:
     # backwards compatibility with Python 35, Python36, and Python37 
-    from typing import Set, Dict, Any
+    from typing import Set, Dict, Union, List, Any
     from typing_extensions import Final
 
 # The type of results dicts
@@ -74,7 +74,7 @@ class Experiment(object):
     def __init__(self):
         self._metadata : Dict[str, Any] = dict()
         self._parameters : Dict[str, Any] = dict()
-        self._results : Dict[str, Any] = dict()
+        self._results : Union[Dict[str, Any], List[Dict[str, Any]]] = dict()
 
     @classmethod
     def _init_statics(cls):
@@ -156,20 +156,30 @@ class Experiment(object):
         """Tear down the experiment. Default does nothing."""
         pass
 
-    def do(self, params : Dict[str, Any]) -> Dict[str, Any]:
+    def do(self, params : Dict[str, Any]) -> Union[Dict[str, Any], List[ResultsDict]]:
         """Do the body of the experiment. This should be overridden
         by sub-classes. Default does nothing.
 
+        An experiment can return two types of results:
+
+        - a dict mapping names to values for experimental results
+        - a list of :term:`results dict`s, which represent fully-formed experiments
+
         params: a dict of parameters for the experiment
-        returns: a dict of experimental results (empty by default)"""
+        returns: the experimental results """
         return dict()
 
-    def report(self, params : Dict[str, Any], meta : Dict[str, Any], res : Dict[str, Any]) -> ResultsDict:
+    def report(self, params : Dict[str, Any], meta : Dict[str, Any], res : Union[Dict[str, Any], List[ResultsDict]]) -> ResultsDict:
         """Return a properly-structured dict of results. The default returns a dict with
         results keyed by :attr:`Experiment.RESULTS`, the data point in the parameter space
         keyed by :attr:`Experiment.PARAMETERS`, and timing and other metadata keyed
         by :attr:`Experiment.METADATA`. Overriding this method can be used to record extra
         metadata values, but be sure to call the base method as well.
+
+        If the experimental results are a list of results dicts, then we report a
+        results dict whose results are a list of results dicts.
+        This is used by :class:`RepeatedExperiment` amd other experiments that want to report
+        multiple sets of results.
 
         :param params: the parameters we ran under
         :param meta: the metadata for this run
@@ -294,20 +304,20 @@ class Experiment(object):
         else:
             return not (self.metadata())[self.STATUS]
 
-    def results(self) -> ResultsDict:
+    def results(self) -> Union[ResultsDict, List[ResultsDict]]:
         """Return a complete results dict. Only really makes sense for
         recently-executed experimental runs.
 
-        :returns: the results dict"""
+        :returns: the results dict, or a list of them"""
         return self.report(self.parameters(),
                            self.metadata(),
                            self.experimentalResults())
 
-    def experimentalResults(self) -> Dict[str, Any]:
+    def experimentalResults(self) -> Union[Dict[str, Any], List[Dict[str, Any]]]:
         """Return the experimental results from our last run. This will
         be None if we haven't been run, or if we ran and failed.
 
-        :returns: the experimental results, which may be empty"""
+        :returns: the experimental results dict, which may be empty, and may be a list of dicts"""
         return self._results
     
     def parameters(self) -> Dict[str, Any]:
