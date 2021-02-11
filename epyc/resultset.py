@@ -214,7 +214,7 @@ class ResultSet(object):
         return self._locked
 
     def assertUnlocked(self):
-        '''Tests whewther the result set is locked, and raises a :class:`ResultSetLockedException`
+        '''Tests whether the result set is locked, and raises a :class:`ResultSetLockedException`
         if so. This is used to protect update methods, since locked result sets are never
         updated.'''
         if self.isLocked():
