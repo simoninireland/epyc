@@ -25,7 +25,8 @@ from datetime import datetime
 from pandas import DataFrame   # type: ignore
 from dateutil.parser import parse
 from requests import get
-from requests.exceptions import InvalidSchema
+from requests.exceptions import MissingSchema
+from tempfile import NamedTemporaryFile
 import sys
 if sys.version_info >= (3, 8):
     from typing import Final, Any
@@ -83,11 +84,21 @@ class HDF5LabNotebook(LabNotebook):
     def __init__(self, name : str, create : bool =False, description : str =None):
         # create an empty file structure
         self._file : h5py.File = None          # HDF5 file for underlying data
-        self._stream = None                    # stream for notebooks loaded from URLs
         self._group : h5py.Group = None        # group associated with the current result set
 
+        # if we're looking at a URL, some behaviour is different
+        try:
+            # attempt to open the name as a URL
+            response = get(name)
+
+            # if we get here, the name is a URL
+            self._isRemote = True
+        except MissingSchema:
+            # name is a file
+            self._isRemote = False
+
         # check for file needing creation
-        created = create # or not os.path.isfile(name)
+        created = (not self._isRemote) and (create or not os.path.isfile(name))
         if created:
             self._create(name)                
 
@@ -115,6 +126,13 @@ class HDF5LabNotebook(LabNotebook):
 
     def commit(self):
         """Persist any changes in the result sets in the notebook to disc."""
+        if not self.isLocked():
+            self._open()
+            self._save()
+            self._close()
+
+    def _commit(self):
+        '''If we're finishing, commit regardless of the lock status.'''
         self._open()
         self._save()
         self._close()
@@ -158,14 +176,20 @@ class HDF5LabNotebook(LabNotebook):
     def _open(self):
         '''Open the HDF5 file that backs this notebook.'''
         if self._file is None:
-            try:
-                # attempt to open the name as a URL
+            if self._isRemote:
+                # open as a URL
                 response = get(self.name())
-                self._stream = response.raw
-                self._file = h5py.File(self._stream, 'r')   # can only be read
-                self._isremote = True
-            except InvalidSchema:
-                # fall back to a file 
+
+                # slurp the contents into a local temp file
+                tf = NamedTemporaryFile(delete=False)
+                for chunk in response.iter_content(chunk_size=1024):
+                    tf.write(chunk)
+                tf.close()
+
+                # open the file read-only
+                self._file = h5py.File(tf.name, 'r')   # can only be read
+            else:
+                # open as a file 
                 self._file = h5py.File(self.name(), 'a')
 
     def _close(self):
@@ -174,13 +198,9 @@ class HDF5LabNotebook(LabNotebook):
             self._file.close()
             self._file = None
 
-            # close the underlying URL stream if there was one
-            if self._stream is not None:
-                self._stream.release_conn()
-                self._stream = None
-
-                # mark the notebook as locked
-                self.finish() 
+        # if we loaded from a URL, lock the notebook
+        if self._isRemote:
+            self.finish(commit=False)   # don't try to commit it when finishing
 
     def _write(self, tag : str):
         '''Write the given result set to the file.
@@ -396,7 +416,7 @@ class HDF5LabNotebook(LabNotebook):
                 # record the pending result
                 self.addPendingResult(params, jobid, tag)
 
-        # lock the result set if flagged
+        # lock the result set if flagged 
         if locked:
             rs.finish()
 
@@ -448,7 +468,7 @@ class HDF5LabNotebook(LabNotebook):
 
         # lock if necessary
         if meta[self.LOCKED]:
-            self.finish()
+            self.finish(commit=False)
 
 
     # ---------- Type conversion ----------

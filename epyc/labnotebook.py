@@ -151,6 +151,11 @@ class LabNotebook(object):
         automatically in some sub-classes, depending on their implementation."""
         pass
 
+    def _commit(self):
+        '''Private API for forcing commits, called when finishing a notebook.
+        Defaults to the same behaviour as  :meth:`commit`.'''
+        self.commit()
+
 
     # ---------- Managing results sets ----------
 
@@ -219,21 +224,29 @@ class LabNotebook(object):
         '''Return the number of result sets in this notebook.
         Same as :meth:`numberOfResultSets`.
 
-        :returns: the numbernof result sets'''
+        :returns: the number of result sets'''
         return self.numberOfResultSets()
 
 
     # ---------- Finishing ----------
 
-    def finish(self):
+    def finish(self, commit=True):
         '''Mark the entire notebook as finished, closing and locking all result sets
-        against further changes. Finishing a persistent notebook commits it.'''
+        against further changes. Finishing a persistent notebook commits it.
+        
+        By default the finished notebook is committed as such. In certain cases
+        it may be desirable to finish the notebook but not commit it, *i.e.*, to
+        stop updates in memory without changing the backing file. Setting ``commit=False``
+        will accomplish this.
+        
+        :param commit: (optional) commit the notebook (defaults to True)'''
         if not self.isLocked():
             for tag in self.resultSets():
                 rs = self.resultSet(tag)
                 rs.finish()
-            self._locked = True
-            self.commit()
+            self._locked = True   # set here to make sure the status is committed
+            if commit:
+                self._commit()
 
     def isLocked(self) -> bool:
         '''Returns true if the notebook is locked.

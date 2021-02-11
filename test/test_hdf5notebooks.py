@@ -652,6 +652,24 @@ class HDF5LabNotebookTests(unittest.TestCase):
             rcs = nb1.resultsFor(rc4[Experiment.PARAMETERS])
             self.assertEqual(len(rcs), 1)
         
+    @unittest.skip('Seems to depend on exact config of the underlying filesystem')
+    def testNoWriteWhenLocked(self):
+        '''Test that no writing happens after a notebook is locked.'''
+        nb = HDF5LabNotebook(self._fn, create=True)
+
+        # commit the finished notebook
+        nb.addResultSet('first')
+        nb.finish()
+        t1 = os.path.getmtime(self._fn)
+
+        # reload and commit again, which shouldn't write anything
+        with HDF5LabNotebook(self._fn).open() as nb1:
+            nb1.commit()
+        t2 = os.path.getmtime(self._fn)
+
+        self.assertEqual(t1, t2)
+
+
     def testLoadingFromURL(self):
         '''Test we can load a read-only notebook from a URL.'''
         with HDF5LabNotebook(testFileURL).open() as nb1:
