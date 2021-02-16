@@ -358,7 +358,7 @@ class ResultSet(object):
             return self.TypeMapping[t]
 
     def valueToDtype(self, v : Any) -> numpy.dtype:
-        '''Return thwe stype of a Python value. An exception
+        '''Return the dtype of a Python value. An exception
         is thrown if there is no appropriate mapping.
 
         :param v: the value
@@ -371,7 +371,7 @@ class ResultSet(object):
 
     def inferDtype(self, rc : ResultsDict):
         '''Infer the dtype of the given result dict. This will include all the
-        standard and exceptional metedata dfined for an :class:`Experiment`, plus
+        standard and exceptional metedata defined for an :class:`Experiment`, plus
         the parameters and results (if present) for the results dict.
 
         If more elements are provided than have previously been seen, the underlying
