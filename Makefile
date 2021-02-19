@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.3.1
+VERSION = 1.3.2
 
 
 # ----- Sources -----

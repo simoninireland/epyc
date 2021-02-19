@@ -1,4 +1,8 @@
-Version 1.3.1 2020-02-11
+Version 1.3.2 2021-02-19
+
+   - Fixed adding lists as results in HDF5 notebooks
+
+Version 1.3.1 2021-02-11
 
    - Added notebook-level locking
    - Added loading notebooks directly from URLs
