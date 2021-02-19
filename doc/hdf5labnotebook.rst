@@ -54,6 +54,22 @@ underlying file, for example:
     nb.commit()
 
 
+.. _hdf5-url-access:
+
+Remote notebooks
+----------------
+
+Remote notebooks can be accessed by providing a URL instead of a filename to the
+notebook constructor:
+
+.. code-block :: python
+
+    nb = HDF5LabNotebook(name='http://example.com/test.h5') 
+
+Since remote updating doesn't usually work, any notebook loaded from a URL is
+treated as "finished" (as though you'd called :meth:`LabNotebook.finish`)
+
+
 .. _hdf5-file-structure:
 
 Structure of the HDF5 file
@@ -132,18 +148,16 @@ and ``datetime`` values, all of which are mapped to HDF5 strings (in ISO standar
 date format for the latter). A little bit of patching happens for "known"
 metadata values (specifically :attr:`Experiment.START_TIME` and :attr:`Experiment.END_TIME`)
 which are automatically patched to ``datetime`` instances when loaded.
+List-valued results are supported, and can be "ragged" (not have the same length)
+across results.
 
 .. warning ::
 
-    ``epyc`` allows result dicts to contain arrays as results. These can only be
-    written to HDF5 if all the array results have the same shape: having different
-    shapes will (probably) result in an exception with a hard-to-understand
-    message.
-
-    To work around this, it's safest to not have array-valued results. If you need
-    them, pick a shape beforehand and stick to it.
-
-    This limitation may be removed in future versions.
+    Because of the differences between Python's and HDF5's type systems you
+    may not get back a value with exactly the same type as the one you saved.
+    Specifically, lists come back as ``numpy`` arrays. The values and the behaviours
+    are the same, though. If you need a specific type, be sure to cast the
+    value before use.
 
 
 Tuning parameters
