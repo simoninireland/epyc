@@ -19,6 +19,7 @@
 
 from epyc import *
 import unittest
+import numpy
 import os
 from tempfile import NamedTemporaryFile
 
@@ -49,16 +50,16 @@ class HDF5LabNotebookTests(unittest.TestCase):
 
     def setUp( self ):
         '''Set up with a temporary file.'''
-        tf = NamedTemporaryFile()
-        tf.close()
-        self._fn = tf.name
-        #self._fn = 'test.h5'
+        #tf = NamedTemporaryFile()
+        #tf.close()
+        #self._fn = tf.name
+        self._fn = 'test.h5'
 
     def tearDown( self ):
         '''Delete the temporary file.'''
         try:
-            os.remove(self._fn)
-            #pass
+            #os.remove(self._fn)
+            pass
         except OSError:
             pass
         
@@ -413,13 +414,6 @@ class HDF5LabNotebookTests(unittest.TestCase):
         rc = nb.resultsFor(params)[0]
         self.assertCountEqual(rc[Experiment.RESULTS]['list'], [ 3, 3, 3 ])
 
-        # check we can't add another with a different shape
-        with self.assertRaises(Exception):
-            params['k'] = 5
-            rc = SampleExperiment2().set(params).run()
-            nb.addResult(rc)
-            nb.commit()
-
     def testContextManager(self):
         '''Test that the conext manager works as inteneded.'''
         nb = HDF5LabNotebook(self._fn, create=True) 
@@ -669,12 +663,41 @@ class HDF5LabNotebookTests(unittest.TestCase):
 
         self.assertEqual(t1, t2)
 
-
     def testLoadingFromURL(self):
         '''Test we can load a read-only notebook from a URL.'''
         with HDF5LabNotebook(testFileURL).open() as nb1:
             self.assertIn('first', nb1.resultSets())
             self.assertTrue(nb1.isLocked())
+
+    def testRagged(self):
+        '''Test we can create ragged axes (i.e., variable length array results).'''
+        nb = HDF5LabNotebook(self._fn, create=True)
+
+        params = dict()
+        params['k'] =  1
+        e = SampleExperiment2()
+        rc = e.set(params).run()
+        nb.addResult(rc)
+
+        params['k'] =  10
+        rc = e.set(params).run()
+        nb.addResult(rc)
+
+        self.assertEqual(len(nb.dataframe()), 2)
+        nb.commit()
+
+        nb1 = HDF5LabNotebook(self._fn)
+        self.assertEqual(len(nb1.dataframe()), 2)
+        rcs = nb.resultsFor(dict(k=1))
+        self.assertEqual(len(rcs), 1)
+        rcs1 = nb1.resultsFor(dict(k=1))
+        self.assertEqual(len(rcs1), 1)
+        self.assertCountEqual(rcs[0][Experiment.RESULTS]['list'], rcs1[0][Experiment.RESULTS]['list'])
+        rcs = nb.resultsFor(dict(k=10))
+        self.assertEqual(len(rcs), 1)
+        rcs1 = nb1.resultsFor(dict(k=10))
+        self.assertEqual(len(rcs1), 1)
+        self.assertCountEqual(rcs[0][Experiment.RESULTS]['list'], rcs1[0][Experiment.RESULTS]['list'])
 
 if __name__ == '__main__':
     unittest.main()

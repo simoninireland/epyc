@@ -262,7 +262,8 @@ class HDF5LabNotebook(LabNotebook):
 
             # write out each result
             df = rs.dataframe()
-            dtype = ds.dtype
+            dtype = rs.dtype()
+            hdf5dtype = ds.dtype
             dfnames = dtype.names
             for i in range(len(df.index)):
                 # get the row to write
@@ -275,11 +276,18 @@ class HDF5LabNotebook(LabNotebook):
                         # patch known datestamps ISO-format strings in metadata
                         dt = res[k].isoformat()
                         entry.append(dt)
-                    elif dtype[k] == h5py.string_dtype():
-                        entry.append(self._asString(res[k]))
                     else:
-                        entry.append(res[k])
-
+                        et = h5py.check_vlen_dtype(hdf5dtype[k])
+                        if et is None:
+                            # "normal" type, pass through
+                            entry.append(res[k])
+                        elif et == str:
+                            # string, convert
+                            entry.append(self._asString(res[k]))
+                        else:
+                            # array of something
+                            entry.append(numpy.array(res[k]))
+    
                 # write out the row
                 ds[i] = tuple(entry)
 
@@ -336,6 +344,7 @@ class HDF5LabNotebook(LabNotebook):
         g = self._file[tag]
 
         # read the attributes, all treated as strings
+        formats = None
         locked = False
         for k in g.attrs.keys():
             if k == self.DESCRIPTION:
@@ -364,15 +373,20 @@ class HDF5LabNotebook(LabNotebook):
 
             # read each line of the dataset into the result set
             # sd: this uses the results dict API and so is quite wasteful
-            dtype = ds.dtype
+            hdf5dtype = ds.dtype
             for i in range(len(ds)):
                 entry = list(ds[i])
                 rc = Experiment.resultsdict()
                 j = 0
                 for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                     for k in names[d]:
-                        if dtype[k] == h5py.string_dtype():
+                        et = h5py.check_vlen_dtype(hdf5dtype[k])
+                        if et == str:
+                            # string, convert
                             entry[j] = self._asString(entry[j])
+                        elif et is not None:
+                            # array of something
+                            entry[j] = numpy.array(entry[j])
                         if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
                             try:
                                 # patch known datestamps to datetime objects
@@ -480,8 +494,16 @@ class HDF5LabNotebook(LabNotebook):
         :returns: the HDF5 dtype'''
         if dtype.kind in ['S', 'U']:
             # h5py can't handle Python strings but has its own dtype for them
-            dtype = h5py.string_dtype()
-        return dtype
+            return h5py.string_dtype()
+        #elif dtype.kind in ['O']:
+        #    # object (probably numpy array), wrap as vlen
+        #    return h5py.vlen_dtype(dtype)
+        elif dtype.shape != ():
+            # list, make into a vlen type
+            return h5py.vlen_dtype(self._HDF5dtype(dtype.base))
+        else:
+            # leave unpatched
+            return dtype
 
     def _HDF5dtype(self, dtype : numpy.dtype) -> numpy.dtype:
         '''Patch a ``numpy`` dtype into its HDF5 equivalent. This method
@@ -493,7 +515,7 @@ class HDF5LabNotebook(LabNotebook):
             # a structured dtype, unpack and patch all the fields
             elements = []
             for k in dtype.names:
-                t = self._HDF5simpledtype(dtype.fields[k][0])
+                t = self._HDF5dtype(dtype.fields[k][0])
                 elements.append((k, t))
             return numpy.dtype(elements)
         else:
