@@ -69,7 +69,8 @@ def show(notebook, long):
 @click.argument('rss', nargs=-1)
 @click.argument('dest', nargs=1)
 @click.option('-v', '--verbose', count=True, help='Generate verbose output (repeat for extra verbosity)')
-def copy(rss, dest, verbosity):
+@click.option('-n', '--pretend', is_flag=True, help="Check validity but don't copy anything")
+def copy(rss, dest, verbose, pretend):
     '''Copy one or more result sets to the destination notebook.
 
     Result sets are specified as a triple [NOTEBOOK]:TAG[=NEWTAG] where NOTEBOOK
@@ -124,24 +125,25 @@ def copy(rss, dest, verbosity):
                 nb1 = epyc.HDF5LabNotebook(fn)
 
             # sanity check the result sets
-            if tag not in nb1.resultSetTags():
+            if tag not in nb1.resultSets():
                 print(f"No result set '{tag}' in {fn}", file=sys.stderr)
                 sys.exit(1)
-            if newtag in nb.resultSetTags():
+            if newtag in nb.resultSets():
                 print(f"Result set '{tag}' already exists in {dest}", file=sys.stderr)
                 sys.exit(1)
             
             # copy the result set
-            if verbosity == 1:
-                click.echo(click.style('#', fg='green'), end='')
-            rs1 = nb1.resultSet(tag)
-            rs = nb.addResultSet(newtag)
-            for rc in rs1.results():
-                if verbosity == 1:
-                    print('.', end='')
-                rs.addResult(rc)    
-            if verbosity == 1:
-                print('')
+            if not pretend:
+                if verbose == 1:
+                    click.echo(click.style('#', fg='green'), end='')
+                rs1 = nb1.resultSet(tag)
+                rs = nb.addResultSet(newtag)
+                for rc in rs1.results():
+                    if verbose == 1:
+                        click.echo(click.style('.', fg='blue'), end='')
+                    rs.addResult(rc)
+                if verbose == 1:
+                    click.echo('')
 
             
 if __name__ == '__main__':
