@@ -1,6 +1,6 @@
 # Simulation "lab notebook" for collecting results, in-memory version
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2021 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -21,11 +21,10 @@ from epyc import Experiment, ResultSet, ResultsDict
 from pandas import DataFrame                               # type: ignore
 from contextlib import contextmanager
 import sys
+from typing import List, Set, Dict, Any, Optional, Union, cast
 if sys.version_info >= (3, 8):
-    from typing import List, Set, Dict, Any, Optional, Union, Final, cast
+    from typing import Final
 else:
-    # backwards compatibility with Python 35, Python36, and Python37 
-    from typing import List, Set, Dict, Any, Optional, Union, cast
     from typing_extensions import Final
 
 
@@ -36,7 +35,7 @@ class ResultsStructureException(Exception):
     :param rc: the results dict structure that causes the problem''' 
 
     def __init__(self, rc : Union[ResultsDict, List[ResultsDict]]):
-        super(ResultsStructureException, self).__init__("Can't handle results dict {rc}".format(rc=rc))
+        super().__init__("Can't handle results dict {rc}".format(rc=rc))
         self._rc = rc
 
     def resultsdict(self) -> Union[ResultsDict, List[ResultsDict]]:
@@ -54,7 +53,7 @@ class NotebookVersionException(Exception):
     :param actual: the actual version'''
 
     def __init__(self, expected : str, actual : str):
-        super(NotebookVersionException, self).__init__('Expected notebook version {v1}, got {v2}'.format(v1=expected, v2=actual))
+        super().__init__('Expected notebook version {v1}, got {v2}'.format(v1=expected, v2=actual))
         self._expected = expected
         self._actual = actual
     
@@ -76,23 +75,29 @@ class LabNotebookLockedException(Exception):
     attemoting to add result sets.'''
 
     def __init__(self):
-        super(LabNotebookLockedException, self).__init__('Lab notebook locked')
+        super().__init__('Lab notebook locked')
 
 
+class LabNotebook:
+    '''A "laboratory notebook" collecting together the results obtained
+    from different sets of experiments. A notebook is composed of
+    :class:`ResultSet` objects, which are homogeneous collections of
+    results of experiments performed at different values for the same
+    set of parameters. Each result set is tagged for access, with the
+    notebook using one result set as "current" at any time.
 
-class LabNotebook(object):
-    '''A "laboratory notebook" collecting together the results obtained from
-    different sets of experiments. A notebook is composed of :class:`ResultSet` objects,
-    which are homogeneous collections of results of experiments performed at different values
-    for the same set of parameters. Each result set is tagged for access,
-    with the notebook using one result set as "current" at any time.
+    The notebook collects together pending results from all result
+    sets so that they can be accessed uniformly. This is used by labs
+    to resolve pending results if there are multiple sets of
+    experiments running simultaneously.
 
-    The notebook collects together pending results from all result sets so that they
-    can be accessed uniformly. This is used by labs to resolve pending results if
-    there are multiple sets of experiments running simultaneously.
+    Result sets are immutable, but can be added and deleted freely
+    from notebooks: their contents cannot be changed, however.
 
     :param name: (optional) the notebook name (may be meaningful for sub-classes)
-    :param description: (optional) a free text description'''
+    :param description: (optional) a free text description
+
+    '''
  
     # Defaults
     DEFAULT_RESULTSET : Final[str] = 'epyc.resultset.default'  #: Tag for the default result set.
@@ -102,7 +107,7 @@ class LabNotebook(object):
             description = 'A notebook' 
         self._name : Optional[str] = name                    # name
         self._description : str = description                # description
-        self._resultSets: Dict[str, ResultSet] = dict()      # tag to result set
+        self._resultSets : Dict[str, ResultSet] = dict()     # tag to result set
         self._resultSetTags : Dict[ResultSet, str] = dict()  # result set to tag
         self._pending : Dict[str, ResultSet] = dict()        # pending results job ids to result sets
         self._locked : bool = False                          # locked flag
@@ -173,6 +178,22 @@ class LabNotebook(object):
         self._current = rs
         return self._current
 
+    def deleteResultSet(self, rs : Union[str, ResultSet]):
+        '''Delete a result set.
+
+        :param rs: the result set or its tag'''
+        self.assertUnlocked()
+        if isinstance(rs, ResultSet):
+            rss = rs
+            tag = self._resultSetTags[rs]
+        else:
+            tag = rs
+            rss = self._resultSets[tag]
+        if rss == self._current:
+            raise Exception("Can't delete current result set ({tag})".format(tag=tag))
+        del self._resultSets[tag]
+        del self._resultSetTags[rss]
+            
     def resultSets(self) -> List[str]:
         '''Return the tags for all the result sets in this notebook.
 

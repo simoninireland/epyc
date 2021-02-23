@@ -699,6 +699,36 @@ class HDF5LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(rcs1), 1)
         self.assertCountEqual(rcs[0][Experiment.RESULTS]['list'], rcs1[0][Experiment.RESULTS]['list'])
 
+    def testDeleteResultSet(self):
+        '''Test a deleted result set is deleted when persisted.'''
+        nb = HDF5LabNotebook(self._fn, create=True)
+
+        # create additional result sets and save them
+        nb.addResultSet('second')
+        params = dict()
+        params['k'] =  1
+        e = SampleExperiment2()
+        rc = e.set(params).run()
+        nb.addResult(rc)
+        nb.addResultSet('third')
+        params = dict()
+        params['k'] =  5
+        e = SampleExperiment2()
+        rc = e.set(params).run()
+        nb.addResult(rc)
+        nb.commit()
+
+        # delete the result set and re-save
+        nb1 = HDF5LabNotebook(self._fn)
+        nb1.deleteResultSet('second')
+        nb1.commit()
+
+        # make sure we only have the default result set
+        nb2 = HDF5LabNotebook(self._fn)
+        self.assertEqual(len(nb2), 2)
+        self.assertEqual(nb2.currentTag(), 'third')
+        self.assertCountEqual(nb2.resultSets(), ['third', LabNotebook.DEFAULT_RESULTSET])
+        
 if __name__ == '__main__':
     unittest.main()
 

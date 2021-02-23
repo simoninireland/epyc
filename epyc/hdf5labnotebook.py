@@ -1,6 +1,6 @@
 # Simulation "lab notebook" for collecting results, HDF5 version
 #
-# Copyright (C) 2020 Simon Dobson
+# Copyright (C) 2020--2021 Simon Dobson
 # 
 # This file is part of epyc, experiment management in Python.
 #
@@ -28,40 +28,41 @@ from requests import get
 from requests.exceptions import MissingSchema
 from tempfile import NamedTemporaryFile
 import sys
+from typing import Any
 if sys.version_info >= (3, 8):
-    from typing import Final, Any
+    from typing import Final
 else:
-    # backwards compatibility with Python 35, Python36, and Python37 
-    from typing import Any
     from typing_extensions import Final
 
 class HDF5LabNotebook(LabNotebook):
-    '''A lab notebook that persists itself to an HDF5 file.
-    `HDF5 <https://www.hdfgroup.org/>`_  is a very common format
-    for sharing large scientific datasets, allowing ``epyc`` to interoperate
-    with a larger toolchain.
+    '''A lab notebook that persists itself to an HDF5 file.  `HDF5
+    <https://www.hdfgroup.org/>`_ is a very common format for sharing
+    large scientific datasets, allowing ``epyc`` to interoperate with
+    a larger toolchain.
 
-    ``epyc`` is built on top of the ``h5py`` `Python binding to HDF5 <https://www.h5py.org/>`_,
-    which handles most of the heavy lifting using a lot of machinery for typing
-    and so on matched with ``numpy``. Note that
-    the limitations of HDF5's types mean that some values may have
-    different types when read than when acquired. (See :ref:`hdf5-type-management`
-    for details.)
+    ``epyc`` is built on top of the ``h5py`` `Python binding to HDF5
+    <https://www.h5py.org/>`_, which handles most of the heavy lifting
+    using a lot of machinery for typing and so on matched with
+    ``numpy``. Note that the limitations of HDF5's types mean that
+    some values may have different types when read than when
+    acquired. (See :ref:`hdf5-type-management` for details.)
 
-    The name of the notebook can be a file or a URL. Only files can be created
-    or updated: if a URL is provided then the notebook will be read and
-    immediately marked as locked. This implies that ``create=True`` won't
-    work in conjunction with URLs.
+    The name of the notebook can be a file or a URL. Only files can be
+    created or updated: if a URL is provided then the notebook will be
+    read and immediately marked as locked. This implies that
+    ``create=True`` won't work in conjunction with URLs.
 
     .. important ::
 
-        Note that because of the design of the ``requests`` library used for
-        handling URLs, using a ``file:``-schema URL will result in an exception
-        being raised. Use filenames for accessing files.
+        Note that because of the design of the ``requests`` library
+        used for handling URLs, using a ``file:``-schema URL will
+        result in an exception being raised. Use filenames for
+        accessing files.
 
     :param name: HDF5 file or URL backing the notebook
     :param create: (optional) if True, erase any existing file (defaults to False)
-    :param description: (optional) free text description of the notebook 
+    :param description: (optional) free text description of the notebook
+
     '''
 
     # Latest file format, defining how a notebook is laid out within the HDF5 file
@@ -79,7 +80,7 @@ class HDF5LabNotebook(LabNotebook):
     VERSION : Final[str] = 'version'                 #: Attribute holding the version of file structure used.
     DESCRIPTION : Final[str] = 'description'         #: Attribute holding the notebook and result set descriptions.
     CURRENT : Final[str] = 'current-resultset'       #: Attribute holding the tag of the current result set.
-    LOCKED : Final[str] = 'locked'                   #: Attribute flagging as result set or notebook as being locked to further changes.
+    LOCKED : Final[str] = 'locked'                   #: Attribute flagging a result set or notebook as being locked to further changes.
 
     def __init__(self, name : str, create : bool =False, description : str =None):
         # create an empty file structure
@@ -103,7 +104,7 @@ class HDF5LabNotebook(LabNotebook):
             self._create(name)                
 
         # perform the normal initialisation
-        super(HDF5LabNotebook, self).__init__(name, description)
+        super().__init__(name, description)
 
         if not created:
             # load notebook from file if it wasn't newly created
@@ -202,6 +203,16 @@ class HDF5LabNotebook(LabNotebook):
         if self._isRemote:
             self.finish(commit=False)   # don't try to commit it when finishing
 
+    def _purge(self):
+        '''Delete any HDF5 datasets that relate to deleted result sets.'''
+        tags = self.resultSets()
+        g = self._file
+        for tag in g.keys():
+            if tag not in tags:
+                # result set with this tag has been deleted, remove the corresponding dataset
+                print(f'purge {tag}')
+                del g[tag]
+                
     def _write(self, tag : str):
         '''Write the given result set to the file.
 
@@ -446,6 +457,10 @@ class HDF5LabNotebook(LabNotebook):
                 # result set has changed since it was created, loaded, or last saved
                 self._write(tag)
 
+        # delete any datasets that aare no longer in the notebook,
+        # i.e., those that have been deleted
+        self._purge()
+        
         # write out the housekeeping information for the notebook
         meta = self._file.attrs
         meta[self.CREATOR] = PackageContactInfo

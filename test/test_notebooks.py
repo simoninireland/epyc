@@ -326,6 +326,30 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(rcs), 1)
         self.assertFalse(rcs[0][Experiment.METADATA][Experiment.STATUS])
 
+    def testDeleteResultSetByTag(self):
+        '''Test we can delete a result set.'''
+        rs = self._nb.addResultSet('second')
+        self._nb.deleteResultSet(LabNotebook.DEFAULT_RESULTSET)
+        self.assertEqual(len(self._nb), 1)
+        self.assertEqual(self._nb.currentTag(), 'second')
+        self.assertCountEqual(self._nb.resultSets(), ['second'])
+        self.assertEqual(self._nb.current(), rs)
+
+    def testDeleteResultSetByReference(self):
+        '''Test we can delete a result set by reference.'''
+        rs = self._nb.addResultSet('second')
+        self._nb.addResultSet('third')
+        self._nb.deleteResultSet(rs)
+        self.assertEqual(len(self._nb), 2)
+        self.assertEqual(self._nb.currentTag(), 'third')
+        self.assertCountEqual(self._nb.resultSets(), [LabNotebook.DEFAULT_RESULTSET, 'third'])
+
+    def testDeleteCurrent(self):
+        '''Test we can't delete the current result set.''' 
+        rs = self._nb.addResultSet('second')
+        with self.assertRaises(Exception):
+            self._nb.deleteResultSet(rs)
+        
 # TODO: Test we can add metadata
 
 if __name__ == '__main__':
