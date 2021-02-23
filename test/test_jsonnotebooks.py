@@ -17,7 +17,6 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-
 from epyc import *
 
 import unittest
@@ -304,6 +303,36 @@ class JSONLabNotebookTests(unittest.TestCase):
             self.assertEqual(rs.numberOfResults(), 2)
             rcs = nb1.resultsFor(rc4[Experiment.PARAMETERS])
             self.assertEqual(len(rcs), 1)
+
+    def testDeleteResultSet(self):
+        '''Test a deleted result set is deleted when persisted.'''
+        nb = JSONLabNotebook(self._fn, create=True)
+
+        # create additional result sets and save them
+        nb.addResultSet('second')
+        params = dict()
+        params['b'] =  1
+        e = SampleExperiment()
+        rc = e.set(params).run()
+        nb.addResult(rc)
+        nb.addResultSet('third')
+        params = dict()
+        params['b'] =  5
+        e = SampleExperiment()
+        rc = e.set(params).run()
+        nb.addResult(rc)
+        nb.commit()
+
+        # delete the result set and re-save
+        nb1 = JSONLabNotebook(self._fn)
+        nb1.deleteResultSet('second')
+        nb1.commit()
+
+        # make sure we only have the default result set
+        nb2 = JSONLabNotebook(self._fn)
+        self.assertEqual(len(nb2), 2)
+        self.assertEqual(nb2.currentTag(), 'third')
+        self.assertCountEqual(nb2.resultSets(), ['third', LabNotebook.DEFAULT_RESULTSET])
 
 if __name__ == '__main__':
     unittest.main()
