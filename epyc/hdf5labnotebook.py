@@ -210,7 +210,6 @@ class HDF5LabNotebook(LabNotebook):
         for tag in g.keys():
             if tag not in tags:
                 # result set with this tag has been deleted, remove the corresponding dataset
-                print(f'purge {tag}')
                 del g[tag]
                 
     def _write(self, tag : str):
