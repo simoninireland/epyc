@@ -65,10 +65,14 @@ They can also be deleted altogether.
 
 .. automethod:: LabNotebook.resultSets
 
+.. automethod:: LabNotebook.keys
+
 .. automethod:: LabNotebook.numberOfResultSets
 
 .. automethod:: LabNotebook.__len__
 
+.. automethod:: LabNotebook.__contains__
+		
 .. automethod:: LabNotebook.resultSetTag
 
 .. automethod:: LabNotebook.current
@@ -76,6 +80,9 @@ They can also be deleted altogether.
 .. automethod:: LabNotebook.currentTag
 
 .. automethod:: LabNotebook.select
+
+.. automethod:: LabNotebook.already
+		
 
 
 Result storage and access

@@ -349,6 +349,44 @@ class LabNotebookTests(unittest.TestCase):
         rs = self._nb.addResultSet('second')
         with self.assertRaises(Exception):
             self._nb.deleteResultSet(rs)
+
+    def testKeys(self):
+        '''Test we can extract the result set tags.'''
+        self.assertCountEqual(self._nb.keys(), [LabNotebook.DEFAULT_RESULTSET])
+        self._nb.addResultSet('second')
+        self._nb.addResultSet('third')
+        self.assertCountEqual(self._nb.keys(), [LabNotebook.DEFAULT_RESULTSET, 'second', 'third'])
+
+    def testContains(self):
+        '''Test we can check containment.'''
+        self._nb.addResultSet('second')
+        self.assertTrue('second' in self._nb)
+        self.assertTrue(LabNotebook.DEFAULT_RESULTSET in self._nb)
+        self.assertFalse('third' in self._nb)
+
+        self._nb.select(LabNotebook.DEFAULT_RESULTSET)
+        self._nb.deleteResultSet('second')
+        self.assertFalse('second' in self._nb)
+        self.assertTrue(LabNotebook.DEFAULT_RESULTSET in self._nb)
+
+    def testAlready(self):
+        '''Test we can test and select in one method call.'''
+        self.assertEqual(self._nb.currentTag(), LabNotebook.DEFAULT_RESULTSET)
+
+        # first call adds and selects the result set 
+        self.assertFalse(self._nb.already('second'))
+        self.assertEqual(self._nb.currentTag(), 'second')
+
+        # add a result to make sure it's maintained
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        self._nb.addResult(rc1)
+
+        # second call just selects it
+        self.assertTrue(self._nb.already('second'))
+        self.assertEqual(self._nb.currentTag(), 'second')
+        self.assertEqual(len(self._nb.current()), 1)
+
         
 # TODO: Test we can add metadata
 

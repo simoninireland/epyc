@@ -7,10 +7,12 @@ Computational experiments are increasingly happening within the Jupyter ecosyste
 of notebooks, labs, binders, and so on. ``epyc`` integrates well with Jupyter tools,
 and in this tutorial we'll show you how. 
 
-.. include :: jupyter.rst
+.. include:: jupyter.rst
 
-.. include :: disconnected.rst
+.. include:: disconnected.rst
 
-.. include :: here-and-there.rst
+.. include:: avoid-repeated.rst
+
+.. include:: here-and-there.rst
 
 
