@@ -223,19 +223,20 @@ class LabNotebook:
         self._current = self._resultSets[tag] 
         return self._current
 
-    def already(self, tag : str) -> bool:
+    def already(self, tag : str, description : str =None) -> bool:
         '''Check whether a result set exists. If it does, select it
         and return True; if it doesn't, add it and return False.
         This is a single-call combination of :meth:`contains` and
         :meth:`select` that's useful for avoiding repeated computation.
 
         :param tag: the result set tag
+        :param description: (optional) desceription if a result set is created
         :returns: True if the set existed'''
         if tag in self:
             self.select(tag)
             return True
         else:
-            self.addResultSet(tag)
+            self.addResultSet(tag, description=description)
             return False
             
     def current(self) -> ResultSet:
