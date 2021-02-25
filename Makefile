@@ -1,6 +1,6 @@
 # Makefile for epyc
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2021 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -38,7 +38,8 @@ SOURCES_CODE = \
 	epyc/clusterlab.py \
 	epyc/labnotebook.py \
 	epyc/jsonlabnotebook.py \
-	epyc/hdf5labnotebook.py
+	epyc/hdf5labnotebook.py \
+        epyc/scripts/epyc.py
 SOURCES_TESTS = \
 	test/__init__.py \
 	test/test_experiments.py \
@@ -64,21 +65,21 @@ SOURCES_DOCUMENTATION = \
 	doc/lifecycle.rst \
 	doc/glossary.rst \
 	doc/tutorial.rst \
-    doc/tutorial/concepts.rst \
-    doc/tutorial/first.rst \
-    doc/tutorial/simple-experiment.rst \
-    doc/tutorial/defining.rst \
-    doc/tutorial/testing.rst \
-    doc/tutorial/lab.rst \
-    doc/tutorial/parameters.rst \
-    doc/tutorial/running.rst \
-    doc/tutorial/results.rst \
-    doc/tutorial/pointcloud.png\
-    doc/tutorial/second.rst \
-    doc/tutorial/parallel-concepts.rst \
-    doc/tutorial/unicore-parallel.rst \
-    doc/tutorial/multicore-parallel.rst \
-    doc/tutorial/sharedfs-parallel.rst \
+        doc/tutorial/concepts.rst \
+        doc/tutorial/first.rst \
+        doc/tutorial/simple-experiment.rst \
+        doc/tutorial/defining.rst \
+        doc/tutorial/testing.rst \
+        doc/tutorial/lab.rst \
+        doc/tutorial/parameters.rst \
+        doc/tutorial/running.rst \
+        doc/tutorial/results.rst \
+        doc/tutorial/pointcloud.png\
+        doc/tutorial/second.rst \
+        doc/tutorial/parallel-concepts.rst \
+        doc/tutorial/unicore-parallel.rst \
+        doc/tutorial/multicore-parallel.rst \
+        doc/tutorial/sharedfs-parallel.rst \
 	doc/tutorial/cluster.rst \
 	doc/tutorial/cluster-problems.rst \
 	doc/tutorial/third.rst \
@@ -89,6 +90,7 @@ SOURCES_DOCUMENTATION = \
 	doc/tutorial/fourth.rst \
 	doc/tutorial/jupyter.rst \
 	doc/tutorial/disconnected.rst \
+	doc/tutorial/avoid-repeated.rst \
 	doc/tutorial/here-and-there.rst \
 	doc/cookbook.rst \
 	doc/cookbook/epyc-venv.rst \
@@ -108,8 +110,8 @@ SOURCES_DOCUMENTATION = \
 
 # Extras for building diagrams etc
 SOURCES_UTILS = \
-    utils/make-pointcloud.py \
-	utils/make-hdf5-url-test.py
+        utils/make-pointcloud.py \
+        utils/make-hdf5-url-test.py
 
 # Extras for the build and packaging system
 SOURCES_EXTRA = \
@@ -288,6 +290,7 @@ Available targets:
    make sdist        create a source distribution
    make wheel	     create binary (wheel) distribution
    make upload       upload distribution to PyPi
+   make commit       tag current version and push to master repo 
    make clean        clean-up the build
    make reallyclean  clean up the virtualenv as well
 
