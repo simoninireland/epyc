@@ -1,0 +1,64 @@
+* This release
+
+** Coding
+
+*** TODO Command-line interface to lab notebooks
+
+Allow notebooks to be manipulated from the command line. Specifically
+this is to copy and delete result sets from notebooks to tidy them up
+for release.
+
+Also need to be able to :
+
+- Manipulate attributes of result sets
+- Add [[*Notes for result sets][notes for result sets]] for later annotation
+
+*** DONE Select or create
+
+Add a select-or-create method to LabNotebook that can be used as a
+guard for either loading or executing a block of code, to let
+experiments only run when needed.
+
+*** TODO Notes for result sets
+
+Add notes alongside results, as well as the description field.
+
+*** TODO Tidier handling of HDF5 (and other) files
+
+Not creating files without good reason; handling missing file by
+failing rather than creating.
+
+
+** Bugs
+
+*** TODO Empty array typing
+
+In HDF5, adding an empty array first into a field means that the
+result set doesn't get typed properly, as there's no element type
+known.
+
+
+** Documentation
+
+*** DONE Jupyter conditional use case
+
+Document using LabNotebook.already() for load-or-execute cells.
+
+
+* Ideas
+
+** Coding
+
+*** Experimental designs
+
+Add a method for describing experimental designs. These would
+essentially structure the parameter space of an experiment in a Lab to
+(for example) only execute a select number of possibilities, rather
+than doing the whole cross product blindly.
+
+Might help with load balancing too.
+
+*** Container-based engines
+
+Support running experiments in the cloud by containerising the
+engines.
