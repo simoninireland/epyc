@@ -1,4 +1,4 @@
-# Container script for manipulating notebooks from the command line 
+# Container script for manipulating notebooks from the command line
 #
 # Copyright (C) 2021 Simon Dobson
 #
@@ -23,7 +23,8 @@ import re
 import click
 import epyc
 
-notebook_resultset_rename_re = re.compile('^([\w/\.-]*):([\w/\.-]+)(=([\w/\.-]+))?$')
+notebook_resultset_re = re.compile('^([\w/\.-]+)?:([\w/\.-]+)$')
+notebook_resultset_rename_re = re.compile('^([\w/\.-]+)?:([\w/\.-]+)(=([\w/\.-]+))?$')
 
 @click.group()
 def cli():
@@ -39,28 +40,36 @@ def show(notebook, long):
     The long form displays a human-readable summary of the result sets and their
     descriptions. The short form simply lists the result sets, one per line,
     in a form suitable for feeding to other commands. The default is the long form.'''
-    
+
     # open the notebook
     try:
         nb = epyc.HDF5LabNotebook(name=notebook, create=False)
     except Exception as e:
         print(f"Can't open {notebook}: {e}", file=sys.stderr)
         sys.exit(1)
-       
+
     # display the notebook's structure, in long or short form
     if long:
         # long form, print metadata about notebook
-        click.echo('{desc}{locked}'.format(desc=nb.description(),
-                                           locked=click.style(' (locked)', fg='red') if nb.isLocked() else ''))
-        print()
-    
+        desc=nb.description()
+        click.echo(f'{desc}' +
+                   (click.style(' (locked)', fg='red') if nb.isLocked() else ''))
+        click.echo()
+
         # iterate the result sets
         click.echo('Result sets:')
-        tags = nb.resultSets()
-        for tag in tags:
+        for tag in nb.resultSets():
+            # show result set global summary
             rs = nb.resultSet(tag)
+            n = len(rs)
             desc = rs.description()
-            click.echo(click.style(f'   {tag}', fg='red') + f': {desc}')
+            click.echo(click.style(f'  {tag}', fg='green') + f' [{n}]: {desc}' +
+                       (click.style(' (locked)', fg='red') if nb.isLocked() else ''))
+
+            # show any attributes
+            for key in rs.keys():
+                value = rs[key]
+                click.echo(click.style(f'    {key}', fg='green') + f': {value}')
     else:
         # short form, just print result set tags
         print('\n'.join(nb.resultSets()))
@@ -74,55 +83,68 @@ def copy(rss, dest, verbose, pretend):
     '''Copy one or more result sets to the destination notebook.
 
     Result sets are specified as a triple [NOTEBOOK]:TAG[=NEWTAG] where NOTEBOOK
-    is the name of a notebook, TAG is a result set tag within NOITEBOOK, and
+    is the name of a notebook, TAG is a result set tag within NOTEBOOK, and
     NEWTAG is a tag for the result set when it's copied to the destination (to
     avoid name clashes). If NOTEBOOK is omitted then the same notebook as the previous
-    result set is used. if NEWTAG is omittedd then TAG is used for the destination
+    result set is used. If NEWTAG is omitted then TAG is used for the destination
     result set as well'''
 
     # check we have result sets to copy
     if len(rss) == 0:
         print('No result sets to copy')
         exit(0)
-    
+
+    # iterate through all result set specifiers
+    copies = []
+    fn = None
+    tag = None
+    newtag = None
+    for spec in rss:
+        # extract the parts from the specifier
+        m = notebook_resultset_rename_re.match(spec)
+        if m is None:
+            print(f"Invalid result set specifier '{spec}'", file=sys.stderr)
+            exit(1)
+        if m[1] == '':
+            # no notebook, can we use the previous one?
+            if fn is None:
+                # no notebook default
+                print(f"No notebook for result set specifier '{spec}'", file=sys.stderr)
+                exit(1)
+        else:
+            # notebook replaces the current one
+            fn = m[1]
+            tag = m[2]
+        if m[4] is None:
+            # no rename, use the same tag
+            newtag = tag
+        else:
+            # result set will be renamed when copied
+            newtag = m[4]
+
+        # save the decomposed specifier
+        copies.extend([(fn, tag, newtag)])
+
+    # open the destination
     with epyc.HDF5LabNotebook(name=dest).open() as nb:
         # check that destination is not locked
         if nb.isLocked():
             print(f'Destination notebook {dest} is locked')
             sys.exit(1)
 
-        # iterate through all result set specifiers
-        fn = None
-        tag = None
-        newtag = None
+        # traverse the copy specifiers
+        ofn = None
         nb1 = None
-        for spec in rss:
-            # extract the parts from the specifier
-            m = notebook_resultset_rename_re.match(spec)
-            if m is None:
-                print(f"Invalid result set specifier '{spec}'", file=sys.stderr)
-                exit(1)
-            if m[1] == '':
-                # no notebook, can we use the previous one?
-                if fn is None:
-                    # no notebook default
-                    print(f"No notebook for result set specifier '{spec}'", file=sys.stderr)
-                    exit(1)
-            else:
-                # notebook replaces the current one
-                nb1 = None
-                fn = m[1]
-                tag = m[2]
-            if m[4] is None:
-                # no rename, use the same tag
-                newtag = tag
-            else:
-                # result set will be renamed when copied
-                newtag = m[4]
+        for (fn, tag, newtag) in copies:
+            # change notebooks if needed
+            if ofn != fn:
+                if nb1 is not None:
+                    # commit the previous notebook
+                    nb1.commit()
 
-            # load the notebook if it's not already loaded 
-            if nb1 is None:
+                # load the notebook if it's not already loaded
                 nb1 = epyc.HDF5LabNotebook(fn)
+            ofn = fn
 
             # sanity check the result sets
             if tag not in nb1.resultSets():
@@ -131,21 +153,85 @@ def copy(rss, dest, verbose, pretend):
             if newtag in nb.resultSets():
                 print(f"Result set '{tag}' already exists in {dest}", file=sys.stderr)
                 sys.exit(1)
-            
-            # copy the result set
+
+            if verbose > 0:
+                click.echo('copy ' +
+                           click.style(f'{fn}:{tag}', fg='green') +
+                           ' -> ' +
+                           click.style(f'{dest}:{newtag}', fg='green'))
             if not pretend:
-                if verbose == 1:
-                    click.echo(click.style('#', fg='green'), end='')
+                # copy the result set
                 rs1 = nb1.resultSet(tag)
                 rs = nb.addResultSet(newtag)
                 for rc in rs1.results():
-                    if verbose == 1:
-                        click.echo(click.style('.', fg='blue'), end='')
                     rs.addResult(rc)
-                if verbose == 1:
-                    click.echo('')
 
-            
+@cli.command()
+@click.argument('rss', nargs=-1)
+@click.option('-v', '--verbose', count=True, help='Generate verbose output (repeat for extra verbosity)')
+@click.option('-n', '--pretend', is_flag=True, help="Check validity but don't copy anything")
+def remove(rss, verbose, pretend):
+    '''Remove one or more result sets from notebook(s).
+
+    Result sets are specified as a triple [NOTEBOOK]:TAG where
+    NOTEBOOK is the name of a notebook andTAG is a result set tag
+    within NOTEBOOK. If NOTEBOOK is omitted then the same notebook as
+    the previous result set is used.'''
+
+    # iterate through all result set specifiers
+    copies = []
+    fn = None
+    tag = None
+    for spec in rss:
+        # extract the parts from the specifier
+        m = notebook_resultset_re.match(spec)
+        if m is None:
+            print(f"Invalid result set specifier '{spec}'", file=sys.stderr)
+            exit(1)
+        if m[1] == '':
+            # no notebook, can we use the previous one?
+            if fn is None:
+                # no notebook default
+                print(f"No notebook for result set specifier '{spec}'", file=sys.stderr)
+                exit(1)
+        else:
+            # notebook replaces the current one
+            fn = m[1]
+            tag = m[2]
+        copies.extend([(fn, tag)])
+
+    # traverse the removal specifiers
+    ofn = None
+    nb1 = None
+    for (fn, tag) in copies:
+        # change notebooks if needed
+        if ofn != fn:
+            if nb1 is not None:
+                # commit the previous notebook
+                nb1.commit()
+
+            # load the notebook if it's not already loaded
+            nb1 = epyc.HDF5LabNotebook(fn)
+        ofn = fn
+
+        # sanity check the result sets
+        if tag not in nb1.resultSets():
+            print(f"No result set '{tag}' in {fn}", file=sys.stderr)
+            sys.exit(1)
+
+        if verbose > 0:
+            click.echo('remove ' +
+                       click.style(f'{fn}:{tag}', fg='green'))
+        if not pretend:
+            nb1.deleteResultSet(tag)
+
+@cli.command()
+@click.argument('rss', nargs=-1)
+def finish(rss):
+    '''Mark one or more result sets from a notebook(s) as "finished".
+
+    Finished result sets can't accept any more results, and have their pending results purged.'''
+
+
 if __name__ == '__main__':
     cli()
-    
