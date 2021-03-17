@@ -1,3 +1,11 @@
+Version 1.4.1
+
+   - Added results sets as keys in LabNotenook
+   - Added add-or-select method to LabNotebook
+   - Described Jupyter design pattern to avoid repeated computation of result sets
+   - Added better badges to README.rst
+   - Changed to Github workflows for CI
+
 Version 1.3.2 2021-02-19
 
    - Fixed adding lists as results in HDF5 notebooks
@@ -27,7 +35,7 @@ Version 1.1.1 2020-11-27
      held open for a long time seem a lot more prone to failure
    - Slight change to the semantics of lambda-expressions in Python3.8 broke
      ClusterLab
-   - Dropped support for dill, replaced with automatic use of cloudpickle 
+   - Dropped support for dill, replaced with automatic use of cloudpickle
    - Fixed issue with handling RepeatedExperiments
    - Reverted to LabNotebook.addResult() for all additions (splitting between
      addResult() and addResults() caused confusion)
@@ -53,21 +61,21 @@ Version 1.0.1 2020-11-16
    - Changed default behaviour of Experiment.do() to nothing rather than
      raising an exception, as it makes sub-classing easier to describe
    - Replaced explicit Fisher-Yates shuffle of parameter space with
-     numpy.random.shuffle() 
+     numpy.random.shuffle()
    - Moved management of pending results into ResultSet
    - Removed ability to add a result with a job id in LabNotebook.addResult(),
      replaced with LabNotebook.resolvePendingResult()
    - Removed "Managing clusters" from the documentation
    - Added HDF5-based lab notebooks for larger datasets
    - Added storing the classname of an experiment in the metadata
-   - Added type annotations 
+   - Added type annotations
    - Changed some methods to return empty lists or dicts rather than None
    - Added tutorials on large datasets and Jupyter integration
    - Added new format for JSON storage that handles result sets (while maintaining
      the ability to read the old, flat format)
    - Log information messages to sys.stderr rather than standard output
    - Changed recording of timing information to capture as much as possible
-     even if there's an exception in an experiment 
+     even if there's an exception in an experiment
    - Added ``with`` block (context manager) support to notebooks to manage
       committing results (even in the face of exceptions)
 
@@ -101,7 +109,7 @@ Version 0.13.3 2018-03-27
    - Updated some docstrings that were misleading
    - Tightened-up type checking for variable results argument
    - Re-introduced the use of Dill by default
-   
+
 Version 0.13.2 2018-03-23
 
    - Fixed a bug in adding repeated experiments to notebooks
@@ -117,17 +125,17 @@ Version 0.13.1 2018-03-22
    - Added more summary information to summary experiments
    - Removed the default use of dill in ClusterLab
    - ADded documentation for ExperimentCombinator
-   
+
 Version 0.12.1 2018-03-09
 
    - Chunked downloading of pending results from clusters to work around
-     some undocumented limits in some database backends 
+     some undocumented limits in some database backends
    - Added slightly improved error handling in summary experiments
 
 Version 0.11.2 2018-03-06
 
    - Maintenance release changing the build system slightly to allow for
-     auto-generation of documentation on readthedocs.io 
+     auto-generation of documentation on readthedocs.io
 
 Version 0.11.1 2018-03-05
 
@@ -142,16 +150,16 @@ Version 0.10.1 2016-06-23
 
 Version 0.9.1 2016-12-02
 
-   - Changed scale of timing metadata from milliseconds to seconds 
+   - Changed scale of timing metadata from milliseconds to seconds
    - Replaced generated doc/conf.py with a static file
    - Added creation of HTML doc ZIP file
-   
+
 Version 0.8.1 2016-11-01
 
    - Added cancellation of pending results to ClusterLab
    - Added Sphinx API documentation
    - Converted class and method docstrings to Sphinx
-   - Made labs treat string parameters as single values, not iterables 
+   - Made labs treat string parameters as single values, not iterables
 
 Version 0.7.1 2016-08-30
 
@@ -167,7 +175,7 @@ Version 0.7.1 2016-08-30
 Version 0.6.2 2016-08-23
 
    - Oops, forgot to fix one of the changed method names....
-   
+
 Version 0.6.1 2016-08-23
 
    - Refactored experiment combinators
@@ -198,7 +206,7 @@ Version 0.3.1 2016-07-29
 
    - Made parameter spaces of a single point work properly
    - Re-wrote Experiment to clean up the logic and allow better
-     repetition 
+     repetition
 
 Version 0.2.1 2016-07-28
 
@@ -212,4 +220,3 @@ Version 0.1.1 2016-07-15
    - Cluster labs
    - Test suite
    - Persistent notebooks to JSON; SQLite outlined but not working
-   
