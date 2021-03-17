@@ -2,16 +2,12 @@ epyc: Python computational experiment management
 ================================================
 
 .. image:: https://badge.fury.io/py/epyc.svg
-    :target: https://badge.fury.io/py/epyc
+    :target: https://pypi.org/project/epyc/
 
 .. image:: https://readthedocs.org/projects/epyc/badge/?version=latest
     :target: https://epyc.readthedocs.io/en/latest/index.html
 
-.. image:: https://api.travis-ci.com/simoninireland/epyc.svg?branch=master
-    :target: https://travis-ci.com/github/simoninireland/epyc
-
-.. image:: https://coveralls.io/repos/github/simoninireland/epyc/badge.svg?branch=master
-    :target: https://coveralls.io/github/simoninireland/epyc?branch=master
+.. image:: https://github.com/simoninireland/epyc/actions/workflows/ci.yaml/badge.svg
 
 
 Overview
@@ -36,7 +32,7 @@ single machine) or parallel (to use a multicore or cluster of
 machines); lab notebooks can be persistent to allow experiments to be
 fired-off and their results retrieved later -- handy if you use a
 laptop. Notebooks store all the data and metadata in a portable format
-to improve the reproducibility of computational experiments. 
+to improve the reproducibility of computational experiments.
 
 ``epyc`` also includes a small number of "experiment combinators" that
 separate the logic of a single experiment from the logic of performing
@@ -59,13 +55,13 @@ The master distribution of ``epyc`` is hosted on GitHub. To obtain a
 copy, just clone the repo:
 
 ::
-   
+
     git clone git@github.com:simoninireland/epyc.git
     cd epyc
     python setup.py install
 
 
-   
+
 Documentation
 -------------
 
@@ -80,4 +76,3 @@ Author and license
 Copyright (c) 2016-2020, Simon Dobson <simon.dobson@computer.org>
 
 Licensed under the `GNU General Public Licence v.2.0 <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`.
-
