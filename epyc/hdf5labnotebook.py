@@ -1,7 +1,7 @@
 # Simulation "lab notebook" for collecting results, HDF5 version
 #
 # Copyright (C) 2020--2021 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -101,7 +101,7 @@ class HDF5LabNotebook(LabNotebook):
         # check for file needing creation
         created = (not self._isRemote) and (create or not os.path.isfile(name))
         if created:
-            self._create(name)                
+            self._create(name)
 
         # perform the normal initialisation
         super().__init__(name, description)
@@ -164,10 +164,10 @@ class HDF5LabNotebook(LabNotebook):
 
 
     # ---------- Protocol for managing the HDF5 file----------
-    
+
     def _create(self, name : str):
         '''Create the HDF5 file to back this notebook.
-        
+
         :param name: the filename
         :param description: the free text description of this notebook'''
         self._file = h5py.File(name, 'w')
@@ -190,7 +190,7 @@ class HDF5LabNotebook(LabNotebook):
                 # open the file read-only
                 self._file = h5py.File(tf.name, 'r')   # can only be read
             else:
-                # open as a file 
+                # open as a file
                 self._file = h5py.File(self.name(), 'a')
 
     def _close(self):
@@ -211,7 +211,7 @@ class HDF5LabNotebook(LabNotebook):
             if tag not in tags:
                 # result set with this tag has been deleted, remove the corresponding dataset
                 del g[tag]
-                
+
     def _write(self, tag : str):
         '''Write the given result set to the file.
 
@@ -240,7 +240,7 @@ class HDF5LabNotebook(LabNotebook):
             g.attrs.create(k, self._asString(v), dtype=h5py.string_dtype())
 
         # write out the locked flag
-        g.attrs.create(self.LOCKED, rs.isLocked(), dtype=numpy.bool)
+        g.attrs.create(self.LOCKED, rs.isLocked(), dtype=bool)
 
         if rs.numberOfResults() > 0:
             # ---- PART 1: write structure ---
@@ -297,7 +297,7 @@ class HDF5LabNotebook(LabNotebook):
                         else:
                             # array of something
                             entry.append(numpy.array(res[k]))
-    
+
                 # write out the row
                 ds[i] = tuple(entry)
 
@@ -308,11 +308,11 @@ class HDF5LabNotebook(LabNotebook):
                 # table isn't needed any more, so delete it to keep things tidy
                 del g[self.PENDINGRESULTS_DATASET]
         else:
-            pdtype = rs.pendingdtype() 
+            pdtype = rs.pendingdtype()
             hdf5pdtype = self._HDF5dtype(pdtype)
 
             # create results dataset if there isn't one
-            if self.PENDINGRESULTS_DATASET not in g:        
+            if self.PENDINGRESULTS_DATASET not in g:
                 # construct the HDF5 type of the pending results
                 # create the pending results dataset
                 g.create_dataset(self.PENDINGRESULTS_DATASET, (self.DefaultDatasetSize,), maxshape=(None,), dtype=hdf5pdtype)
@@ -366,7 +366,7 @@ class HDF5LabNotebook(LabNotebook):
             else:
                 rs[k] = self._asString(g.attrs[k])
 
-        if self.RESULTS_DATASET in g:   
+        if self.RESULTS_DATASET in g:
             # ---- PART 1: read structure ---
 
             # get the HDF5 dataset associated with this result set
@@ -409,7 +409,7 @@ class HDF5LabNotebook(LabNotebook):
                         j += 1
                 self.addResult(rc, tag)
 
-        if self.PENDINGRESULTS_DATASET in g:   
+        if self.PENDINGRESULTS_DATASET in g:
             # ---- PART 3: read pending results ---
 
             # get the pending results dataset
@@ -440,7 +440,7 @@ class HDF5LabNotebook(LabNotebook):
                 # record the pending result
                 self.addPendingResult(params, jobid, tag)
 
-        # lock the result set if flagged 
+        # lock the result set if flagged
         if locked:
             rs.finish()
 
@@ -459,7 +459,7 @@ class HDF5LabNotebook(LabNotebook):
         # delete any datasets that aare no longer in the notebook,
         # i.e., those that have been deleted
         self._purge()
-        
+
         # write out the housekeeping information for the notebook
         meta = self._file.attrs
         meta[self.CREATOR] = PackageContactInfo
@@ -538,9 +538,9 @@ class HDF5LabNotebook(LabNotebook):
 
     def _asString(self, o : Any) -> str:
         '''Coerce the given value to a string. This is needed to handle
-        occasional (and Python-version-dependent) weirdness in the 
+        occasional (and Python-version-dependent) weirdness in the
         representation of strings as raw sequences when going to and from
-        HDF5. 
+        HDF5.
 
         :param o: the object
         :returns: the string'''
