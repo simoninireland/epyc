@@ -39,7 +39,7 @@ SOURCES_CODE = \
 	epyc/labnotebook.py \
 	epyc/jsonlabnotebook.py \
 	epyc/hdf5labnotebook.py \
-        epyc/scripts/epyc.py
+	epyc/scripts/epyc.py
 SOURCES_TESTS = \
 	test/__init__.py \
 	test/test_experiments.py \
@@ -65,21 +65,21 @@ SOURCES_DOCUMENTATION = \
 	doc/lifecycle.rst \
 	doc/glossary.rst \
 	doc/tutorial.rst \
-        doc/tutorial/concepts.rst \
-        doc/tutorial/first.rst \
-        doc/tutorial/simple-experiment.rst \
-        doc/tutorial/defining.rst \
-        doc/tutorial/testing.rst \
-        doc/tutorial/lab.rst \
-        doc/tutorial/parameters.rst \
-        doc/tutorial/running.rst \
-        doc/tutorial/results.rst \
-        doc/tutorial/pointcloud.png\
-        doc/tutorial/second.rst \
-        doc/tutorial/parallel-concepts.rst \
-        doc/tutorial/unicore-parallel.rst \
-        doc/tutorial/multicore-parallel.rst \
-        doc/tutorial/sharedfs-parallel.rst \
+	doc/tutorial/concepts.rst \
+	doc/tutorial/first.rst \
+	doc/tutorial/simple-experiment.rst \
+	doc/tutorial/defining.rst \
+	doc/tutorial/testing.rst \
+	doc/tutorial/lab.rst \
+	doc/tutorial/parameters.rst \
+	doc/tutorial/running.rst \
+	doc/tutorial/results.rst \
+	doc/tutorial/pointcloud.png\
+	doc/tutorial/second.rst \
+	doc/tutorial/parallel-concepts.rst \
+	doc/tutorial/unicore-parallel.rst \
+	doc/tutorial/multicore-parallel.rst \
+	doc/tutorial/sharedfs-parallel.rst \
 	doc/tutorial/cluster.rst \
 	doc/tutorial/cluster-problems.rst \
 	doc/tutorial/third.rst \
@@ -110,8 +110,8 @@ SOURCES_DOCUMENTATION = \
 
 # Extras for building diagrams etc
 SOURCES_UTILS = \
-        utils/make-pointcloud.py \
-        utils/make-hdf5-url-test.py
+	utils/make-pointcloud.py \
+	utils/make-hdf5-url-test.py
 
 # Extras for the build and packaging system
 SOURCES_EXTRA = \
@@ -135,7 +135,7 @@ CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/pid/ipcluster.pid
 # ----- Tools -----
 
 # Base commands
-PYTHON = python3
+PYTHON = python
 IPYTHON = ipython
 IPCLUSTER = ipcluster
 JUPYTER = jupyter
@@ -198,25 +198,26 @@ coverage: env Makefile setup.py
 
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env
-	$(ACTIVATE) && $(RUN_CREATE_PROFILE) 
+	$(ACTIVATE) && $(RUN_CREATE_PROFILE)
 	$(RM) $(CLUSTER_TOKEN_FILE)
 	$(ACTIVATE) && $(RUN_CLUSTER)
 
 # Just run the ClusterLab tests
 testclusterlab: env
-	PYTHONPATH=. $(PYTHON) test/test_clusterlabs.py
+	$(ACTIVATE) && PYTHONPATH=. $(PYTHON) test/test_clusterlabs.py
 
 # Build the API documentation using Sphinx
 .PHONY: doc
 doc: $(SOURCES_DOCUMENTATION) $(SOURCES_DOC_CONF)
 	$(ACTIVATE) && $(CHDIR) doc && $(RUN_SPHINX_HTML)
 
-# Build a development venv from the known-good requirements in the repo
+# Build a development venv
 .PHONY: env
 env: $(VENV)
 
 $(VENV):
 	$(VIRTUALENV) $(VENV)
+	$(ACTIVATE) && $(PIP) install -U pip wheel
 	$(CAT) $(REQUIREMENTS) $(DEV_REQUIREMENTS) >$(VENV)/requirements.txt
 	$(ACTIVATE) && $(PIP) install -U pip wheel && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt
 
@@ -250,7 +251,7 @@ diagrams:
 testdata:
 	$(ACTIVATE) && PYTHONPATH=$(ROOT) $(PYTHON) utils/make-hdf5-url-test.py
 
-# Clean up the distribution build 
+# Clean up the distribution build
 clean:
 	$(RM) $(SOURCES_GENERATED) epyc.egg-info dist $(SOURCES_DOC_BUILD_DIR) $(SOURCES_DOC_ZIP) dist build
 
@@ -290,7 +291,7 @@ Available targets:
    make sdist        create a source distribution
    make wheel	     create binary (wheel) distribution
    make upload       upload distribution to PyPi
-   make commit       tag current version and push to master repo 
+   make commit       tag current version and push to master repo
    make clean        clean-up the build
    make reallyclean  clean up the virtualenv as well
 
