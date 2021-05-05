@@ -1,64 +1,67 @@
-* This release
+#+title: epyc
 
-** Coding
+* epyc: Experiment management in Python                             :PROJECT:
 
-*** TODO Command-line interface to lab notebooks
+** This release
 
-Allow notebooks to be manipulated from the command line. Specifically
-this is to copy and delete result sets from notebooks to tidy them up
-for release.
+*** Coding
 
-Also need to be able to :
+**** TODO Command-line interface to lab notebooks
 
-- Manipulate attributes of result sets
-- Add [[*Notes for result sets][notes for result sets]] for later annotation
+ Allow notebooks to be manipulated from the command line. Specifically
+ this is to copy and delete result sets from notebooks to tidy them up
+ for release.
 
-*** DONE Select or create
+ Also need to be able to :
 
-Add a select-or-create method to LabNotebook that can be used as a
-guard for either loading or executing a block of code, to let
-experiments only run when needed.
+ - Manipulate attributes of result sets
+ - Add [[*Notes for result sets][notes for result sets]] for later annotation
 
-*** TODO Notes for result sets
+**** DONE Select or create
 
-Add notes alongside results, as well as the description field.
+ Add a select-or-create method to LabNotebook that can be used as a
+ guard for either loading or executing a block of code, to let
+ experiments only run when needed.
 
-*** TODO Tidier handling of HDF5 (and other) files
+**** TODO Notes for result sets
 
-Not creating files without good reason; handling missing file by
-failing rather than creating.
+ Add notes alongside results, as well as the description field.
 
+**** TODO Tidier handling of HDF5 (and other) files
 
-** Bugs
-
-*** TODO Empty array typing
-
-In HDF5, adding an empty array first into a field means that the
-result set doesn't get typed properly, as there's no element type
-known.
+ Not creating files without good reason; handling missing file by
+ failing rather than creating.
 
 
-** Documentation
+*** Bugs
 
-*** DONE Jupyter conditional use case
+**** TODO Empty array typing
 
-Document using LabNotebook.already() for load-or-execute cells.
+ In HDF5, adding an empty array first into a field means that the
+ result set doesn't get typed properly, as there's no element type
+ known.
 
 
-* Ideas
+*** Documentation
 
-** Coding
+**** DONE Jupyter conditional use case
+
+     Document using LabNotebook.already() for load-or-execute cells.
+
+
+** Ideas
+
 
 *** Experimental designs
 
-Add a method for describing experimental designs. These would
-essentially structure the parameter space of an experiment in a Lab to
-(for example) only execute a select number of possibilities, rather
-than doing the whole cross product blindly.
+    Add a method for describing experimental designs. These would
+    essentially structure the parameter space of an experiment in a
+    Lab to (for example) only execute a select number of
+    possibilities, rather than doing the whole cross product blindly.
 
-Might help with load balancing too.
+    Might help with load balancing too.
 
 *** Container-based engines
 
-Support running experiments in the cloud by containerising the
-engines.
+    Support running experiments in the cloud by containerising the
+    engines.
