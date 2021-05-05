@@ -55,6 +55,7 @@ $RECYCLE.BIN/
 
 # Emacs backups
 *~
+\#*\#
 
 # VS-Code
 .vscode
