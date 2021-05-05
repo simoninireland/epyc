@@ -1,7 +1,7 @@
 # Simulation "lab" experiment management, parallel cluster version
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -43,7 +43,7 @@ class ClusterLab(Lab):
     WaitingTime : int = 30           #: Waiting time for checking for job completion. Lower values increase network traffic.
     Reconnections : int = 5          #: Number of attempts when re-connecting to a cluster.
     Retries : int = 3                #: Number of re-tries for failed jobs.
-    
+
     def __init__( self, notebook : LabNotebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
         """Create an empty lab attached to the given cluster. Most of the arguments
         are as expected by the ``pyparallel.Client`` class, and are used to create the
@@ -64,7 +64,7 @@ class ClusterLab(Lab):
         :param timeout: timeout in seconds for ssh connection (defaults to 10s)
         :param cluster_id: string added to runtime files to prevent collisions"""
         super(ClusterLab, self).__init__(notebook)
-        
+
         # record all the connection arguments for later
         self._arguments = dict(url_file = url_file,
                                profile = profile,
@@ -135,7 +135,7 @@ class ClusterLab(Lab):
                     # go round the loop again, saving the exception in
                     # case we're the last try
                     exc = e
-            
+
             # OK, we've failed enough, stop punching the brick wall...
             raise exc
 
@@ -208,7 +208,7 @@ class ClusterLab(Lab):
         # only proceed if there's work to do
         if len(space) > 0:
             nb = self.notebook()
-           
+
             # randomise the order of the parameter space so that we evaluate across
             # the space as we go along to try to make intermediate (incomplete) result
             # sets more representative of the overall result set
@@ -224,21 +224,18 @@ class ClusterLab(Lab):
                 view.set_flags(retries=self.Retries)
 
                 # submit an experiment at each point in the parameter space to the cluster
-                jobs = []
-                for p in ps:
-                    rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (e, p))
-                    ids = rc.msg_ids
-                    #print('Started {ids}'.format(ids=ids))
-                    jobs.extend(ids)
+                try:
+                    for p in ps:
+                        rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (e, p))
+                        ids = rc.msg_ids
+                        #print('Started {ids}'.format(ids=ids))
+                        nb.addPendingResult(p, ids[0])
 
-                    # there seems to be a race condition in submitting jobs,
-                    # whereby jobs get dropped if they're submitted too quickly
-                    time.sleep(0.01)
-                
-                # record the mesage ids of all the jobs as submitted but not yet completed
-                psjs = zip(ps, jobs)
-                for (p, j) in psjs:
-                    nb.addPendingResult(p, j)
+                        # there seems to be a race condition in submitting jobs,
+                        # whereby jobs get dropped if they're submitted too quickly
+                        time.sleep(0.01)
+                except Exception as e:
+                    print(e, file=sys.stderr)
             finally:
                 # commit our pending results in the notebook
                 nb.commit()
@@ -266,7 +263,7 @@ class ClusterLab(Lab):
                         # query the status of a job
                         #print('Test status of {j}'.format(j=j))
                         status = self._client.result_status(j, status_only=False)
-                    
+
                         # add all completed jobs to the notebook
                         if j in status['completed']:
                             r = status[j]
@@ -277,9 +274,9 @@ class ClusterLab(Lab):
 
                             # record that we retrieved the results for the given job
                             n = n + 1
-                    
+
                             # purge the completed job from the cluster
-                            self._client.purge_hub_results(j)        
+                            self._client.purge_hub_results(j)
                     except Exception as e:
                         # report the exception and carry on, recording the job as crashed
                         print(e, file=sys.stderr)
@@ -289,7 +286,7 @@ class ClusterLab(Lab):
                 if purge and len(crashed) > 0:
                     for j in crashed:
                         nb.cancelPendingResult(j)
-                        self._client.purge_hub_results(j)    
+                        self._client.purge_hub_results(j)
             finally:
                 # commit changes to the notebook and close the connection
                 nb.commit()
@@ -299,7 +296,7 @@ class ClusterLab(Lab):
 
 
     # ---------- Accessing results ----------
-    
+
     def wait(self, timeout : int =-1) -> bool:
         """Wait for all pending results in all result sets to be finished. If timeout is set,
         return after this many seconds regardless.
@@ -343,7 +340,7 @@ class ClusterLab(Lab):
                             dt = timeout - timeWaited
                         else:
                             dt = self.WaitingTime
-                            
+
                     # sleep for a while
                     time.sleep(dt)
                     timeWaited = timeWaited + dt
@@ -355,5 +352,3 @@ class ClusterLab(Lab):
         else:
             # no results, so we got them all
             return True
-
-       
