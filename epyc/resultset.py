@@ -26,7 +26,7 @@ from datetime import datetime
 if sys.version_info >= (3, 8):
     from typing import Final, List, Dict, Set, Any, Type, Optional
 else:
-    # backwards compatibility with Python 35, Python36, and Python37 
+    # backwards compatibility with Python 35, Python36, and Python37
     from typing import List, Dict, Set, Any, Type, Optional
     from typing_extensions import Final
 
@@ -87,7 +87,7 @@ class ResultSet(object):
     the metadata, parameters, and results of experiments. For larger experiment
     sets the results are automatically typed using ``numpy``'s ``dtype`` system,
     which both provides more checking and works well with more archival storage
-    formats like HDF5 (see :class:`HDF5LabNotebook`).  
+    formats like HDF5 (see :class:`HDF5LabNotebook`).
 
     :param nb: notebook this result set is part of
     :param description: (optional) description for the result set (defaults to a datestamp)
@@ -118,7 +118,7 @@ class ResultSet(object):
         cls.TypeMapping[Exception] = numpy.dtype(str)
 
     def __init__(self, description : str =None):
-        # generate a description from today's date is none is provided 
+        # generate a description from today's date is none is provided
         if description is None:
             description = "Results collected on {d}".format(d=datetime.now())
 
@@ -138,7 +138,7 @@ class ResultSet(object):
 
 
     # ---------- Metadata access ----------
-    
+
     def description(self) -> str:
         '''Return the free text description of the result set.
 
@@ -196,7 +196,7 @@ class ResultSet(object):
 
     def finish(self):
         '''Finish and lock this result set. This cancels any pending results
-        and locks the result set against future additions. This is useful to tidy up 
+        and locks the result set against future additions. This is useful to tidy up
         after experiments are finished, and protects against accidentally re-using
         a result set for something else.'''
         if not self.isLocked():
@@ -270,7 +270,7 @@ class ResultSet(object):
         :param k: the attribute
         :returns: the attribute value'''
         return self.getAttribute(k)
-        
+
     def __contains__(self, k):
         '''True if there is an attribute with the given name.
 
@@ -365,7 +365,8 @@ class ResultSet(object):
         :returns: the dtype'''
         if isinstance(v, list):
             et = self.valueToDtype(v[0])
-            return numpy.dtype((et, (len(v),)))
+            print(str(len(v)) + '[] ' + str(v[0]) + ' -> ' + str(et))
+            return numpy.dtype((et, len(v)))
         else:
             return self.typeToDtype(type(v))
 
@@ -377,7 +378,8 @@ class ResultSet(object):
         If more elements are provided than have previously been seen, the underlying
         results dataframe will be extended with new columns.
 
-        This method will be called automatically if no explicit dtype has been provided 
+        This method will be called automatically if no explicit dtype has been provide
+d
         for the result set by a call to :meth:`setDtype`.
 
         :returns: the dtype'''
@@ -404,7 +406,7 @@ class ResultSet(object):
         # extract results if the experiment was successful
         if rc[Experiment.METADATA][Experiment.STATUS]:
             resultNames = list(rc[Experiment.RESULTS].keys())
-            rns = self._names[Experiment.RESULTS] 
+            rns = self._names[Experiment.RESULTS]
             if rns is None:
                 # first set, capture
                 resultNames.sort()
@@ -438,7 +440,7 @@ class ResultSet(object):
                 metadataNames.sort()
                 self._names[Experiment.METADATA] = metadataNames
                 rebuild = True
-        
+
         # (re-)construct the dtype if needed
         if rebuild:
             if self._dtype is None:
@@ -796,7 +798,7 @@ class ResultSet(object):
             # grab a traceback
             tb = traceback.format_exc()
 
-            # fill in the limited metadata we have 
+            # fill in the limited metadata we have
             rc[Experiment.METADATA][Experiment.STATUS] = False
             rc[Experiment.METADATA][Experiment.END_TIME] = datetime.now()
             rc[Experiment.METADATA][Experiment.EXCEPTION] = ex
@@ -817,7 +819,7 @@ class ResultSet(object):
         row = df.loc[id]
         for k in self._names[Experiment.PARAMETERS]:
             rc[Experiment.PARAMETERS][k] = row[k]
-        
+
         # add the result to the results table
         self.addSingleResult(rc)
 
@@ -957,7 +959,7 @@ class ResultSet(object):
         interface -- which is also a lot less efficient and more memory-hungry. The
         parameters are interpreted as for :meth:`dataframeFor`, with lists or other
         iterators being converted into disjunctions of values.
-        
+
         :param params: the parameters
         :returns: a list of results dicts'''
         return self._dataframeToDict(self.dataframeFor(params))
@@ -1014,4 +1016,3 @@ class ResultSet(object):
 
         :returns: a list of dicts'''
         raise NotImplementedError('TBD')
-
