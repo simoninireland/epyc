@@ -30,9 +30,9 @@ else:
 
 class ResultsStructureException(Exception):
     '''An exception raised when there is a problem with the structure of a
-    results dict. 
+    results dict.
 
-    :param rc: the results dict structure that causes the problem''' 
+    :param rc: the results dict structure that causes the problem'''
 
     def __init__(self, rc : Union[ResultsDict, List[ResultsDict]]):
         super().__init__("Can't handle results dict {rc}".format(rc=rc))
@@ -56,13 +56,13 @@ class NotebookVersionException(Exception):
         super().__init__('Expected notebook version {v1}, got {v2}'.format(v1=expected, v2=actual))
         self._expected = expected
         self._actual = actual
-    
+
     def expectedVersion(self) -> str:
         '''Return the expected version of the file.
 
         :returns: the expected version'''
         return self._expected
-    
+
     def actualVersion(self) -> str:
         '''Return the actual version of the file.
 
@@ -98,13 +98,13 @@ class LabNotebook:
     :param description: (optional) a free text description
 
     '''
- 
+
     # Defaults
     DEFAULT_RESULTSET : Final[str] = 'epyc.resultset.default'  #: Tag for the default result set.
 
     def __init__(self, name : str ='', description : str =None):
         if description is None:
-            description = 'A notebook' 
+            description = 'A notebook'
         self._name : Optional[str] = name                    # name
         self._description : str = description                # description
         self._resultSets : Dict[str, ResultSet] = dict()     # tag to result set
@@ -193,7 +193,7 @@ class LabNotebook:
             raise Exception("Can't delete current result set ({tag})".format(tag=tag))
         del self._resultSets[tag]
         del self._resultSetTags[rss]
-            
+
     def resultSets(self) -> List[str]:
         '''Return the tags for all the result sets in this notebook.
 
@@ -212,7 +212,7 @@ class LabNotebook:
 
         :param rs: the result set
         :returns: the tag'''
-        return self._resultSetTags[rs] 
+        return self._resultSetTags[rs]
 
     def select(self, tag: str) -> ResultSet:
         '''Select the given result set as current. Sub-classes may use this
@@ -220,7 +220,7 @@ class LabNotebook:
 
         :param tag: the tag
         :returns: the result set'''
-        self._current = self._resultSets[tag] 
+        self._current = self._resultSets[tag]
         return self._current
 
     def already(self, tag : str, description : str =None) -> bool:
@@ -230,7 +230,7 @@ class LabNotebook:
         :meth:`select` that's useful for avoiding repeated computation.
 
         :param tag: the result set tag
-        :param description: (optional) desceription if a result set is created
+        :param description: (optional) description if a result set is created
         :returns: True if the set existed'''
         if tag in self:
             self.select(tag)
@@ -238,7 +238,7 @@ class LabNotebook:
         else:
             self.addResultSet(tag, description=description)
             return False
-            
+
     def current(self) -> ResultSet:
         '''Return the current result set.
 
@@ -284,12 +284,12 @@ class LabNotebook:
     def finish(self, commit=True):
         '''Mark the entire notebook as finished, closing and locking all result sets
         against further changes. Finishing a persistent notebook commits it.
-        
+
         By default the finished notebook is committed as such. In certain cases
         it may be desirable to finish the notebook but not commit it, *i.e.*, to
         stop updates in memory without changing the backing file. Setting ``commit=False``
         will accomplish this.
-        
+
         :param commit: (optional) commit the notebook (defaults to True)'''
         if not self.isLocked():
             for tag in self.resultSets():
@@ -360,7 +360,7 @@ class LabNotebook:
         rs.resolveSinglePendingResult(jobid)
 
         # mark the job as resolved with the notebook
-        del self._pending[jobid] 
+        del self._pending[jobid]
 
     def cancelPendingResult(self, jobid : str):
         '''Cancel the given pending result.
@@ -379,10 +379,10 @@ class LabNotebook:
         rs.cancelSinglePendingResult(jobid)
 
         # mark the job as resolved with the notebook
-        del self._pending[jobid] 
-            
+        del self._pending[jobid]
+
     def ready(self, tag : str =None) -> bool:
-        '''Test whether the result set has pending results. 
+        '''Test whether the result set has pending results.
 
         :params tag: (optional) the result set tag (defaults to the current set)
         :returns: True if all pending results have been resolved (or cancelled)'''
@@ -394,7 +394,7 @@ class LabNotebook:
 
     def readyFraction(self, tag : str =None) -> float:
         """Test what fraction of results are available in the tagged result set.
-        
+
         :params tag: (optional) the result set tag (defaults to the current set)
         :returns: the fraction of available results"""
         if tag is None:
@@ -412,7 +412,7 @@ class LabNotebook:
 
     def pendingResults(self, tag : str =None) -> List[str]:
         '''Return the identifiers of the results pending in the tagged dataset.
-        
+
         :params tag: (optional) the result set tag (defaults to the current set)
         :returns: a set of job identifiers'''
         if tag is None:
@@ -423,7 +423,7 @@ class LabNotebook:
 
     def numberOfPendingResults(self, tag : str =None) -> int:
         '''Return the number of results pending in the tagged dataset.
-        
+
         :params tag: (optional) the result set tag (defaults to the current set)
         :returns: the number of results'''
         if tag is None:
@@ -453,7 +453,7 @@ class LabNotebook:
         '''Return the number of results pending in all result sets.
 
         :returns: the total number of pending results'''
-        return len(self._pending) 
+        return len(self._pending)
 
 
     # --------- Managing results ----------
@@ -483,7 +483,7 @@ class LabNotebook:
         One may also add a list of results dicts, in which case they will
         be added individually.
 
-        Any structure of results dicts that can't be handled will raise a 
+        Any structure of results dicts that can't be handled will raise a
         :class:`ResultsStructureException`.
 
         :param result: a results dict or collection of them
@@ -507,17 +507,17 @@ class LabNotebook:
 
         else:
             raise ResultsStructureException(results)
-    
+
     def dataframe(self, tag : str =None, only_successful : bool =True) -> DataFrame:
         """Return results as a ``pandas.DataFrame``. If no tag is provided,
-        use the current result set. 
+        use the current result set.
 
         If the only_successful flag is set (the default), then the DataFrame will
         only include results that completed without an exception; if it is set to
         False, the DataFrame will include all results and also the exception details.
 
         If you are only interested in results corresponding to some sets of parameters
-        you can pre-filter the dataframe using :meth:`dataframeFor`. 
+        you can pre-filter the dataframe using :meth:`dataframeFor`.
 
         :params tag: (optional) the tag of the result set (defaults to the currently select result set)
         :param only_successful: include only successful experiments (defaults to True)
@@ -531,7 +531,7 @@ class LabNotebook:
 
     def dataframeFor(self, params : Dict[str, Any], tag : str =None, only_successful : bool =True) -> DataFrame:
         """Return results for the goven parameter values as a ``pandas.DataFrame``.
-        If no tag is provided, the current result set is queried. 
+        If no tag is provided, the current result set is queried.
         If the only_successful flag is set (the default), then the DataFrame will
         only include results that completed without an exception; if it is set to
         False, the DataFrame will include all results and also the exception details.
@@ -581,7 +581,7 @@ class LabNotebook:
 
     def numberOfResults(self, tag : str =None) -> int:
         '''Return the number of results in the tagged dataset.
-        
+
         :params tag: (optional) the result set tag (defaults to the current set)
         :returns: the number of results'''
         if tag is None:
@@ -604,5 +604,3 @@ class LabNotebook:
         finally:
             # commit any changes and close the file
             self.commit()
-
-

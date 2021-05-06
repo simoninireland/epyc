@@ -30,7 +30,7 @@ re-do) the calculations:
    # execute this cell if you want to compute the results
    nb = epyc.HDF5LabNotebook('lots-of-results.h5')
    nb.addResultSet('first-results',
-                   description='My long-running first computation')
+		   description='My long-running first computation')
    e = LongComputation()
    lab = Lab(nb)
    lab[LongComputation.INITIAL] = int(1e6)
@@ -48,7 +48,7 @@ Of course this is quite awkward, relies on the notebook user to decide
 which cells to execute -- and means that you can't simply run all the
 cells to get back to where you started.
 
-``epyc`` solves this problem with the @meth:`LabNotebook.already`
+``epyc`` solves this problem with the :meth:`LabNotebook.already`
 method. This checks whether a given result set exists. If it does, it
 is selected and the method returns True; if it doesn't then it's added
 (and therefore implicitly selected) and the method returns False. We
@@ -58,7 +58,7 @@ can then use a much more attractive coding pattern:
 
    nb = epyc.HDF5LabNotebook('lots-of-results.h5')
    if not nb.already('first-results',
-                     description='My long-running first computation'):
+		     description='My long-running first computation'):
        e = LongComputation()
        lab = Lab(nb)
        lab[LongComputation.INITIAL] = int(1e6)
@@ -84,5 +84,3 @@ There are a couple of limitations to be aware of, of course:
 The latter can be addressed by locking the result set after the
 computation has happened (by calling :meth:`ResultSet.finish`) to fix
 the results.
-
-	 
