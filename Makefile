@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.3.2
+VERSION = 1.4.1
 
 
 # ----- Sources -----
@@ -135,7 +135,7 @@ CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/pid/ipcluster.pid
 # ----- Tools -----
 
 # Base commands
-PYTHON = python
+PYTHON = python3
 IPYTHON = ipython
 IPCLUSTER = ipcluster
 JUPYTER = jupyter
@@ -217,7 +217,6 @@ env: $(VENV)
 
 $(VENV):
 	$(VIRTUALENV) $(VENV)
-	$(ACTIVATE) && $(PIP) install -U pip wheel
 	$(CAT) $(REQUIREMENTS) $(DEV_REQUIREMENTS) >$(VENV)/requirements.txt
 	$(ACTIVATE) && $(PIP) install -U pip wheel && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt
 
