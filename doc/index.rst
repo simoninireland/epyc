@@ -43,7 +43,7 @@ Current features
 
 * Experiments can run locally, remotely, and in parallel
 
-* Works with Python 3.6 and later, and with PyPy3
+* Works with Python 3.6 and later, and (to a limited extent) with PyPy3
 
 * Remote simulation jobs run asynchronously
 
@@ -63,5 +63,3 @@ Current features
    reference
    cookbook
    glossary
-
-
