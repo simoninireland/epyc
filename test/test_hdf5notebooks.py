@@ -1,7 +1,7 @@
 # Tests of HDF5 notebooks
 #
 # Copyright (C) 2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -28,24 +28,24 @@ testFileURL = 'https://raw.githubusercontent.com/simoninireland/epyc/dev/test/te
 
 class SampleExperiment(Experiment):
     '''A very simple experiment that adds up its parameters.'''
-    
+
     def do( self, param ):
         return dict(total=param['k'] + 10)
 
 class SampleExperiment1(Experiment):
     '''An experiment that fails.'''
-    
+
     def do( self, param ):
         raise Exception('A (deliberate) failure')
 
 class SampleExperiment2(Experiment):
     '''An experiment whose results contain a list.'''
-    
+
     def do( self, param ):
         k = param['k']
         return dict(list=[k] * k)
 
-  
+
 class HDF5LabNotebookTests(unittest.TestCase):
 
     def setUp( self ):
@@ -62,7 +62,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
             #pass
         except OSError:
             pass
-        
+
     def testCreate( self ):
         '''Test creation of empty notebook (which will create a backing file too)'''
         nb = HDF5LabNotebook(self._fn)
@@ -391,7 +391,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb.commit()
         nb = HDF5LabNotebook(self._fn)
         self.assertEqual(nb.currentTag(), LabNotebook.DEFAULT_RESULTSET)
-       
+
     def testInferList(self):
         '''Test we can add results that contain lists.'''
         nb = HDF5LabNotebook(self._fn, create=True)
@@ -401,7 +401,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
         params['k'] = 3
         rc = SampleExperiment2().set(params).run()
         nb.addResult(rc)
-        
+
         # add another with the same shape1
         params['k'] = 3
         rc = SampleExperiment2().set(params).run()
@@ -416,7 +416,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
 
     def testContextManager(self):
         '''Test that the conext manager works as inteneded.'''
-        nb = HDF5LabNotebook(self._fn, create=True) 
+        nb = HDF5LabNotebook(self._fn, create=True)
         with nb.open():
             # add two results, same type
             params = dict()
@@ -463,7 +463,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
     def testAttributes(self):
         '''Test we can read and write attributes.'''
         nb = HDF5LabNotebook(self._fn, description='A test notebook', create=True)
-        
+
         # attributes of a result set but no results dataset
         rs = nb.current()
         rs['number1'] = '1'
@@ -645,7 +645,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
             self.assertEqual(rs.numberOfResults(), 2)
             rcs = nb1.resultsFor(rc4[Experiment.PARAMETERS])
             self.assertEqual(len(rcs), 1)
-        
+
     @unittest.skip('Seems to depend on exact config of the underlying filesystem')
     def testNoWriteWhenLocked(self):
         '''Test that no writing happens after a notebook is locked.'''
@@ -674,12 +674,12 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb = HDF5LabNotebook(self._fn, create=True)
 
         params = dict()
-        params['k'] =  1
+        params['k'] = 1
         e = SampleExperiment2()
         rc = e.set(params).run()
         nb.addResult(rc)
 
-        params['k'] =  10
+        params['k'] = 10
         rc = e.set(params).run()
         nb.addResult(rc)
 
@@ -706,13 +706,13 @@ class HDF5LabNotebookTests(unittest.TestCase):
         # create additional result sets and save them
         nb.addResultSet('second')
         params = dict()
-        params['k'] =  1
+        params['k'] = 1
         e = SampleExperiment2()
         rc = e.set(params).run()
         nb.addResult(rc)
         nb.addResultSet('third')
         params = dict()
-        params['k'] =  5
+        params['k'] = 5
         e = SampleExperiment2()
         rc = e.set(params).run()
         nb.addResult(rc)
@@ -728,10 +728,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
         self.assertEqual(len(nb2), 2)
         self.assertEqual(nb2.currentTag(), 'third')
         self.assertCountEqual(nb2.resultSets(), ['third', LabNotebook.DEFAULT_RESULTSET])
-        
+
+
 if __name__ == '__main__':
     unittest.main()
-
-
-
-
