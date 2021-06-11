@@ -10,5 +10,6 @@ sphinx
 twine
 black
 jedi
+pylint
 flake8
 rope
