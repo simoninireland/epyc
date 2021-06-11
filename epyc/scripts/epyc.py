@@ -23,7 +23,9 @@ import re
 import click
 import epyc
 
+notebook_re = re.compile('^([\w/\.-]+)$')
 notebook_resultset_re = re.compile('^([\w/\.-]+)?:([\w/\.-]+)$')
+notebook_opt_resultset_re = re.compile('^([\w/\.-]+)(:([\w/\.-]+))?$')
 notebook_resultset_rename_re = re.compile('^([\w/\.-]+)?:([\w/\.-]+)(=([\w/\.-]+))?$')
 
 @click.group()
@@ -40,7 +42,8 @@ def show(notebook, long):
     The long form displays a human-readable summary of the result sets
     and their descriptions. The short form simply lists the result
     sets, one per line, in a form suitable for feeding to other
-    commands. The default is the long form.
+    commands. The default is the long form. The current result set is
+    starred.
 
     '''
 
@@ -60,13 +63,16 @@ def show(notebook, long):
         click.echo()
 
         # iterate the result sets
+        currentTag = nb.currentTag()
         click.echo('Result sets:')
         for tag in nb.resultSets():
             # show result set global summary
             rs = nb.resultSet(tag)
             n = len(rs)
             desc = rs.description()
-            click.echo(click.style(f'  {tag}', fg='green') + f' [{n}]: {desc}' +
+            click.echo(click.style(f'  {tag}', fg='green') +
+                       (click.style('(*)', fg='yellow') if tag == currentTag else '') +
+                       f' [{n}]: {desc}' +
                        (click.style(' (locked)', fg='red') if nb.isLocked() else ''))
 
             # show any attributes
@@ -157,11 +163,11 @@ def copy(rss, dest, verbose, pretend):
                 print(f"No result set '{tag}' in {fn}", file=sys.stderr)
                 sys.exit(1)
             if newtag in nb.resultSets():
-                print(f"Result set '{tag}' already exists in {dest}", file=sys.stderr)
+                print(f"Result set '{newtag}' already exists in {dest}", file=sys.stderr)
                 sys.exit(1)
 
             if verbose > 0:
-                click.echo('copy ' +
+                click.echo('Copied ' +
                            click.style(f'{fn}:{tag}', fg='green') +
                            ' -> ' +
                            click.style(f'{dest}:{newtag}', fg='green'))
@@ -170,7 +176,7 @@ def copy(rss, dest, verbose, pretend):
                 rs1 = nb1.resultSet(tag)
                 rs = nb.addResultSet(newtag)
                 for rc in rs1.results():
-                    rs.addResult(rc)
+                    rs.addSingleResult(rc)
 
 @cli.command()
 @click.argument('rss', nargs=-1)
@@ -179,8 +185,8 @@ def copy(rss, dest, verbose, pretend):
 def remove(rss, verbose, pretend):
     '''Remove one or more result sets from notebook(s).
 
-    Result sets are specified as a triple [NOTEBOOK]:TAG where
-    NOTEBOOK is the name of a notebook andTAG is a result set tag
+    Result sets are specified as a pair [NOTEBOOK]:TAG where
+    NOTEBOOK is the name of a notebook and TAG is a result set tag
     within NOTEBOOK. If NOTEBOOK is omitted then the same notebook as
     the previous result set is used.
 
@@ -228,20 +234,52 @@ def remove(rss, verbose, pretend):
             sys.exit(1)
 
         if verbose > 0:
-            click.echo('remove ' +
+            click.echo('Removed ' +
                        click.style(f'{fn}:{tag}', fg='green'))
         if not pretend:
             nb1.deleteResultSet(tag)
 
 @cli.command()
-@click.argument('rss', nargs=-1)
-def finish(rss):
-    '''Mark one or more result sets from a notebook(s) as "finished".
+@click.argument('spec')
+@click.option('-v', '--verbose', count=True, help='Generate verbose output (repeat for extra verbosity)')
+@click.option('-n', '--pretend', is_flag=True, help="Check validity but don't change anything")
+def current(spec, verbose, pretend):
+    '''Mark a result set as current.
 
-    Finished result sets can't accept any more results, and have their
-    pending results purged.
+    The result set is specified as a pair NOTEBOOK[:TAG] where
+    NOTEBOOK is the name of a notebook and TAG is a result set tag
+    within NOTEBOOK. If no TAG is specified then the command returns
+    the tag of the current result set.
 
     '''
+
+    # extract the notebook and tag
+    m = notebook_opt_resultset_re.match(spec)
+    if m is None:
+        print(f"Invalid result set specifier '{spec}'", file=sys.stderr)
+        exit(1)
+    else:
+        fn = m[1]
+        tag = m[3]
+
+    with epyc.HDF5LabNotebook(fn).open() as nb:
+        if tag == None:
+            # no tag, just display the current result set's tag
+            tag = nb.currentTag()
+            print(tag)
+        else:
+            # sanity check
+            if tag in nb.resultSets():
+                # tag exists, make it current
+                if not pretend:
+                    nb.select(tag)
+                    if verbose > 0:
+                        click.echo('Made ' +
+                                   click.style(f'{fn}:{tag}', fg='green') +
+                                   " current")
+            else:
+                print(f'No result set {tag}')
+                exit(1)
 
 
 if __name__ == '__main__':

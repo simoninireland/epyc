@@ -8,7 +8,7 @@
 
 **** Coding
 
-***** TODO Command-line interface to lab notebooks
+***** DONE Command-line interface to lab notebooks
 
   Allow notebooks to be manipulated from the command line. Specifically
   this is to copy and delete result sets from notebooks to tidy them up
