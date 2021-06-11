@@ -5,6 +5,8 @@ Version 1.4.1
    - Described Jupyter design pattern to avoid repeated computation of result sets
    - Added better badges to README.rst
    - Changed to Github workflows for CI
+   - Added basic command-line tool for manipulating notebooks
+   - Added exception propagation to Exeperiment.run()
 
 Version 1.3.2 2021-02-19
 
