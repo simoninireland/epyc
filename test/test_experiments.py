@@ -1,7 +1,7 @@
 # Tests of experiments class
 #
 # Copyright (C) 2016--2021 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -18,24 +18,23 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
-
 import unittest
 import time
 
 
 class SampleExperiment0(Experiment):
     '''A base experiment that records the phases of the experiment.'''
-    
+
     def __init__( self ):
         super(SampleExperiment0, self).__init__()
         self._ps = []
-        
+
     def setUp( self, params ):
         self._ps.append('setup')
 
     def tearDown( self ):
         self._ps.append('teardown')
-        
+
     def do( self, params ):
         self._ps.append('do')
         return dict()
@@ -47,26 +46,26 @@ class SampleExperiment0(Experiment):
 
 class SampleExperiment1(Experiment):
     '''An experiment that does literally nothing.'''
-    
+
     def do( self, params ):
         pass
 
 class SampleExperiment2(SampleExperiment0):
     '''An experiment that does nothing for 1s and returns a results dict.'''
-    
+
     def do( self, params ):
         time.sleep(1)
         return SampleExperiment0.do(self, params)
 
 class SampleExperiment3(SampleExperiment0):
     '''An experiment that does a calculation.'''
-    
+
     def do( self, params ):
         return dict(result = params['a'] + params['b'])
 
 class SampleExperiment4(SampleExperiment0):
     '''An experiment that makes sure there are timings to test.'''
-    
+
     def setUp( self, params ):
         time.sleep(1)
 
@@ -79,19 +78,19 @@ class SampleExperiment4(SampleExperiment0):
 
 class SampleExperiment5(SampleExperiment0):
     '''An experiment that fails in its main action.'''
-    
+
     def do( self, params ):
         raise Exception('We failed (on purpose)')
-   
+
 class SampleExperiment6(SampleExperiment0):
     '''An experiment that fails in its setup, and so should not do a teardown.'''
-    
+
     def setUp( self, params ):
         raise Exception('We failed (on purpose)')
 
 class SampleExperiment7(SampleExperiment0):
     '''An experiment that fails in its teardown.'''
-    
+
     def tearDown( self ):
         raise Exception('We failed (on purpose)')
 
@@ -221,6 +220,20 @@ class ExperimentTests(unittest.TestCase):
         self.assertEqual(len(res), 2)
         for rc in res:
             self.assertEqual(rc[Experiment.RESULTS]['c'], params['c'])
-       
+
+    def testPropagatingExceptions(self):
+        '''Test that we can get an exception from a failed experimental run.'''
+        e = SampleExperiment7()
+        params = dict()
+
+        rc = e.set(params).run()
+        self.assertFalse(rc[Experiment.METADATA][Experiment.STATUS])
+        self.assertFalse(e.success())
+        self.assertTrue(e.failed())
+
+        with self.assertRaises(Exception):
+            rc = e.set(params).run(fatal=True)
+
+
 if __name__ == '__main__':
     unittest.main()
