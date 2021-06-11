@@ -37,9 +37,12 @@ def cli():
 def show(notebook, long):
     '''Show the structure of a notebook.
 
-    The long form displays a human-readable summary of the result sets and their
-    descriptions. The short form simply lists the result sets, one per line,
-    in a form suitable for feeding to other commands. The default is the long form.'''
+    The long form displays a human-readable summary of the result sets
+    and their descriptions. The short form simply lists the result
+    sets, one per line, in a form suitable for feeding to other
+    commands. The default is the long form.
+
+    '''
 
     # open the notebook
     try:
@@ -82,12 +85,15 @@ def show(notebook, long):
 def copy(rss, dest, verbose, pretend):
     '''Copy one or more result sets to the destination notebook.
 
-    Result sets are specified as a triple [NOTEBOOK]:TAG[=NEWTAG] where NOTEBOOK
-    is the name of a notebook, TAG is a result set tag within NOTEBOOK, and
-    NEWTAG is a tag for the result set when it's copied to the destination (to
-    avoid name clashes). If NOTEBOOK is omitted then the same notebook as the previous
-    result set is used. If NEWTAG is omitted then TAG is used for the destination
-    result set as well'''
+    Result sets are specified as a triple [NOTEBOOK]:TAG[=NEWTAG]
+    where NOTEBOOK is the name of a notebook, TAG is a result set tag
+    within NOTEBOOK, and NEWTAG is a tag for the result set when it's
+    copied to the destination (to avoid name clashes). If NOTEBOOK is
+    omitted then the same notebook as the previous result set is
+    used. If NEWTAG is omitted then TAG is used for the destination
+    result set as well
+
+    '''
 
     # check we have result sets to copy
     if len(rss) == 0:
@@ -176,7 +182,9 @@ def remove(rss, verbose, pretend):
     Result sets are specified as a triple [NOTEBOOK]:TAG where
     NOTEBOOK is the name of a notebook andTAG is a result set tag
     within NOTEBOOK. If NOTEBOOK is omitted then the same notebook as
-    the previous result set is used.'''
+    the previous result set is used.
+
+    '''
 
     # iterate through all result set specifiers
     copies = []
@@ -230,7 +238,10 @@ def remove(rss, verbose, pretend):
 def finish(rss):
     '''Mark one or more result sets from a notebook(s) as "finished".
 
-    Finished result sets can't accept any more results, and have their pending results purged.'''
+    Finished result sets can't accept any more results, and have their
+    pending results purged.
+
+    '''
 
 
 if __name__ == '__main__':
