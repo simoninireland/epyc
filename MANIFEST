@@ -14,3 +14,4 @@ epyc/clusterlab.py
 epyc/labnotebook.py
 epyc/jsonlabnotebook.py
 epyc/hdf5labnotebook.py
+epyc/scripts/epyc.py
