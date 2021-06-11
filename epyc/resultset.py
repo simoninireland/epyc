@@ -1,6 +1,6 @@
 # A set of results for experiments in a given parameter space
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2021 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,48 +17,57 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import Experiment, ResultsDict
-import numpy                       # type: ignore
-from pandas import DataFrame       # type: ignore
 import sys
 import traceback
 from datetime import datetime
+import numpy                       # type: ignore
+from pandas import DataFrame       # type: ignore
+from epyc import Experiment, ResultsDict
+from typing import List, Dict, Set, Any, Type, Optional
 if sys.version_info >= (3, 8):
-    from typing import Final, List, Dict, Set, Any, Type, Optional
+    from typing import Final
 else:
-    # backwards compatibility with Python 35, Python36, and Python37
-    from typing import List, Dict, Set, Any, Type, Optional
+    # backwards compatibility with Python35, Python36 and Python37
     from typing_extensions import Final
 
 
 class CancelledException(Exception):
-    '''An exception stored within the :class:`Experiment` :term:`results dict`
-    when a pending result is cancelled without completeing the experiment.
-    This means that all experiments started either complete successfully (and
-    have their results recorded), or fail within the experiment itself
-    (and have that exception stored, without results), or are cancelled
-    (and have this exception and a traceback stored).'''
+    '''An exception stored within the :class:`Experiment` :term:`results
+    dict` when a pending result is cancelled without completeing the
+    experiment.  This means that all experiments started either
+    complete successfully (and have their results recorded), or fail
+    within the experiment itself (and have that exception stored,
+    without results), or are cancelled (and have this exception and a
+    traceback stored).
+
+    '''
 
     def __init__(self):
-        super(CancelledException, self).__init__('Cancelled')
+        super().__init__('Cancelled')
 
 
 class ResultSetLockedException(Exception):
-    '''An exception raised if an attempt is made to write new results to a result
-    set that's been locked by a call to :meth:`ResultSet.finish`.'''
+    '''An exception raised if an attempt is made to write new results to a
+    result set that's been locked by a call to
+    :meth:`ResultSet.finish`.
+
+    '''
 
     def __init__(self):
-        super(ResultSetLockedException, self).__init__('Result set locked')
+        super().__init__('Result set locked')
 
 
 class PendingResultException(Exception):
-    '''An exception raised if an invalid pending result job identifier is used. A common
-    cause of this is a pending result that failed on submission and so was never actually started.
+    '''An exception raised if an invalid pending result job identifier is
+    used. A common cause of this is a pending result that failed on
+    submission and so was never actually started.
 
-    :param jobid: the job id'''
+    :param jobid: the job id
 
-    def __init__(self, jobid : str):
-        super(PendingResultException, self).__init__('Unrecognised pending result job identifier {j}'.format(j=jobid))
+    '''
+
+    def __init__(self, jobid: str):
+        super().__init__('Unrecognised pending result job identifier {j}'.format(j=jobid))
         self._jobid = jobid
 
     def jobid(self) -> str:
@@ -69,42 +78,44 @@ class PendingResultException(Exception):
 
 
 class ResultSet(object):
-    '''A "page" in a lab notebook for the results of a particular set
-    of experiments. This will consist of metadata, notes, and a data table resulting from
-    the execution of the experiment. Each experiment runs with a specific
-    set of parameters: the parameter names are fixed once set initially, with
-    the specific values being stored alongside each result. There
-    may be multiple results for the same parameters, to allow for
-    repetition of experiments at a data point.
-    Results committ5ed to result sets are immutable: once entered, a result can't be deleted
-    or changed.
+    '''A "page" in a lab notebook for the results of a particular set of
+    experiments. This will consist of metadata, notes, and a data
+    table resulting from the execution of the experiment. Each
+    experiment runs with a specific set of parameters: the parameter
+    names are fixed once set initially, with the specific values being
+    stored alongside each result. There may be multiple results for
+    the same parameters, to allow for repetition of experiments at a
+    data point.  Results committ5ed to result sets are immutable: once
+    entered, a result can't be deleted or changed.
 
-    Result sets also record "pending" results, allowing us to record experiments
-    in progress. A pending result can be finalised by providing it with a
-    value, or can be cancelled.
+    Result sets also record "pending" results, allowing us to record
+    experiments in progress. A pending result can be finalised by
+    providing it with a value, or can be cancelled.
 
-    A result set can be used very Pythonically using a :term:`results dict` holding
-    the metadata, parameters, and results of experiments. For larger experiment
-    sets the results are automatically typed using ``numpy``'s ``dtype`` system,
-    which both provides more checking and works well with more archival storage
+    A result set can be used very Pythonically using a :term:`results
+    dict` holding the metadata, parameters, and results of
+    experiments. For larger experiment sets the results are
+    automatically typed using ``numpy``'s ``dtype`` system, which both
+    provides more checking and works well with more archival storage
     formats like HDF5 (see :class:`HDF5LabNotebook`).
 
     :param nb: notebook this result set is part of
     :param description: (optional) description for the result set (defaults to a datestamp)
+
     '''
 
     # Pending results management
-    JOBID : Final[str] = 'epyc.resultset.pending-jobid'     #: Column name for pending result job identifier.
+    JOBID: Final[str] = 'epyc.resultset.pending-jobid'     #: Column name for pending result job identifier.
 
     # Typing
-    TypeMapping : Dict[Type, numpy.dtype] = dict()          #: Default type mapping from Python types to ``numpy`` ``dtypes``.
-    ZeroMapping : Dict[str, Any] = { 'i': 0,
-                                     'f': 0.0,
-                                     'c': 0 + 0j,
-                                     'b': False,
-                                     'U': '',
-                                     'S': '',
-                                   }                        #: Default ("zero") values for all the numpy type kinds we handle.
+    TypeMapping: Dict[Type, numpy.dtype] = dict()          #: Default type mapping from Python types to ``numpy`` ``dtypes``.
+    ZeroMapping: Dict[str, Any] = { 'i': 0,
+                                    'f': 0.0,
+                                    'c': 0 + 0j,
+                                    'b': False,
+                                    'U': '',
+                                    'S': '',
+                                  }                        #: Default ("zero") values for all the numpy type kinds we handle.
 
     @classmethod
     def _init_statics(cls):
@@ -117,7 +128,7 @@ class ResultSet(object):
         cls.TypeMapping[datetime] = numpy.dtype(str)
         cls.TypeMapping[Exception] = numpy.dtype(str)
 
-    def __init__(self, description : str =None):
+    def __init__(self, description: str = None):
         # generate a description from today's date is none is provided
         if description is None:
             description = "Results collected on {d}".format(d=datetime.now())
@@ -145,7 +156,7 @@ class ResultSet(object):
         :returns: the description'''
         return self._description
 
-    def setDescription(self, d : str):
+    def setDescription(self, d: str):
         '''Set the free text description of the result set.
 
         :param d: the description'''
@@ -153,29 +164,37 @@ class ResultSet(object):
         self.dirty()
 
     def names(self) -> Dict[str, Optional[List[str]]]:
-        '''Return a dict of sets of names, corresponding to the entries in
-        the results dicts for this result set. If only pending results have so far
-        been added the :attr:`Experiment.METADATA` and :attr:`Experiment.RESULTS`
-        sets will be empty.
+        '''Return a dict of sets of names, corresponding to the entries in the
+        results dicts for this result set. If only pending results
+        have so far been added the :attr:`Experiment.METADATA` and
+        :attr:`Experiment.RESULTS` sets will be empty.
 
-        :returns: the dict of parameter names'''
+        :returns: the dict of parameter names
+
+        '''
         return self._names
 
     def metadataNames(self) -> List[str]:
-        '''Return the set of metadata  names associated with this result set. If
-        no results have been submitted, this set will be empty.
+        '''Return the set of metadata names associated with this result
+        set. If no results have been submitted, this set will be
+        empty.
 
-        :returns: the set of experimental metadata names'''
+        :returns: the set of experimental metadata names
+
+        '''
         ns = self._names[Experiment.METADATA]
         if ns is None:
             ns = []
         return ns
 
     def parameterNames(self) -> List[str]:
-        '''Return the set of parameter names associated with this result set. If
-        no results (pending or real) have been submitted, this set will be empty.
+        '''Return the set of parameter names associated with this result
+        set. If no results (pending or real) have been submitted, this
+        set will be empty.
 
-        :returns: the set of experimental parameter names'''
+        :returns: the set of experimental parameter names
+
+        '''
         ns = self._names[Experiment.PARAMETERS]
         if ns is None:
             ns = []
@@ -185,7 +204,9 @@ class ResultSet(object):
         '''Return the set of result names associated with this result set. If
         no results have been submitted, this set will be empty.
 
-        :returns: the set of experimental result names'''
+        :returns: the set of experimental result names
+
+        '''
         ns = self._names[Experiment.RESULTS]
         if ns is None:
             ns = []
@@ -196,9 +217,12 @@ class ResultSet(object):
 
     def finish(self):
         '''Finish and lock this result set. This cancels any pending results
-        and locks the result set against future additions. This is useful to tidy up
-        after experiments are finished, and protects against accidentally re-using
-        a result set for something else.'''
+        and locks the result set against future additions. This is
+        useful to tidy up after experiments are finished, and protects
+        against accidentally re-using a result set for something
+        else.
+
+        '''
         if not self.isLocked():
             # cancel any peiding results
             for j in self.pendingResults():
@@ -214,16 +238,19 @@ class ResultSet(object):
         return self._locked
 
     def assertUnlocked(self):
-        '''Tests whether the result set is locked, and raises a :class:`ResultSetLockedException`
-        if so. This is used to protect update methods, since locked result sets are never
-        updated.'''
+        '''Tests whether the result set is locked, and raises a
+        :class:`ResultSetLockedException` if so. This is used to
+        protect update methods, since locked result sets are never
+        updated.
+
+        '''
         if self.isLocked():
             raise ResultSetLockedException()
 
 
     # ---------- Attributes ----------
 
-    def setAttribute(self, k : str, v : Any):
+    def setAttribute(self, k: str, v: Any):
         '''Set the given attribute.
 
         :param k: the key
@@ -232,12 +259,14 @@ class ResultSet(object):
         self._attributes[k] = v
         self.dirty()
 
-    def getAttribute(self, k : str) -> Any:
-        '''Retrieve the given attribute. A KeyException will be
-        raised if the attribute doesn't exist.
+    def getAttribute(self, k: str) -> Any:
+        '''Retrieve the given attribute. A KeyException will be raised if the
+        attribute doesn't exist.
 
         :param k: the attribute
-        :returns: the attribute value'''
+        :returns: the attribute value
+
+        '''
         return self._attributes[k]
 
     def keys(self) -> Set[str]:
@@ -246,32 +275,40 @@ class ResultSet(object):
         :returns: the attribute keys'''
         return set(self._attributes.keys())
 
-    def __delitem__(self, k : str):
-        '''Delete the named attribute. This method is invoiked
-        by the ``del`` operator. A KeyException will be
-        raised if the attribute doesn't exist.
+    def __delitem__(self, k: str):
+        '''Delete the named attribute. This method is invoiked by the ``del``
+        operator. A KeyException will be raised if the attribute
+        doesn't exist.
 
-        :param k: the attribute'''
+        :param k: the attribute
+
+        '''
         self.assertUnlocked()
         del self._attributes[k]
         self.dirty()
 
-    def __setitem__(self, k : str, v : Any):
-        '''Set the given attribute. The dict-like form of :meth:`setAttribute`.
+    def __setitem__(self, k: str, v: Any):
+        '''Set the given attribute. The dict-like form of
+        :meth:`setAttribute`.
 
         :param k: the key
-        :param v: the attribute value'''
+        :param v: the attribute value
+
+        '''
         self.assertUnlocked()
         self.setAttribute(k, v)
 
-    def __getitem__(self, k : str) -> Any:
-        '''Retrieve the given attribute. The dict-like form of :meth:`getAttribute`.
+    def __getitem__(self, k: str) -> Any:
+        '''Retrieve the given attribute. The dict-like form of
+        :meth:`getAttribute`.
 
         :param k: the attribute
-        :returns: the attribute value'''
+        :returns: the attribute value
+
+        '''
         return self.getAttribute(k)
 
-    def __contains__(self, k):
+    def __contains__(self, k: str):
         '''True if there is an attribute with the given name.
 
         :oparam k: the attribute
@@ -282,13 +319,15 @@ class ResultSet(object):
     # ---------- Dirtiness ----------
 
     def isDirty(self) -> bool:
-        '''Test whether the result set is dirty, i.e., if its contents need persisting
-        (if the containing notebook is persistent).
+        '''Test whether the result set is dirty, i.e., if its contents need
+        persisting (if the containing notebook is persistent).
 
-        :returns: True if the result set is dirty'''
+        :returns: True if the result set is dirty
+
+        '''
         return self._dirty
 
-    def dirty(self, f : bool =True):
+    def dirty(self, f: bool = True):
         '''Mark the result set as dirty (the default) or clean.
 
         :param f: True if the result set is dirty'''
@@ -302,7 +341,7 @@ class ResultSet(object):
         :returns: True if the result set has changed type'''
         return self._typedirty
 
-    def typechanged(self, f : bool =True):
+    def typechanged(self, f: bool = True):
         '''Mark the result set as having changed type (the default) or not.
 
         :param f: True if the result set has changed type'''
@@ -344,7 +383,7 @@ class ResultSet(object):
         :param dtype: the dtype'''
         self._pendingdtype = dtype
 
-    def typeToDtype(self, t : type) -> numpy.dtype:
+    def typeToDtype(self, t: type) -> numpy.dtype:
         '''Return the dtype of the given Python type. An exception
         is thrown if there is no appropriate mapping.
 
@@ -357,7 +396,7 @@ class ResultSet(object):
             # Python types are translated through the type mapping
             return self.TypeMapping[t]
 
-    def valueToDtype(self, v : Any) -> numpy.dtype:
+    def valueToDtype(self, v: Any) -> numpy.dtype:
         '''Return the dtype of a Python value. An exception
         is thrown if there is no appropriate mapping.
 
@@ -365,12 +404,12 @@ class ResultSet(object):
         :returns: the dtype'''
         if isinstance(v, list):
             et = self.valueToDtype(v[0])
-            print(str(len(v)) + '[] ' + str(v[0]) + ' -> ' + str(et))
-            return numpy.dtype((et, len(v)))
+            #print(str(len(v)) + '[] ' + str(v[0]) + ' -> ' + str(et))
+            return numpy.dtype((et, (len(v),)))
         else:
             return self.typeToDtype(type(v))
 
-    def inferDtype(self, rc : ResultsDict):
+    def inferDtype(self, rc: ResultsDict):
         '''Infer the dtype of the given result dict. This will include all the
         standard and exceptional metedata defined for an :class:`Experiment`, plus
         the parameters and results (if present) for the results dict.
@@ -527,7 +566,7 @@ d
         # return the dtype
         return self._dtype
 
-    def inferPendingResultDtype(self, params : Dict[str, Any]):
+    def inferPendingResultDtype(self, params: Dict[str, Any]):
         '''Infer the dtype of the pending results of
         given dict of experimental parameters. This is essentially the same operation as
         :meth:`inferDtype` but restricted to experimental parameters and including
@@ -618,7 +657,7 @@ d
         # return the dtype
         return self._pendingdtype
 
-    def zero(self, dtype : numpy.dtype) -> Any:
+    def zero(self, dtype: numpy.dtype) -> Any:
         '''Return the appropriate "zero" for the given simple dtype.
 
         :param dtype: the dtype
@@ -632,7 +671,7 @@ d
 
     # ---------- Adding results ----------
 
-    def addSingleResult(self, rc : ResultsDict):
+    def addSingleResult(self, rc: ResultsDict):
         '''Add a single result. This should be a single :term:`results dict`
         as returned from an instance of :class:`Experiment`, that contains metadata,
         parameters, and result.
@@ -674,7 +713,7 @@ d
 
     # ---------- Manage pending results ----------
 
-    def addSinglePendingResult(self, params : Dict[str, Any], jobid : str):
+    def addSinglePendingResult(self, params: Dict[str, Any], jobid: str):
         '''Add a pending result for the given point in the parameter space
         under the given job identifier. The identifier will generally be
         meaningful to the lab that submitted the request. They must be unique.
@@ -719,7 +758,7 @@ d
         :returns: the number of pending results'''
         return len(self._pending)
 
-    def pendingResultsFor(self, params : Dict[str, Any]) -> List[str]:
+    def pendingResultsFor(self, params: Dict[str, Any]) -> List[str]:
         '''Return the ids of all pending results with the given parameters. Not all parameters
         have to be provided, allowing for partial matching.
 
@@ -750,18 +789,22 @@ d
         # return the ids
         return list(df[self.JOBID])
 
-    def _dropPendingResult(self, jobid : str):
+    def _dropPendingResult(self, jobid: str):
         '''Drop a pending result from the pending table.
 
         :param jobid: the job id'''
 
-    def resolveSinglePendingResult(self, jobid : str):
+    def resolveSinglePendingResult(self, jobid: str):
         '''Resolve the given pending result. This drops the job from the
-        pending results table. User code should call :meth:`LabNotebook.resolvePendingResult`
-        rather than using this method directly, since this method doesn't actually
-        store the completed pending result, it just manages its non-pending-ness.
+        pending results table. User code should call
+        :meth:`LabNotebook.resolvePendingResult` rather than using
+        this method directly, since this method doesn't actually store
+        the completed pending result, it just manages its
+        non-pending-ness.
 
-        :param jobid: the job id'''
+        :param jobid: the job id
+
+        '''
         self.assertUnlocked()
 
         # drop the job line from the pending table
@@ -779,15 +822,18 @@ d
         # mark us as dirty
         self.dirty()
 
-    def cancelSinglePendingResult(self, jobid : str):
+    def cancelSinglePendingResult(self, jobid: str):
         '''Cancel a pending job, This records the cancellation using a
-        :class:`CancelledException`, storing a traceback to show where the cancellation
-        was triggered from. User code should call :meth:`LabNotebook.cancelPendingResult`
-        rather than using this method directly.
+        :class:`CancelledException`, storing a traceback to show where
+        the cancellation was triggered from. User code should call
+        :meth:`LabNotebook.cancelPendingResult` rather than using this
+        method directly.
 
         Cancelling a result generates a message to standard output.
 
-        :param jobid: the job id'''
+        :param jobid: the job id
+
+        '''
         self.assertUnlocked()
 
         # create the "marker" exception for the results dict
@@ -836,11 +882,13 @@ d
         :returns: True if all pending results have been either resolved or cancelled'''
         return (self.numberOfPendingResults() == 0)
 
-    def pendingResultParameters(self, jobid : str) -> Dict[str, Any]:
+    def pendingResultParameters(self, jobid: str) -> Dict[str, Any]:
         '''Return a dict of the parameters for the given pending result.
 
         :param jobid: the job id
-        :returns: a dict of parameter values'''
+        :returns: a dict of parameter values
+
+        '''
         df = self._pending
 
         # retieve the line from the pending table for the given job
@@ -860,43 +908,51 @@ d
 
     # ---------- Retrieving results ----------
 
-    def dataframe(self, only_successful : bool =False) -> DataFrame:
-        '''Return all the available results.
-        The results are returned as a `pandas` DataFrame object, which is detached
-        from the results held in the result set, thereby keeping the result set
-        itself immutable.
+    def dataframe(self, only_successful: bool = False) -> DataFrame:
+        '''Return all the available results.  The results are returned as a
+        `pandas` DataFrame object, which is detached from the results
+        held in the result set, thereby keeping the result set itself
+        immutable.
 
         You can pre-filter the contents of the dataframe to only include results
         for specific parameter values using :meth:`dataframeFor`. You can also discard
         any unsuccessful results the using only_successful flag.
 
         :param only_successful: (optional) filter out any failed results (defaults to False)
-        :returns: a dataframe of results'''
+        :returns: a dataframe of results
+
+        '''
         df = self._results.copy()
         if len(df) > 0 and only_successful:
             # filter out only the successful runs (if there are any to start with)
             df = df[df[Experiment.STATUS] == True]
         return df
 
-    def dataframeFor(self, params : Dict[str, Any], only_successful : bool =False) -> DataFrame:
-        '''Extract a dataframe the results for only the given set of parameters. These need not be
-        all the parameters for the experiments, so it's possible to project-out
-        all results for a sub-set of the parameters. If a parameter is mapped to
-        an iterator or list then these are treated as disjunctions and select
-        *all* results with *any* of these values for that parameter.
+    def dataframeFor(self, params: Dict[str, Any], only_successful: bool = False) -> DataFrame:
+        '''Extract a dataframe the results for only the given set of
+        parameters. These need not be all the parameters for the
+        experiments, so it's possible to project-out all results for a
+        sub-set of the parameters. If a parameter is mapped to an
+        iterator or list then these are treated as disjunctions and
+        select *all* results with *any* of these values for that
+        parameter.
 
-        An empty set of parameters filters out nothing and so returns all the
-        results. This is far less efficient that calling :meth:`dataframe`.
+        An empty set of parameters filters out nothing and so returns
+        all the results. This is far less efficient that calling
+        :meth:`dataframe`.
 
-        The results are returned as a `pandas` DataFrame object, which is detached
-        from the results held in the result set, thereby keeping the result set
-        itself immutable.
+        The results are returned as a `pandas` DataFrame object, which
+        is detached from the results held in the result set, thereby
+        keeping the result set itself immutable.
 
-        You can also discard any unsuccessful results the using only_successful flag.
+        You can also discard any unsuccessful results the using
+        only_successful flag.
 
         :param params: a dict of parameters and values
         :param only_successful: (optional) filter out any failed results (defaults to False)
-        :returns: a dataframe containing results matching the parameter constraints'''
+        :returns: a dataframe containing results matching the parameter constraints
+
+        '''
 
         # if we have no results, exit immediately
         if self.numberOfResults() == 0:
@@ -926,12 +982,14 @@ d
         # return the dataframe with the projected-out results
         return df
 
-    def _dataframeToDict(self, df : DataFrame) -> List[ResultsDict]:
-        '''Convert all the rows in a dataframe into a results dict with the correct
-        structure for this result set.
+    def _dataframeToDict(self, df: DataFrame) -> List[ResultsDict]:
+        '''Convert all the rows in a dataframe into a results dict with the
+        correct structure for this result set.
 
         :param df: the dataframe
-        :returns: a list of results dicts'''
+        :returns: a list of results dicts
+
+        '''
         results = []
         for i in df.index:
             res = df.loc[i]
@@ -946,22 +1004,29 @@ d
         return results
 
     def results(self) -> List[ResultsDict]:
-        '''Return all the results as a list of results dicts. This is useful for
-        avoiding the use of ``pandas`` and having a more Pythonic interface -- which
-        is also a lot less efficient and more memory-hungry.
+        '''Return all the results as a list of results dicts. This is useful
+        for avoiding the use of ``pandas`` and having a more Pythonic
+        interface -- which is also a lot less efficient and more
+        memory-hungry.
 
-        :returns: a list of results dicts'''
+        :returns: a list of results dicts
+
+        '''
         return self._dataframeToDict(self.dataframe())
 
-    def resultsFor(self, params : Dict[str, Any]) -> List[ResultsDict]:
-        '''Return all the results for the given paramneters as a list of results dicts.
-        This is useful for avoiding the use of ``pandas`` and having a more Pythonic
-        interface -- which is also a lot less efficient and more memory-hungry. The
-        parameters are interpreted as for :meth:`dataframeFor`, with lists or other
-        iterators being converted into disjunctions of values.
+    def resultsFor(self, params: Dict[str, Any]) -> List[ResultsDict]:
+        '''Return all the results for the given paramneters as a list of
+        results dicts.  This is useful for avoiding the use of
+        ``pandas`` and having a more Pythonic interface -- which is
+        also a lot less efficient and more memory-hungry. The
+        parameters are interpreted as for :meth:`dataframeFor`, with
+        lists or other iterators being converted into disjunctions of
+        values.
 
         :param params: the parameters
-        :returns: a list of results dicts'''
+        :returns: a list of results dicts
+
+        '''
         return self._dataframeToDict(self.dataframeFor(params))
 
     def numberOfResults(self) -> int:
@@ -973,19 +1038,24 @@ d
 
     def __len__(self) -> int:
         '''Return the number of results in the results set, including any
-        repetitions at the same parameter point.mEquivalent to :meth:`numberOfResults`.
+        repetitions at the same parameter point.mEquivalent to
+        :meth:`numberOfResults`.
 
-        :returns: the number of results'''
+        :returns: the number of results
+
+        '''
         return self.numberOfResults()
 
 
     # ---------- Retrieving parameter names and values ----------
 
-    def parameterRange(self, param : str) -> Set[Any]:
+    def parameterRange(self, param: str) -> Set[Any]:
         '''Return all the values for this parameter for which we have results.
 
         :param param: the parameter name
-        :returns: a collection of values for which we have data'''
+        :returns: a collection of values for which we have data
+
+        '''
 
         # check the parameter is legal
         if param not in self.parameterNames():
@@ -996,23 +1066,28 @@ d
         return set(df[param].unique())
 
     def parameterSpace(self) -> Dict[str, Any]:
-        '''Return a dict mapping parameter names to all their values,
-        which is the space of all possible paramater points at which results
-        *could* have been collected.
-        This does not guarantee that all combinations of values *have* results
-        associated with them: that function is provided by :meth:`parameterCombinations`.
+        '''Return a dict mapping parameter names to all their values, which is
+        the space of all possible paramater points at which results
+        *could* have been collected.  This does not guarantee that all
+        combinations of values *have* results associated with them:
+        that function is provided by :meth:`parameterCombinations`.
 
-        :returns: a dict mapping parameter names to their ranges'''
+        :returns: a dict mapping parameter names to their ranges
+
+        '''
         ps = dict()
         for k in self.parameterNames():
             ps[k] = self.parameterRange(k)
         return ps
 
     def parameterCombinations(self) -> List[Dict[str, Any]]:
-        '''Return a list of all combinations of parameters for which we have results,
-        as a list of dicts. This means that there are results (possible more than
-        one set) associated with the combination of parameters in each dict.
-        The ranges of the parameters can be found using :meth:`parameterSpace`.
+        '''Return a list of all combinations of parameters for which we have
+        results, as a list of dicts. This means that there are results
+        (possible more than one set) associated with the combination
+        of parameters in each dict.  The ranges of the parameters can
+        be found using :meth:`parameterSpace`.
 
-        :returns: a list of dicts'''
+        :returns: a list of dicts
+
+        '''
         raise NotImplementedError('TBD')
