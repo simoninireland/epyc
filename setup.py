@@ -25,7 +25,7 @@ with open('README.rst') as f:
     longDescription = f.read()
 
 setup(name='epyc',
-      version='1.3.2',
+      version='1.4.1',
       description='Python computational experiment management',
       long_description=longDescription,
       url='http://github.com/simoninireland/epyc',
