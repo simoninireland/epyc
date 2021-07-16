@@ -1,4 +1,4 @@
-Version 1.4.2
+Version 1.4.2 2021-07-16
 
    - Fixed issue with typing backwards compatibility
    - Fixed leaving spare cores in ParallalLab, and capped requests
