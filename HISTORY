@@ -1,3 +1,9 @@
+Version 1.4.2
+
+   - Fixed issue with typing backwards compatibility
+   - Fixed leaving spare cores in ParallalLab, and capped requests
+     at the maximum number of cores available
+
 Version 1.4.1 2021-06-11
 
    - Added results sets as keys in LabNotenook

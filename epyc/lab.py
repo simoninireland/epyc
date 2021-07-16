@@ -1,7 +1,7 @@
 # Simulation "lab" experiment management, sequential version
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -122,7 +122,7 @@ class Lab(object):
         for p in self.parameters():
             n = n * len(self._parameters[p])
         return n
-        
+
     def __getitem__(self, k : str) -> Any:
         """Access a parameter range using array notation.
 
@@ -163,7 +163,7 @@ class Lab(object):
 
         # return the complete parameter space
         return ds
-           
+
     def parameterSpace(self) -> List[Dict[str, Any]]:
         """Return the parameter space of the experiment as a list of dicts,
         with each dict mapping each parameter name to a value.
@@ -190,7 +190,7 @@ class Lab(object):
         # run the experiment at each point
         nb = self.notebook()
         for p in ps:
-            #print "Running {p}".format(p = p)
+            print(f"Running {p}")
             res = e.set(p).run()
             nb.addResult(res)
 
@@ -205,7 +205,7 @@ class Lab(object):
         any pending results that have completed. This makes
         use of the underlying notebook's current result set. For finer control,
         access the notebook's :meth:`LabNotebook.dataframe` or
-        :meth:LabNotebook.dataframeFor` methods directly. 
+        :meth:LabNotebook.dataframeFor` methods directly.
 
         :param only_successful: only return successful results
         :returns: the resulting dataset as a DataFrame"""
@@ -218,7 +218,7 @@ class Lab(object):
         use of the underlying notebook's current result set. For finer control,
         access the notebook's :meth:`LabNotebook.results` or
         :meth:LabNotebook.resultsFor` methods directly.
-        
+
         Note that this approach to acquiring results is a lot slower and more
         memory-hungry than using :meth:`dataframe`, but may be useful for small
         sets of results that benefit from a more Pythonic intertface.'''
@@ -242,4 +242,3 @@ class Lab(object):
         :returns: the ready fraction'''
         self.updateResults()
         return self._notebook.readyFraction(tag)
-

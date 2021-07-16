@@ -1,7 +1,7 @@
 # Simulation "lab" experiment management, local parallel version
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -41,7 +41,7 @@ class ParallelLab(Lab):
 
     So a value of ``cores=-1`` will run on 1 fewer cores than the total number
     of physical cores available on the machine.
-    
+
     .. important ::
 
         This behaviour is slightly different to that of ``joblib``
@@ -58,8 +58,8 @@ class ParallelLab(Lab):
     :param cores: (optional) number of cores to use (defaults to all available)
     '''
 
-    def __init__(self, notebook : LabNotebook =None, cores : int =0):
-        super(ParallelLab, self).__init__(notebook)
+    def __init__(self, notebook: LabNotebook = None, cores: int = 0):
+        super().__init__(notebook)
 
         # compute the nunber of cores to use and store for later
         if cores == 0:
@@ -67,7 +67,10 @@ class ParallelLab(Lab):
             cores = cpu_count()
         elif cores < 0:
             # use fewer than available, down to a minimum of 1
-            cores = max(cpu_count() + cores, 1)
+            cores = max(cpu_count() + cores, 1)   # cpu_count() + cores as cores is negative
+        else:
+            # use the number of cores requested, up to the maximum available
+            cores = min(cores, cpu_count())
         self._cores = cores
 
     def numberOfCores(self) -> int:
@@ -79,7 +82,7 @@ class ParallelLab(Lab):
 
     # ---------- Running experiments ----------
 
-    def runExperiment(self, e : Experiment):
+    def runExperiment(self, e: Experiment):
         """Run the experiment across the parameter space in parallel using
         the allowed cores. The experiments are all run synchronously.
 
@@ -109,5 +112,3 @@ class ParallelLab(Lab):
                 # commit our pending results in the notebook
                 nb.commit()
                 self.close()
-
-    

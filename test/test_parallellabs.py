@@ -1,7 +1,7 @@
 # Tests of local-parallel lab class
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -31,8 +31,8 @@ class SampleExperiment(Experiment):
         for k in param:
             total = total + param[k]
         return dict(total = total)
-    
-        
+
+
 class ParallelLabTests(unittest.TestCase):
 
     def testCoresSelection(self):
@@ -46,10 +46,11 @@ class ParallelLabTests(unittest.TestCase):
         self._lab = ParallelLab(cores=0)
         self.assertEqual(self._lab.numberOfCores(), cpu_count())
 
-        # fixed numbers, possibly more than we have physical cores (which is fine)
+        # fixed numbers, possibly more than we have physical cores (which
+        # will be capped)
         for i in range(1, cpu_count() + 2):
             self._lab = ParallelLab(cores=i)
-            self.assertEqual(self._lab.numberOfCores(), i)
+            self.assertEqual(self._lab.numberOfCores(), min(i, cpu_count()))
 
     @unittest.skipIf(cpu_count() < 2, 'Need multiple cores to check free core selection')
     def testFreeCoresSelection(self):
@@ -75,7 +76,7 @@ class ParallelLabTests(unittest.TestCase):
         rcs = self._lab.results()
         self.assertEqual(len(rcs), 10)
         self.assertCountEqual(list(map(lambda rc: rc[Experiment.RESULTS]['total'], rcs)), range(10))
-    
+
     @unittest.skipIf(cpu_count() < 2, 'Need multiple cores to check parallel execution')
     def testParallel(self):
         '''Test we can run in parallel.'''
