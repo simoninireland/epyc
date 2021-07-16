@@ -20,7 +20,7 @@
 import sys
 from datetime import datetime
 import traceback
-from typing import Set, Dict, Union, List, Any, Final
+from typing import Set, Dict, Union, List, Any
 if sys.version_info >= (3, 8):
     from typing import Final
 else:
