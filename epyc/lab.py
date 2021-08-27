@@ -115,7 +115,7 @@ class Lab(object):
         if k in self._parameters:
             del self._parameters[k]
 
-    def deleteAllParamaters(self):
+    def deleteAllParameters(self):
         '''Delete all parameters from the parameter space.'''
         for k in self.parameters():
             del self[k]

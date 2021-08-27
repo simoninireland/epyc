@@ -49,7 +49,7 @@ creating or selecting a new result set in the :class:`LabNotebook`.
 
 .. automethod:: Lab.deleteParameter
 
-.. automethod:: Lab.deleteParameters
+.. automethod:: Lab.deleteAllParameters
 
 
 Running experiments
