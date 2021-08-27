@@ -107,6 +107,19 @@ class Lab(object):
                 # not iterable, a single value
                 self._parameters[k] = [ r ]
 
+    def deleteParameter(self, k : str):
+        '''Delete a parameter from the parameter space. If the
+        parameter doesn't exist then this is a no-op.
+
+        :param k: the parameter name'''
+        if k in self._parameters:
+            del self._parameters[k]
+
+    def deleteAllParamaters(self):
+        '''Delete all parameters from the parameter space.'''
+        for k in self.parameters():
+            del self[k]
+
     def parameters(self) -> List[str]:
         """Return a list of parameter names.
 
@@ -115,13 +128,11 @@ class Lab(object):
 
     def __len__(self) -> int:
         """The length of an experiment is the total number of data points
-        that will be explored.
+        that will be explored. This is the number of points in the
+        list returned by :meth:`parameterSpace`.
 
         :returns: the length of the experiment"""
-        n = 1
-        for p in self.parameters():
-            n = n * len(self._parameters[p])
-        return n
+        return len(self.parameterSpace())
 
     def __getitem__(self, k : str) -> Any:
         """Access a parameter range using array notation.
@@ -130,12 +141,25 @@ class Lab(object):
         :returns: the parameter range"""
         return self._parameters[k]
 
-    def __setitem__(self, k : str, r : Any) -> Any:
+    def __setitem__(self, k : str, r : Any):
         """Add a parameter using array notation.
 
         :param k: the parameter name
         :param r: the parameter range"""
-        return self.addParameter(k, r)
+        self.addParameter(k, r)
+
+    def __delitem__(self, k : str):
+        '''Delete a parameter using array notation.
+
+        :param k: the key'''
+        self.deleteParameter(k)
+
+    def __contains__(self, k : str) -> bool:
+        '''Test whether the given key is a paramater for the lab.
+
+        :param k: the keys
+        :returns: True if this is a parameter'''
+        return k in self.parameters()
 
     def _crossProduct(self, ls : List[str]) -> List[Dict[str, Any]]:
         """Internal method to generate the cross product of all parameter
@@ -167,6 +191,9 @@ class Lab(object):
     def parameterSpace(self) -> List[Dict[str, Any]]:
         """Return the parameter space of the experiment as a list of dicts,
         with each dict mapping each parameter name to a value.
+
+        This method can be overridden to create other parameter spaces
+        from the given parametrers if required.
 
         :returns: the parameter space as a list of dicts"""
         ps = self.parameters()

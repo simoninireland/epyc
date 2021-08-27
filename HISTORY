@@ -1,3 +1,8 @@
+Version 1.5.1
+
+   - Added the ability to delete parameters from labs, to reset
+     ready for the next experiment.
+
 Version 1.4.2 2021-07-16
 
    - Fixed issue with typing backwards compatibility

@@ -2,7 +2,7 @@
 ====================================================
 
 .. currentmodule:: epyc
-   
+
 .. autoclass:: Lab
 
 
@@ -30,16 +30,26 @@ iterable in Python. Experiments are then conducted on the cross
 product of the dimensions.
 
 .. automethod:: Lab.addParameter
-		
+
 .. automethod:: Lab.parameters
-		
+
 .. automethod:: Lab.parameterSpace
-		
+
 .. automethod:: Lab.__len__
-		
+
 .. automethod:: Lab.__getitem__
-		
+
 .. automethod:: Lab.__setitem__
+
+Parameters can be dropped, either individually or *en masse*, to
+prepare the lab for another experiment. This will often accompany
+creating or selecting a new result set in the :class:`LabNotebook`.
+
+.. automethod:: Lab.__delitem__
+
+.. automethod:: Lab.deleteParameter
+
+.. automethod:: Lab.deleteParameters
 
 
 Running experiments
@@ -49,12 +59,12 @@ Running experiments involves providing a :class:`Experiment` object
 which can then be executed by setting its parameter point (using :meth:`Experiment.set`)
 and then run (by calling :meth:`Experiment.run`) The :class:`Lab`
 co-ordinates the running of the experiment at all points in the lab's
-parameter space. 
+parameter space.
 
 .. automethod:: Lab.runExperiment
-		
+
 .. automethod:: Lab.ready
-		
+
 .. automethod:: Lab.readyFraction
 
 
@@ -66,9 +76,7 @@ underlying :class:`LabNotebook`, or directly as a ``DataFrame`` from
 the ``pandas`` analysis package.
 
 .. automethod:: Lab.notebook
-		
-.. automethod:: Lab.results
-		
-.. automethod:: Lab.dataframe
-		
 
+.. automethod:: Lab.results
+
+.. automethod:: Lab.dataframe
