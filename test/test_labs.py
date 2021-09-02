@@ -1,7 +1,7 @@
 # Tests of sequential lab class
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -18,7 +18,6 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
-
 import unittest
 import numpy
 
@@ -32,7 +31,7 @@ class SampleExperiment(Experiment):
             total = total + param[k]
         return dict(total = total)
 
-    
+
 class NullExperiment(Experiment):
     '''An experiment that just returns the value of its (one)
     parameter as its result.'''
@@ -40,18 +39,18 @@ class NullExperiment(Experiment):
     def do( self, param ):
         k = list(param.keys())[0]
         return dict(result = param[k])
-    
-        
+
+
 class LabTests(unittest.TestCase):
 
     def setUp( self ):
         '''Create a lab in which to perform tests.'''
         self._lab = Lab()
-        
+
     def testParameterOne( self ):
         '''Test that we can set a single parameter.'''
         self._lab['a'] = numpy.arange(0, 100)
-        
+
         self.assertEqual(len(self._lab['a']), len(numpy.arange(0, 100)))
         for i in numpy.arange(0, 100):
             self.assertIn(i, self._lab['a'])
@@ -61,7 +60,7 @@ class LabTests(unittest.TestCase):
         self._lab['a'] = numpy.arange(0, 100)
         self._lab['b'] = numpy.arange(0, 1000)
         self._lab['c'] = numpy.arange(10, 50, 10)
-        
+
         self.assertCountEqual(self._lab['a'], numpy.arange(0, 100))
         self.assertCountEqual(self._lab['b'], numpy.arange(0, 1000))
         self.assertCountEqual(self._lab['c'], numpy.arange(10, 50, 10))
@@ -103,7 +102,7 @@ class LabTests(unittest.TestCase):
         # check that each result corresponds to its parameter
         for p in res:
             self.assertEqual(p[Experiment.PARAMETERS]['a'] + p[Experiment.PARAMETERS]['b'], p[Experiment.RESULTS]['total'])
- 
+
     def testReady(self):
         '''Test we can check readiness correctly.'''
         n = 10
