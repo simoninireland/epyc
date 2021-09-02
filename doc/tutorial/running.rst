@@ -11,10 +11,12 @@ We can now run the entire experiment with one command:
 
     lab.runExperiment(CurveExperiment())
 
-Time will now pass while the experiment is run on the 250 points in the parameter space: 50 points
-along each axis, with the experiment being run with each possible pair of values for each parameter.
+What experiments will be run depends on the lab's :term:`experimental
+design`.  By default labs use a :class:`FactorialDesign` that performs
+an experiment for each combination of parameter values, which in this
+case will have 250 points: 50 points along each axis.
 
-Where are the results? They've been stored into the notebook we associated with the lab, either
-in-memory or in a JSON file on disk.
+Time will now pass until all the experiments are finished.
 
-
+Where are the results? They've been stored into the notebook we
+associated with the lab, either in-memory or in a JSON file on disk.

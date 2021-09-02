@@ -10,6 +10,16 @@ Glossary
       Experiments are run at a point in a multi-dimensional parameter
       space, and should be designed to be repeatable.
 
+   experiment combinators
+      Experiments that wrap-up other, underlying experiments and
+      perform them in some way, perhaps repeating them or summarising
+      or re-writing their results. They allow common experimental
+      patterns to be coded.
+
+   experimental design
+      The way in which a set of parameters is converted into points
+      at which experiments are run.
+
    experimental parameters
       The values used to position an individual experimental run in
       the "space" of all experiments. Each experiment has its own
@@ -31,6 +41,10 @@ Glossary
       An immutable and often persistent store experimental results and
       metadata, inheriting from :class:`LabNotebook`.
 
+   parameter space
+      The set of :term:`experimental parameters` at which experiments
+      will be run. The parameter space is defined by a :class:`Design`,
+
    results dict
       A dict structured according to a particular convention. The dict
       uses three top-level keys, defined by the Experiment class, for
@@ -39,9 +53,3 @@ Glossary
       themselves map to a hash of further values: for some
       experiments, the experimental results key may refer to a list of
       hashes.
-
-   experiment combinators
-      Experiments that wrap-up other, underlying experiments and
-      perform them in some way, perhaps repeating them or summarising
-      or re-writing their results. They allow common experimental
-      patterns to be coded.

@@ -48,16 +48,23 @@ experiment can be repeated and statistically summarised, for example.
 # String written into every persistent notebook file
 PackageContactInfo = 'Created by epyc, computational experiment management for Python <https://pypi.org/project/epyc/>'
 
+# Experiments
 from .experiment import Experiment, ResultsDict
 from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
 
+# Result sets anf notebooks
 from .resultset import ResultSet, ResultSetLockedException, CancelledException, PendingResultException
 from .labnotebook import LabNotebook, ResultsStructureException, NotebookVersionException, LabNotebookLockedException
 from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
 
+# Experimental designs
+from .design import Design, DesignException
+from .standard_designs import FactorialDesign, SingletonDesign
+
+# Labs
 from .lab import Lab
 from .parallellab import ParallelLab
 from .clusterlab import ClusterLab
@@ -65,5 +72,3 @@ from .clusterlab import ClusterLab
 # Late and/or complex initialisation
 Experiment._init_statics()
 ResultSet._init_statics()
-
-

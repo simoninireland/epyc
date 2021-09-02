@@ -34,6 +34,8 @@ SOURCES_CODE = \
 	epyc/experimentcombinator.py \
 	epyc/repeatedexperiment.py \
 	epyc/summaryexperiment.py \
+	epyc/design.py \
+	epyc/standard_designs.py \
 	epyc/lab.py \
 	epyc/clusterlab.py \
 	epyc/labnotebook.py \
@@ -46,6 +48,7 @@ SOURCES_TESTS = \
 	test/test_parameters.py \
 	test/test_repeatedexperiments.py \
 	test/test_summaryexperiments.py \
+	test/test_designs.py \
 	test/test_labs.py \
 	test/test_parallellabs.py \
 	test/test_clusterlabs.py \
@@ -75,7 +78,8 @@ SOURCES_DOCUMENTATION = \
 	doc/tutorial/parameters.rst \
 	doc/tutorial/running.rst \
 	doc/tutorial/results.rst \
-	doc/tutorial/pointcloud.png\
+	doc/tutorial/more.rst \
+	doc/tutorial/pointcloud.png \
 	doc/tutorial/second.rst \
 	doc/tutorial/parallel-concepts.rst \
 	doc/tutorial/unicore-parallel.rst \
@@ -101,6 +105,8 @@ SOURCES_DOCUMENTATION = \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/resultset.rst \
+	doc/design.rst \
+	doc/standard_designs.rst \
 	doc/lab.rst \
 	doc/experimentcombinator.rst \
 	doc/repeatedexperiment.rst \

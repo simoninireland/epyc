@@ -202,8 +202,8 @@ class ClusterLab(Lab):
 
         :param e: the experiment"""
 
-        # create the parameter space
-        space = self.parameterSpace()
+        # create the set of experimental points to run
+        space = self.experiments()
 
         # only proceed if there's work to do
         if len(space) > 0:

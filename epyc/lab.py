@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import LabNotebook, Experiment, ResultsDict
+from epyc import LabNotebook, Experiment, Design, FactorialDesign, ResultsDict
 from pandas import DataFrame                                   # type: ignore
 from typing import Dict, List, Any
 
@@ -30,20 +30,25 @@ class Lab(object):
     experiments locally; sub-classes exist to perform remote parallel
     experiments.
 
-    A :class:`Lab` stores its result in a notebook, an instance of :class:`LabNotebook`.
-    By default the base :class:`Lab` class uses an in-memory notebook, essentially
-    just a dict; sub-classes use persistent notebooks to manage larger
-    sets of experiments.
+    A :class:`Lab` stores its result in a notebook, an instance of
+    :class:`LabNotebook`.  By default the base :class:`Lab` class uses
+    an in-memory notebook, essentially just a dict; sub-classes use
+    persistent notebooks to manage larger sets of experiments.
+
+    Each lab has an associated :class:`Design` that turns a set of
+    parameter ranges into a set of individual "points" of the parameter
+    space at which to perform actual experiments. The default is to
+    use a :class:`FactorialDesign` that performs an experiment for every
+    combination of parameter values. This might be a *lot* of experiments,
+    and other designs can be used to reduce or modify the space.
+
+    :param notebook: the notebook used to store results (defaults to an empty :class:`LabNotebook`)
+    :param design: the experimental design to use (defaults to a :class:`FactorialDesign`)
     """
 
-    def __init__( self, notebook : LabNotebook = None ):
-        """Create an empty lab.
-
-        :param notebook: the notebook used to store results (defaults to an empty :class:`LabNotebook`)"""
-        if notebook is None:
-            self._notebook = LabNotebook()
-        else:
-            self._notebook = notebook
+    def __init__(self, notebook: LabNotebook = None, design: Design = None):
+        self._notebook = notebook if notebook is not None else LabNotebook()
+        self._design = design if design is not None else FactorialDesign()
         self._parameters : Dict[str, Any] = dict()
 
     def notebook(self) -> LabNotebook:
@@ -51,6 +56,12 @@ class Lab(object):
 
         :returns: the notebook"""
         return self._notebook
+
+    def design(self) -> Design:
+        '''Return the experimental design this lab uses.
+
+        :returns: the design'''
+        return self._design
 
 
     # ---------- Protocol ----------
@@ -129,10 +140,10 @@ class Lab(object):
     def __len__(self) -> int:
         """The length of an experiment is the total number of data points
         that will be explored. This is the number of points in the
-        list returned by :meth:`parameterSpace`.
+        list returned by :meth:`experiments`.
 
         :returns: the length of the experiment"""
-        return len(self.parameterSpace())
+        return len(self.experiments())
 
     def __getitem__(self, k : str) -> Any:
         """Access a parameter range using array notation.
@@ -161,46 +172,16 @@ class Lab(object):
         :returns: True if this is a parameter'''
         return k in self.parameters()
 
-    def _crossProduct(self, ls : List[str]) -> List[Dict[str, Any]]:
-        """Internal method to generate the cross product of all parameter
-        values, creating the parameter space for the experiment.
+    def experiments(self) -> List[Dict[str, Any]]:
+        """Return the list of poinmts at which to perform the experiment, as a
+        list of dicts with each dict mapping each parameter name to a
+        value. The structure of the experimental space is defined by the
+        lab's experimental design.
 
-        :param ls: an array of parameter names
-        :returns: list of dicts"""
-        p = ls[0]
-        ds = []
-        if len(ls) == 1:
-            # last parameter, convert range to a dict
-            for i in self._parameters[p]:
-                dp = dict()
-                dp[p] = i
-                ds.append(dp)
-        else:
-            # for other parameters, create a dict combining each value in
-            # the range to a copy of the dict of other parameters
-            ps = self._crossProduct(ls[1:])
-            for i in self._parameters[p]:
-                for d in ps:
-                    dp = d.copy()
-                    dp[p] = i
-                    ds.append(dp)
+        :returns: the parameter space as a list of dicts
 
-        # return the complete parameter space
-        return ds
-
-    def parameterSpace(self) -> List[Dict[str, Any]]:
-        """Return the parameter space of the experiment as a list of dicts,
-        with each dict mapping each parameter name to a value.
-
-        This method can be overridden to create other parameter spaces
-        from the given parametrers if required.
-
-        :returns: the parameter space as a list of dicts"""
-        ps = self.parameters()
-        if len(ps) == 0:
-            return []
-        else:
-            return self._crossProduct(ps)
+        """
+        return self._design.space(self._parameters)
 
 
     # ---------- Running experiments ----------
@@ -212,7 +193,7 @@ class Lab(object):
         :param e: the experiment"""
 
         # create the parameter space
-        ps = self.parameterSpace()
+        ps = self.experiments()
 
         # run the experiment at each point
         nb = self.notebook()

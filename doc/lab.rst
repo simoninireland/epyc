@@ -18,8 +18,8 @@ Lab creation and management
 .. automethod:: Lab.updateResults
 
 
-Parameter space management
---------------------------
+Parameter management
+--------------------
 
 A :class:`Lab` is equipped with a multi-dimensional parameter space
 over which to run experiments, one experiment per point. The
@@ -52,14 +52,29 @@ creating or selecting a new result set in the :class:`LabNotebook`.
 .. automethod:: Lab.deleteAllParameters
 
 
+Building the parameter space
+----------------------------
+
+The parameter ranges defined above need to be translated into "points"
+in the parameter space at which to conduct experiments. This function
+is delegated to the :term:`experimental design`, an instance of
+:class:`Design`, which turns ranges into points. The design is
+provided at construction time: by default a :class:`FactorialDesign`
+is used, and this will be adequate for most use cases..
+
+.. automethod:: Lab.design
+
+.. automethod:: Lab.experiments
+
+
 Running experiments
 -------------------
 
 Running experiments involves providing a :class:`Experiment` object
 which can then be executed by setting its parameter point (using :meth:`Experiment.set`)
 and then run (by calling :meth:`Experiment.run`) The :class:`Lab`
-co-ordinates the running of the experiment at all points in the lab's
-parameter space.
+co-ordinates the running of the experiment at all the points chosen by
+the design.
 
 .. automethod:: Lab.runExperiment
 

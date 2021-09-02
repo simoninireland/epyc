@@ -2,6 +2,8 @@ Version 1.5.1
 
    - Added the ability to delete parameters from labs, to reset
      ready for the next experiment.
+   - Tests on updating parameters from setrUp(), with notes
+   - Refactored experimental designs out of the lab classes
 
 Version 1.4.2 2021-07-16
 

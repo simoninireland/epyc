@@ -88,8 +88,8 @@ class ParallelLab(Lab):
 
         :param e: the experiment"""
 
-        # create the parameter space
-        ps = self.parameterSpace()
+        # create the set of experimental points to run
+        ps = self.experiments()
         nps = len(ps)
 
         # only proceed if there's work to do

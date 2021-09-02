@@ -6,7 +6,7 @@ API reference
 Core classes
 ------------
 
-.. toctree ::
+.. toctree::
    :maxdepth: 2
 
    experiment
@@ -17,7 +17,7 @@ Core classes
 Persistent storage
 ------------------
 
-.. toctree ::
+.. toctree::
    :maxdepth: 2
 
    jsonlabnotebook
@@ -26,7 +26,7 @@ Persistent storage
 Extended functionality
 ----------------------
 
-.. toctree ::
+.. toctree::
    :maxdepth: 2
 
    experimentcombinator
@@ -36,16 +36,25 @@ Extended functionality
 Parallel experiments
 --------------------
 
-.. toctree ::
+.. toctree::
    :maxdepth: 2
 
    parallellab
    clusterlab
 
+Experimental designs
+--------------------
+
+.. toctree::
+   :maxdepth: 2
+
+   design
+   standard_designs
+
 Exceptions
 ----------
 
-.. toctree ::
+.. toctree::
    :maxdepth: 2
 
    exceptions
