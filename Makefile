@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.4.2
+VERSION = 1.5.1
 
 
 # ----- Sources -----
@@ -43,6 +43,7 @@ SOURCES_CODE = \
 SOURCES_TESTS = \
 	test/__init__.py \
 	test/test_experiments.py \
+	test/test_parameters.py \
 	test/test_repeatedexperiments.py \
 	test/test_summaryexperiments.py \
 	test/test_labs.py \
@@ -94,6 +95,7 @@ SOURCES_DOCUMENTATION = \
 	doc/tutorial/here-and-there.rst \
 	doc/cookbook.rst \
 	doc/cookbook/epyc-venv.rst \
+	doc/cookbook/advanced-parameters.rst \
 	doc/cookbook/disconnected-usage.rst \
 	doc/cookbook/metadata.rst \
 	doc/reference.rst \

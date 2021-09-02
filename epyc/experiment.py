@@ -162,12 +162,12 @@ class Experiment(object):
 
         An experiment can return two types of results:
 
-        - a dict mapping names to values for experimental results a
-        - list of :term:`results dict`s, which represent fully-formed
-          experiments
+        - a dict mapping names to values for experimental results; or
+        - a :term:`results dict` list, each of which represents a
+          fully-formed experiment
 
-        params: a dict of parameters for the experiment
-        returns: the experimental results
+        :param params: a dict of parameters for the experiment
+        :returns: the experimental results
 
         """
         return dict()

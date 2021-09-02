@@ -13,6 +13,6 @@ This section is a work-in-progress cookbook of using ``epyc`` in practice.
     :maxdepth: 2
 
     cookbook/epyc-venv.rst
+    cookbook/advanced-parameters.rst
     cookbook/disconnected-usage.rst
     cookbook/metadata.rst
-

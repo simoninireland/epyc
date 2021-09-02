@@ -15,16 +15,17 @@ An ``epyc`` experiment goes through the following lifecycle stages:
 5. **Teardown**. The experiment is cleaned up after the experimental run.
 6. **Deconfiguration**. The experiment is tidied up ready to receive new parameters.
 
-Step 1 happens once, when the experiment is created. Steps 2 and 6 happen whenever
-the parameters to the experiment are changed, and are the place to configure
-any data that will be used for all experimental runs with these parameters.
-Steps 3, 4, and 5 happen in sequence for every experimental run with a
-given parameter set. Steps 3 and 5 are the place to set up and tear down data
-needed for a single run. Step 4 is the place to describe what happens in a
-single experimental run, using the parameter-dependent (configured) and run-dependent
-(set up) data from steps 2 and 3.
+Step 1 happens once, when the experiment is created. Steps 2 and 6
+happen whenever the :term:`experimental parameters` of the experiment
+are changed, and are the place to configure any data that will be used
+for all experimental runs with these parameters.  Steps 3, 4, and 5
+happen in sequence for every experimental run with a given parameter
+set. Steps 3 and 5 are the place to set up and tear down data needed
+for a single run. Step 4 is the place to describe what happens in a
+single experimental run, using the parameter-dependent (configured)
+and run-dependent (set up) data from steps 2 and 3.
 
-.. note ::
+.. note::
 
    The difference between confiuration and set-up is that configuration happens
    when parameters change while set-up happens before every individual run.
@@ -53,22 +54,22 @@ Notice that setting new parameters using :meth:`Experiment.set` will trigger a c
 :meth:`Experiment.deconfigure` (if the experiment had already been configured) and then
 a call to :meth:`Experiment.configure` to perform any configuration.
 
-Similar, running the experiment by calling :meth:`Experiment.run` will call :meth:`Experiment.setUp`,
-:meth:`Experiment.do`, and :meth:`Experiment.tearDown`, in that order. 
+Similarly, running the experiment by calling :meth:`Experiment.run` will call :meth:`Experiment.setUp`,
+:meth:`Experiment.do`, and :meth:`Experiment.tearDown`, in that order.
 
 There are a few things to notice about this process. Firstly, there are two sets of "bracketing" methods
 that are called for each parameter change (:meth:`Experiment.configure` and :meth:`Experiment.deconfigure`)
 and for each individual run (:meth:`Experiment.setUp` and :meth:`Experiment.tearDown`).
 These methods can be used to create a predictable environment for the :meth:`Experiment.do` to operate in.
 
-.. note ::
+.. note::
 
    If you write unit tests with your code -- and you should, of course -- then :meth:`Experiment.setUp` and
    :meth:`Experiment.tearDown` have essentially the same purpose as ``unittest.TestCase.setUp`` and
    ``unittest.TestCase.tearDown``.)
 
 Secondly, it is often the case that changing parameters requires creating complex data structures
-which can then be reused for every experimental run with these parameters. 
+which can then be reused for every experimental run with these parameters.
 Separating parameter changes from individual runs is an opportunity to separate these
 phases and minimise re-doing expensive construction operations.
 For example, you might create a complex random dataset in :meth:`Experiment.configure` using some parameter
@@ -82,6 +83,3 @@ you'll avoid any unexpected interactions.
 
 Finally, whenever you override any of these methods (apart from :meth:`Experiment.do`), be sure to call the
 base method first. There are some global steps that need to happen for all experiments.
-
-
-
