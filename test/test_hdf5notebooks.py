@@ -729,6 +729,20 @@ class HDF5LabNotebookTests(unittest.TestCase):
         self.assertEqual(nb2.currentTag(), 'third')
         self.assertCountEqual(nb2.resultSets(), ['third', LabNotebook.DEFAULT_RESULTSET])
 
+    def testArray(self):
+        '''Test we can add arrays as parameters.'''
+        params = dict()
+        params['k'] = 100
+
+        with HDF5LabNotebook(self._fn, create=True).open() as nb:
+            e = SampleExperiment2()
+            rc = e.set(params).run()
+            nb.addResult(rc)
+
+        with HDF5LabNotebook(self._fn).open() as nb:
+            rc = nb.resultsFor(params)[0]
+            self.assertCountEqual(rc[Experiment.RESULTS]['list'], [100] * 100)
+
 
 if __name__ == '__main__':
     unittest.main()
