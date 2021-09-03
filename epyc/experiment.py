@@ -307,7 +307,7 @@ class Experiment(object):
         False if the experiment hasn't been run, or if it's been run
         and failed.
 
-        :returns: ``True`` if the experiment has been run successfully
+        :returns: True if the experiment has been run successfully
 
         """
         if self.STATUS in self.metadata().keys():
