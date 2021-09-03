@@ -65,7 +65,7 @@ to let ``epyc`` use it:
 
 There are pros and cons to each approach. For the :class:`ParallelLab` we have:
 
-- it's very simple to start, requiring no extra software to manage;
+- it's very simple to start, requiring no extra software to manage; but
 - you only get (at most) as many cores as you have on your local machine; and
 - experiments run *synchronously*, meaning the program that runs them is locked
   out until they complete (this is especially inconvenient when using
@@ -80,5 +80,3 @@ For the :class:`ClusterLab`:
 As a rule of thumb, a suite of experiments likely to take hours or days will be
 better run on a cluster; shorter campaigns can use local parallelism to get a useful
 speed-up.
-
-
