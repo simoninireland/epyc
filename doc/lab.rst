@@ -33,8 +33,6 @@ product of the dimensions.
 
 .. automethod:: Lab.parameters
 
-.. automethod:: Lab.parameterSpace
-
 .. automethod:: Lab.__len__
 
 .. automethod:: Lab.__getitem__

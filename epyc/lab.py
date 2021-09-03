@@ -19,7 +19,7 @@
 
 from epyc import LabNotebook, Experiment, Design, FactorialDesign, ResultsDict
 from pandas import DataFrame                                   # type: ignore
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any
 
 
 class Lab(object):
@@ -172,34 +172,35 @@ class Lab(object):
         :returns: True if this is a parameter'''
         return k in self.parameters()
 
-    def experiments(self) -> List[Dict[str, Any]]:
-        """Return the list of poinmts at which to perform the experiment, as a
-        list of dicts with each dict mapping each parameter name to a
-        value. The structure of the experimental space is defined by the
-        lab's experimental design.
+    def experiments(self, e: Experiment) -> List[Tuple[Experiment, Dict[str, Any]]]:
+        """Return the experiments and the points at which they should be run,
+        as a list of experiments and experimental parameter dicts. The
+        structure of the experimental space is defined by the lab's
+        experimental design, which may also change the experiment to be run.
 
+        :param e: the experiment
         :returns: the parameter space as a list of dicts
 
         """
-        return self._design.space(self._parameters)
+        return self._design.experiments(e, self._parameters)
 
 
     # ---------- Running experiments ----------
 
-    def runExperiment(self, e : Experiment):
+    def runExperiment(self, e: Experiment):
         """Run an experiment over all the points in the parameter space.
         The results will be stored in the notebook.
 
         :param e: the experiment"""
 
-        # create the parameter space
-        ps = self.experiments()
+        # create the experimental parameter space
+        eps = self.experiments(e)
 
         # run the experiment at each point
         nb = self.notebook()
-        for p in ps:
+        for (ep, p) in eps:
             print(f"Running {p}")
-            res = e.set(p).run()
+            res = ep.set(p).run()
             nb.addResult(res)
 
         # commit the results

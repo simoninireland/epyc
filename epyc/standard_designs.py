@@ -17,8 +17,9 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from typing import Dict, List, Any
-from epyc import Design, DesignException
+from typing import Dict, List, Tuple, Any
+import numpy
+from epyc import Design, DesignException, Experiment
 
 
 class FactorialDesign(Design):
@@ -41,29 +42,36 @@ class FactorialDesign(Design):
     - {a=2, b=3}
     - {a=2, b=4}
 
+    at which it would run the given experiment. The experiments are
+    returned in random order.
+
     '''
 
-    def space(self, ps: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> List[Tuple[Experiment, Dict[str, Any]]]:
         '''Form the cross-product of all parameters.
 
         :param ps: a dict of parameter values
-        :returns: a list of dicts of points in the parameter space'''
+        :returns: a list of experiements and their dict of parameters'''
         ds = []
         for p in ps.keys():
             rs = ps[p]
             dsprime = []
             for r in rs:
                 if len(ds) > 0:
-                    for e in ds:
-                        eprime = e.copy()
+                    for (_, dp) in ds:
+                        eprime = dp.copy()
                         eprime[p] = r
-                        dsprime.append(eprime)
+                        dsprime.append((e, eprime))
                 else:
                     eprime = dict()
                     eprime[p] = r
-                    dsprime.append(eprime)
+                    dsprime.append((e, eprime))
             if len(dsprime) > 0:
                 ds = dsprime
+
+        # randomise the order of the experiments
+        numpy.random.shuffle(ds)
+
         return ds
 
 
@@ -96,12 +104,12 @@ class SingletonDesign(Design):
     - {a=1, b=4}
     '''
 
-    def space(self, ps: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> List[Tuple[Experiment, Dict[str, Any]]]:
         '''Form experimental points from corresponding values in
         the parameter ranges, extending any singletons.
 
         :param ps: a dict of parameter values
-        :returns: a list of dicts of points in the parameter space'''
+        :returns: a list of experiements and their dict of parameters'''
 
         # check parameter ranges are all equal or 1
         ls = list(map(len, [vs for vs in ps.values()]))
@@ -130,11 +138,11 @@ class SingletonDesign(Design):
 
         ds = []
         for i in range(l):
-            e = dict()
+            eprime = dict()
             for p in ps.keys():
                 if p in ones:
-                    e[p] = ps[p][0]
+                    eprime[p] = ps[p][0]
                 else:
-                    e[p] = ps[p][i]
-            ds.append(e)
+                    eprime[p] = ps[p][i]
+            ds.append((e, eprime))
         return ds

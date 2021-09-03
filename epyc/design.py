@@ -17,7 +17,8 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from typing import Dict, List, Any
+from typing import Dict, List, Tuple, Any
+from epyc import Experiment
 
 
 class DesignException(Exception):
@@ -48,11 +49,12 @@ class Design:
 
     '''
 
-    def space(self, ps: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> List[Tuple[Experiment, Dict[str, Any]]]:
         '''Convert a mapping from parameter name to list of values into
-        a list of mappings from parameter names to single values, according to the
-        requirements of the design. This method must be overridden by sub-classes.
+        a list of mappings from parameter names to single values paired with
+        experiment to run at that point, according to the requirements of the
+        design. This method must be overridden by sub-classes.
 
         :param ps: a dict of parameter values
-        :returns: a list of dicts of points in the parameter space'''
+        :returns: a list of experiements and their dict of parameters'''
         raise NotImplementedError('parameterSpace() must be overridden by sub-classes')

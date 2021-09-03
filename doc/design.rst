@@ -6,7 +6,7 @@
 .. autoclass:: Design
 
 
-The space of experiments
-------------------------
+Creating experiments
+--------------------
 
-.. automethod:: Design.space
+.. automethod:: Design.experiments

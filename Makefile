@@ -102,6 +102,7 @@ SOURCES_DOCUMENTATION = \
 	doc/cookbook/advanced-parameters.rst \
 	doc/cookbook/disconnected-usage.rst \
 	doc/cookbook/metadata.rst \
+	doc/cookbook/advanced-designs.rst \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/resultset.rst \

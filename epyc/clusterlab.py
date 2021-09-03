@@ -202,18 +202,12 @@ class ClusterLab(Lab):
 
         :param e: the experiment"""
 
-        # create the set of experimental points to run
-        space = self.experiments()
+        # create the experimental parameter space
+        eps = self.experiments(e)
 
         # only proceed if there's work to do
-        if len(space) > 0:
+        if len(eps) > 0:
             nb = self.notebook()
-
-            # randomise the order of the parameter space so that we evaluate across
-            # the space as we go along to try to make intermediate (incomplete) result
-            # sets more representative of the overall result set
-            ps = space.copy()
-            numpy.random.shuffle(ps)
 
             try:
                 # connect to the cluster
@@ -225,8 +219,8 @@ class ClusterLab(Lab):
 
                 # submit an experiment at each point in the parameter space to the cluster
                 try:
-                    for p in ps:
-                        rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (e, p))
+                    for (ep, p) in eps:
+                        rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (ep, p))
                         ids = rc.msg_ids
                         #print('Started {ids}'.format(ids=ids))
                         nb.addPendingResult(p, ids[0])
