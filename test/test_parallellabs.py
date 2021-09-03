@@ -18,7 +18,6 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
-
 import unittest
 from multiprocessing import cpu_count
 
@@ -31,6 +30,14 @@ class SampleExperiment(Experiment):
         for k in param:
             total = total + param[k]
         return dict(total = total)
+
+
+class SampleExperiment1(SampleExperiment):
+    '''An experiment that adds a parameter.'''
+
+    def setUp(self, params):
+        super().setUp(params)
+        params['additional'] = 10
 
 
 class ParallelLabTests(unittest.TestCase):
@@ -88,6 +95,20 @@ class ParallelLabTests(unittest.TestCase):
         rcs = self._lab.results()
         self.assertEqual(len(rcs), 10)
         self.assertCountEqual(list(map(lambda rc: rc[Experiment.RESULTS]['total'], rcs)), range(10))
+
+    def testAddParameters(self):
+        '''Test that adding experimental parameters works.'''
+        self._lab = ParallelLab()
+        self._lab['k'] = range(10)
+        self._lab.runExperiment(SampleExperiment1())
+
+        # check what we got back
+        rcs = self._lab.results()
+        self.assertEqual(len(rcs), 10)
+        for rc in rcs:
+            self.assertIn('additional', rc[Experiment.PARAMETERS])
+        self.assertCountEqual(list(map(lambda rc: rc[Experiment.RESULTS]['total'], rcs)),
+                              [i + 10 for i in range(10)])
 
 
 if __name__ == '__main__':

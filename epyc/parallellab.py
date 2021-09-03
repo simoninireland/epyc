@@ -88,9 +88,9 @@ class ParallelLab(Lab):
 
         :param e: the experiment"""
 
-        # create the set of experimental points to run
-        ps = self.experiments()
-        nps = len(ps)
+        # create the experimental parameter space
+        eps = self.experiments(e)
+        nps = len(eps)
 
         # only proceed if there's work to do
         if nps > 0:
@@ -99,9 +99,6 @@ class ParallelLab(Lab):
             # run the experiments
             try:
                 with Parallel(n_jobs=self.numberOfCores()) as processes:
-                    # form experiments with parameters
-                    eps = zip([e] * nps, ps)
-
                     # run over the chunk
                     rcs = processes(delayed(lambda ep: ep[0].set(ep[1]).run())(ep) for ep in eps)
 
