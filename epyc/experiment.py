@@ -121,7 +121,7 @@ class Experiment(object):
 
     # ---------- Configuration ----------
 
-    def set(self, params: Dict[str, Any]) -> 'Experiment':
+    def set(self, params: ExperimentalParameters) -> 'Experiment':
         """Set the parameters for the experiment, returning the
         now-configured experiment.
 
@@ -132,7 +132,7 @@ class Experiment(object):
         self.configure(params)
         return self
 
-    def configure(self, params: Dict[str, Any]):
+    def configure(self, params: ExperimentalParameters):
         """Configure the experiment for the given parameters.
         The default stores the parameters for later use. Be sure
         to call this base method when overriding.
@@ -149,7 +149,7 @@ class Experiment(object):
 
     # ---------- Running the experiment ----------
 
-    def setUp(self, params: Dict[str, Any]):
+    def setUp(self, params: ExperimentalParameters):
         """Set up the experiment. Default does nothing.
 
         :param params: the parameters of the experiment"""
@@ -159,7 +159,7 @@ class Experiment(object):
         """Tear down the experiment. Default does nothing."""
         pass
 
-    def do(self, params: Dict[str, Any]) -> Union[Dict[str, Any], List[ResultsDict]]:
+    def do(self, params: ExperimentalParameters) -> Union[Dict[str, Any], List[ResultsDict]]:
         """Do the body of the experiment. This should be overridden by
         sub-classes. Default does nothing.
 
@@ -175,7 +175,7 @@ class Experiment(object):
         """
         return dict()
 
-    def report(self, params: Dict[str, Any], meta: Dict[str, Any], res: Union[Dict[str, Any], List[ResultsDict]]) -> ResultsDict:
+    def report(self, params: ExperimentalParameters, meta: Dict[str, Any], res: Union[Dict[str, Any], List[ResultsDict]]) -> ResultsDict:
         """Return a properly-structured dict of results. The default returns a
         dict with results keyed by :attr:`Experiment.RESULTS`, the
         data point in the parameter space keyed by

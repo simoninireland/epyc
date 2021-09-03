@@ -21,7 +21,7 @@ created using a static method.
 
 .. automethod:: Experiment.resultsdict
 
-The dict has three top-level keys:
+The ``ResultsDict`` type is an alias for this structure. The dict has three top-level keys:
 
 .. autoattribute:: Experiment.PARAMETERS
    :annotation:
