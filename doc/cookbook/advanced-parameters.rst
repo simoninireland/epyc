@@ -47,3 +47,6 @@ to :meth:`Experiment.setUp`:
 
 This change to the dict of experimental parameters will be stored with
 the rest of the parameters of the experiment.
+
+It's probably only sensible to *add* parameters in this way, not to
+delete or change them.
