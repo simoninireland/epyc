@@ -43,10 +43,14 @@ class Design:
     topic in real-world experiments, and can be applied to
     computational experiments as well.
 
-    A design in `epyc` converts a set of :term:`experimental
+    A design in ``epyc`` converts a set of :term:`experimental
     parameters` into ann :term:`experimental configuration`, a list
     consisting of pairs of an experiment to run and the parameters at
     which to run it.
+
+    A design must be able to cope with being passed None as an
+    experiment, and should return None for all the experiments in the
+    configuration: this allows for pre-checks to be performed.
 
     A design is associated with each :class:`Lab`. By default the standard
     :class:`FactorialDesign` is used, and no further action is needed. Other
