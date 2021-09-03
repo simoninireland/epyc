@@ -16,8 +16,8 @@ Creating the results dict
 --------------------------
 
 The :term:`results dict` is the structure returned from running an
-:class:`Experiment`. They are simply nested Python dicts which can
-be created using a class method.
+:class:`Experiment`. They are simply nested Python dicts which can be
+created using a static method.
 
 .. automethod:: Experiment.resultsdict
 
