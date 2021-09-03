@@ -50,7 +50,7 @@ and other structuring tasks.
 PackageContactInfo = 'Created by epyc, computational experiment management for Python <https://pypi.org/project/epyc/>'
 
 # Experiments
-from .experiment import Experiment, ResultsDict
+from .experiment import Experiment, ResultsDict, ExperimentalParameters
 from .experimentcombinator import ExperimentCombinator
 from .repeatedexperiment import RepeatedExperiment
 from .summaryexperiment import SummaryExperiment
@@ -62,7 +62,7 @@ from .jsonlabnotebook import JSONLabNotebook
 from .hdf5labnotebook import HDF5LabNotebook
 
 # Experimental designs
-from .design import Design, DesignException
+from .design import Design, ExperimentalConfiguration, DesignException
 from .standard_designs import FactorialDesign, SingletonDesign
 
 # Labs

@@ -21,6 +21,10 @@ from typing import Dict, List, Tuple, Any
 from epyc import Experiment
 
 
+# Type alias for sets of experiments
+ExperimentalConfiguration = List[Tuple[Experiment, Dict[str, Any]]]    #: Type of a configuration of experiments.
+
+
 class DesignException(Exception):
     '''An exception raised whenever a set of parameter ranges can't
     be used as the basis for a design.
@@ -39,9 +43,10 @@ class Design:
     topic in real-world experiments, and can be applied to
     computational experiments as well.
 
-    A design in `epyc` converts a set of :term:`experimental parameters` into
-    a :term:`parameter space`, the set of combinations of parameters at which
-    individual experimental runs will happen.
+    A design in `epyc` converts a set of :term:`experimental
+    parameters` into ann :term:`experimental configuration`, a list
+    consisting of pairs of an experiment to run and the parameters at
+    which to run it.
 
     A design is associated with each :class:`Lab`. By default the standard
     :class:`FactorialDesign` is used, and no further action is needed. Other
@@ -49,12 +54,12 @@ class Design:
 
     '''
 
-    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> List[Tuple[Experiment, Dict[str, Any]]]:
+    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> ExperimentalConfiguration:
         '''Convert a mapping from parameter name to list of values into
         a list of mappings from parameter names to single values paired with
         experiment to run at that point, according to the requirements of the
         design. This method must be overridden by sub-classes.
 
         :param ps: a dict of parameter values
-        :returns: a list of experiements and their dict of parameters'''
+        :returns: an experimental configuration'''
         raise NotImplementedError('parameterSpace() must be overridden by sub-classes')

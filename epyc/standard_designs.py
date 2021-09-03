@@ -19,7 +19,7 @@
 
 from typing import Dict, List, Tuple, Any
 import numpy
-from epyc import Design, DesignException, Experiment
+from epyc import Design, DesignException, Experiment, ExperimentalConfiguration
 
 
 class FactorialDesign(Design):
@@ -47,11 +47,11 @@ class FactorialDesign(Design):
 
     '''
 
-    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> List[Tuple[Experiment, Dict[str, Any]]]:
+    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> ExperimentalConfiguration:
         '''Form the cross-product of all parameters.
 
         :param ps: a dict of parameter values
-        :returns: a list of experiements and their dict of parameters'''
+        :returns: an experimental configuration'''
         ds = []
         for p in ps.keys():
             rs = ps[p]
@@ -104,12 +104,12 @@ class SingletonDesign(Design):
     - {a=1, b=4}
     '''
 
-    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> List[Tuple[Experiment, Dict[str, Any]]]:
+    def experiments(self, e: Experiment, ps: Dict[str, Any]) -> ExperimentalConfiguration:
         '''Form experimental points from corresponding values in
         the parameter ranges, extending any singletons.
 
         :param ps: a dict of parameter values
-        :returns: a list of experiements and their dict of parameters'''
+        :returns: an experimental configuration'''
 
         # check parameter ranges are all equal or 1
         ls = list(map(len, [vs for vs in ps.values()]))

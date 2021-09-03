@@ -27,8 +27,11 @@ else:
     # backwards compatibility with Python35, Python36, and Python37
     from typing_extensions import Final
 
-# The type of results dicts
+
+# Type aliases
 ResultsDict = Dict[str, Dict[str, Any]]     #: Type of results dicts.
+ExperimentalParameters = Dict[str, Any]     #: Type of experimental parameter dicts.
+
 
 class Experiment(object):
     """Base class for an :term:`experiment` conducted in a :term:`lab`.

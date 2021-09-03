@@ -17,7 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import LabNotebook, Experiment, Design, FactorialDesign, ResultsDict
+from epyc import LabNotebook, Experiment, Design, FactorialDesign, ResultsDict, ExperimentalConfiguration
 from pandas import DataFrame                                   # type: ignore
 from typing import Dict, List, Tuple, Any
 
@@ -172,14 +172,15 @@ class Lab(object):
         :returns: True if this is a parameter'''
         return k in self.parameters()
 
-    def experiments(self, e: Experiment) -> List[Tuple[Experiment, Dict[str, Any]]]:
-        """Return the experiments and the points at which they should be run,
-        as a list of experiments and experimental parameter dicts. The
+    def experiments(self, e: Experiment) -> ExperimentalConfiguration:
+        """Return the :term:`experimental configuration`, a list consisting of
+        experiments and the points at which they should be run. The
         structure of the experimental space is defined by the lab's
-        experimental design, which may also change the experiment to be run.
+        experimental design, which may also change the experiment to
+        be run.
 
         :param e: the experiment
-        :returns: the parameter space as a list of dicts
+        :returns: an experimental configuration
 
         """
         return self._design.experiments(e, self._parameters)

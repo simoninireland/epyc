@@ -16,6 +16,10 @@ Glossary
       or re-writing their results. They allow common experimental
       patterns to be coded.
 
+   experimental configuration
+      A list of pairs of an experiment and the parameters at which it
+      will be run, created according to an :term:`experimental design`.
+
    experimental design
       The way in which a set of parameters is converted into points
       at which experiments are run.
