@@ -9,6 +9,8 @@ epyc/experiment.py
 epyc/experimentcombinator.py
 epyc/repeatedexperiment.py
 epyc/summaryexperiment.py
+epyc/design.py
+epyc/standard_designs.py
 epyc/lab.py
 epyc/clusterlab.py
 epyc/labnotebook.py
