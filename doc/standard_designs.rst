@@ -15,9 +15,9 @@ add more to reflect experiences in doing a wider set of experiments.
 .. automethod:: FactorialDesign.experiments
 
 
-:class:`SingletonDesign`: Corresponding parameters combined
+:class:`PointwiseDesign`: Corresponding parameters combined
 -----------------------------------------------------------
 
-.. autoclass:: SingletonDesign
+.. autoclass:: PointwiseDesign
 
-.. automethod:: SingletonDesign.experiments
+.. automethod:: PointwiseDesign.experiments
