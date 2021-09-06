@@ -139,11 +139,11 @@ class Lab(object):
 
     def __len__(self) -> int:
         """The length of an experiment is the total number of data points
-        that will be explored. This is the number of points in the
-        list returned by :meth:`experiments`.
+        that will be explored. This is the length of the experimental
+        configuration returned by :meth:`experiments`.
 
-        :returns: the length of the experiment"""
-        return len(self.experiments())
+        :returns: the number of experimental runs"""
+        return len(self.experiments(None))
 
     def __getitem__(self, k : str) -> Any:
         """Access a parameter range using array notation.
@@ -200,7 +200,7 @@ class Lab(object):
         # run the experiment at each point
         nb = self.notebook()
         for (ep, p) in eps:
-            print(f"Running {p}")
+            #print(f"Running {p}")
             res = ep.set(p).run()
             nb.addResult(res)
 
