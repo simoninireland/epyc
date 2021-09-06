@@ -72,13 +72,13 @@ the [Jupyter](https://jupyter.org/) ecosystem, allowing notebook-based
 experimental protocols to still use compute clusters.
 
 Experimental design is a neglected feature of computational science,
-despite its strong presence in traditional settings. The choice of
-design translates an experiment and a space of possible parameters
-into a collection of experimental runs at selected points in that
-parameter space. Typically choices are to use every combination of
-parameters (a factorial design) or to take corresponding values from
-each parameter range (a pointwise design): other designs can easily be
-added.
+despite its strong presence in traditional settings
+[@DesignComparativeExperiments]. The choice of design translates an
+experiment and a space of possible parameters into a collection of
+experimental runs at selected points in that parameter
+space. Typically choices are to use every combination of parameters (a
+factorial design) or to take corresponding values from each parameter
+range (a pointwise design): other designs can easily be added.
 
 ``epyc`` defines a lifecycle for experiments through which they are
 configured to their parameters, set-up, run, and torn-down, before
