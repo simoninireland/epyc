@@ -63,7 +63,7 @@ from .hdf5labnotebook import HDF5LabNotebook
 
 # Experimental designs
 from .design import Design, ExperimentalConfiguration, DesignException
-from .standard_designs import FactorialDesign, SingletonDesign
+from .standard_designs import FactorialDesign, PointwiseDesign
 
 # Labs
 from .lab import Lab

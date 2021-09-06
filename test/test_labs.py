@@ -47,6 +47,10 @@ class LabTests(unittest.TestCase):
         '''Create a lab in which to perform tests.'''
         self._lab = Lab()
 
+    def testDefaultDesign(self):
+        '''Test the default design is a factorial design.'''
+        self.assertTrue(isinstance(self._lab.design(), FactorialDesign))
+
     def testParameterOne( self ):
         '''Test that we can set a single parameter.'''
         self._lab['a'] = numpy.arange(0, 100)
@@ -143,6 +147,47 @@ class LabTests(unittest.TestCase):
         res = self._lab.results()
         self.assertEqual(len(res), 1)
         self.assertEqual(res[0][Experiment.RESULTS]['result'], v)
+
+    def testContains(self):
+        '''Test the contains operator.'''
+        self._lab['a'] = 10
+        self._lab['b'] = range(10)
+        self.assertIn('a', self._lab)
+        self.assertIn('b', self._lab)
+        del self._lab['a']
+        self.assertNotIn('a', self._lab)
+        self.assertIn('b', self._lab)
+
+    def testDeletion(self):
+        '''Test we can delete parameters.'''
+        self.assertCountEqual(self._lab.parameters(), [])
+
+        # delete one
+        self._lab['a'] = 10
+        self._lab['b'] = range(10)
+        self.assertCountEqual(self._lab.parameters(), ['a', 'b'])
+        del self._lab['a']
+        self.assertCountEqual(self._lab.parameters(), ['b'])
+
+        # delete all
+        self._lab['c'] = range(10)
+        self._lab.deleteAllParameters()
+        self.assertCountEqual(self._lab.parameters(), [])
+
+    def testLength(self):
+        '''Test lengths of the various designs.'''
+
+        # under a factorial design
+        self._lab = Lab(design=FactorialDesign())
+        self._lab['a'] = range(10)
+        self._lab['b'] = range(20)
+        self.assertEqual(len(self._lab), len(self._lab['a']) * len(self._lab['b']))
+
+        # under a pointwise design
+        self._lab = Lab(design=PointwiseDesign())
+        self._lab['a'] = range(10)
+        self._lab['b'] = range(10)
+        self.assertEqual(len(self._lab), len(self._lab['a']))
 
 
 if __name__ == '__main__':

@@ -107,6 +107,16 @@ class SampleExperiment8(Experiment):
         res.append(rc)
         return res
 
+class SampleExperiment9(Experiment):
+    '''An experiment that fails in its experiment and then also its tear-down.'''
+
+    def do(self, params):
+        raise Exception('Should be caught')
+
+    def tearDown(self):
+        raise Exception('Should be ignored')
+
+
 class ExperimentTests(unittest.TestCase):
 
     def testNoResults( self ):
@@ -233,6 +243,22 @@ class ExperimentTests(unittest.TestCase):
 
         with self.assertRaises(Exception):
             rc = e.set(params).run(fatal=True)
+
+    def testCatchingTeardownExceptions(self):
+        '''Test we catch (and ignore) exceptions in tearDown().'''
+        e = SampleExperiment9()
+        params = dict()
+        e.set(params).run()
+        self.assertFalse(e.success())
+
+    def testResults(self):
+        '''Test we get a plausible results dict.'''
+        e = SampleExperiment3()
+        params = dict(a=1, b=2, c='hello world')
+        e.set(params).run()
+        res = e.results()
+        self.assertCountEqual(res.keys(), [Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS])
+        self.assertCountEqual(res[Experiment.PARAMETERS].keys(), params.keys())
 
 
 if __name__ == '__main__':

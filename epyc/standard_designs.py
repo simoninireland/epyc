@@ -75,7 +75,7 @@ class FactorialDesign(Design):
         return ds
 
 
-class SingletonDesign(Design):
+class PointwiseDesign(Design):
     '''A design whose space is the sequence of values taken from the range
     of each parameter. If the lab was set up with the following parameters:
 
