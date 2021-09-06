@@ -133,16 +133,16 @@ class ResultSet(object):
         if description is None:
             description = "Results collected on {d}".format(d=datetime.now())
 
-        self._description : str = description                  # free text description
-        self._attributes : Dict[str, Any] = dict()             # attributes
-        self._names : Dict[str, Optional[List[str]]] = dict()  # dict of names from the results dicts
+        self._description: str = description                   # free text description
+        self._attributes: Dict[str, Any] = dict()              # attributes
+        self._names: Dict[str, Optional[List[str]]] = dict()   # dict of names from the results dicts
         self._names[Experiment.METADATA] = None
         self._names[Experiment.PARAMETERS] = None
         self._names[Experiment.RESULTS] = None
-        self._results : DataFrame = DataFrame()                # experimental results
-        self._dtype : Optional[numpy.dtype] = None             # experimental results dtype
-        self._pending : DataFrame = DataFrame()                # pending results
-        self._pendingdtype : Optional[numpy.dtype] = None      # pending results dtype
+        self._results: DataFrame = DataFrame()                 # experimental results
+        self._dtype: Optional[numpy.dtype] = None              # experimental results dtype
+        self._pending: DataFrame = DataFrame()                 # pending results
+        self._pendingdtype: Optional[numpy.dtype] = None       # pending results dtype
         self._dirty: bool = False                              # (pending) results need persisting
         self._typedirty: bool  = False                         # structure of results has changed
         self._locked : bool = False                            # locked to further results
