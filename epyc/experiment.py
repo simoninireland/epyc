@@ -321,7 +321,7 @@ class Experiment(object):
         will be an exception and traceback information stored in the
         metadata. It will be False if the experiment hasn't been run.
 
-        :returns: ``True`` if the experiment has failed
+        :returns: True if the experiment has failed
 
         '''
         if self.STATUS not in self.metadata().keys():

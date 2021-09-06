@@ -189,6 +189,7 @@ RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 RUN_CREATE_PROFILE = $(IPYTHON) profile create --parallel $(CLUSTER_PROFILE)
 RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH $(IPCLUSTER) start --profile $(CLUSTER_PROFILE) --n 2
+RUN_JOSS_PREVIEW = docker run --rm --volume $(ROOT):/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
 
 
 # ----- Top-level targets -----
@@ -258,6 +259,10 @@ diagrams:
 
 testdata:
 	$(ACTIVATE) && PYTHONPATH=$(ROOT) $(PYTHON) utils/make-hdf5-url-test.py
+
+# Preview the JOSS papes
+joss-paper:
+	$(RUN_JOSS_PREVIEW)
 
 # Clean up the distribution build
 clean:
