@@ -1,7 +1,7 @@
 # Tests of in-memory notebooks
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -18,11 +18,10 @@
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
 from epyc import *
-
 import unittest
 from datetime import datetime
 
-    
+
 class LabNotebookTests(unittest.TestCase):
 
     def setUp(self):
@@ -47,7 +46,7 @@ class LabNotebookTests(unittest.TestCase):
         nb = LabNotebook("test")
         self.assertEqual(nb.name(), "test")
         self.assertFalse(nb.isPersistent())
-        
+
     def testOneResultSet(self):
         '''Test we can ignore result sets if we want to.'''
         self.assertIsNotNone(self._nb.current())
@@ -95,7 +94,7 @@ class LabNotebookTests(unittest.TestCase):
         self.assertTrue(self._resultsEqual(self._nb.current().dataframeFor(rc2[Experiment.PARAMETERS]), rc2))
         with self.assertRaises(Exception):
             self._nb.resultsFor(rc1[Experiment.PARAMETERS])
-        
+
     def testPendingResultsAreNotified(self):
         '''Test the notebook records pending results correctly.'''
         rc1 = self._resultsdict()
@@ -345,7 +344,7 @@ class LabNotebookTests(unittest.TestCase):
         self.assertCountEqual(self._nb.resultSets(), [LabNotebook.DEFAULT_RESULTSET, 'third'])
 
     def testDeleteCurrent(self):
-        '''Test we can't delete the current result set.''' 
+        '''Test we can't delete the current result set.'''
         rs = self._nb.addResultSet('second')
         with self.assertRaises(Exception):
             self._nb.deleteResultSet(rs)
@@ -373,7 +372,7 @@ class LabNotebookTests(unittest.TestCase):
         '''Test we can test and select in one method call.'''
         self.assertEqual(self._nb.currentTag(), LabNotebook.DEFAULT_RESULTSET)
 
-        # first call adds and selects the result set 
+        # first call adds and selects the result set
         self.assertFalse(self._nb.already('second'))
         self.assertEqual(self._nb.currentTag(), 'second')
 
@@ -387,10 +386,49 @@ class LabNotebookTests(unittest.TestCase):
         self.assertEqual(self._nb.currentTag(), 'second')
         self.assertEqual(len(self._nb.current()), 1)
 
-        
+    def testReadyResultsSets(self):
+        '''Test we can check for readiness in different result sets.'''
+        rs1 = self._nb.addResultSet('one')
+        self.assertTrue(self._nb.ready())
+
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        self._nb.addPendingResult(rc1[Experiment.PARAMETERS], '1234')
+        self.assertFalse(self._nb.ready())
+        self.assertFalse(self._nb.ready('one'))
+
+        rs2 = self._nb.addResultSet('two')
+        rc2 = self._resultsdict()
+        rc2[Experiment.PARAMETERS]['a'] = list(range(10))
+        self._nb.addPendingResult(rc2[Experiment.PARAMETERS], '5678')
+        self.assertFalse(self._nb.ready())
+        self.assertFalse(self._nb.ready('two'))
+
+        self._nb.select('one')
+        self.assertFalse(self._nb.ready())
+        self.assertFalse(self._nb.ready('one'))
+        self.assertFalse(self._nb.ready('two'))
+
+        self._nb.resolvePendingResult(rc1, '1234')
+        self.assertTrue(self._nb.ready())
+        self.assertTrue(self._nb.ready('one'))
+        self.assertFalse(self._nb.ready('two'))
+
+        self._nb.select('two')
+        self.assertFalse(self._nb.ready())
+        self.assertTrue(self._nb.ready('one'))
+
+    def testPendingResultParameters(self):
+        '''Test we can retrieve pending result parameters.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 10
+        self._nb.addPendingResult(rc1[Experiment.PARAMETERS], '1234')
+
+        p = self._nb.pendingResultParameters('1234')
+        self.assertCountEqual(rc1[Experiment.PARAMETERS], p)
+
+
 # TODO: Test we can add metadata
 
 if __name__ == '__main__':
     unittest.main()
-
- 

@@ -504,6 +504,14 @@ class HDF5LabNotebookTests(unittest.TestCase):
         rs = nb.current()
         self.assertCountEqual(rs.keys(), ['number2'])
 
+    def testOverrideDescription(self):
+        '''Test that the description can be overrideen on a loaded file.'''
+        with HDF5LabNotebook(self._fn, description='A test notebook', create=True).open() as nb:
+            pass
+
+        with HDF5LabNotebook(self._fn, description='A new description').open() as nb:
+            self.assertEqual(nb.description(), 'A new description')
+
     def testChangeAttributes(self):
         '''Test we can change attributes, descriptions, etc.'''
         with HDF5LabNotebook(self._fn, description='A test notebook', create=True).open() as nb:
