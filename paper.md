@@ -8,12 +8,12 @@ tags:
   - automation
 authors:
   - name: Simon Dobson
-	email: simoninireland@gmail.com
-	orcid: 0000-0001-9633-2103
-	affiliation: 1
+    email: simoninireland@gmail.com
+    orcid: 0000-0001-9633-2103
+    affiliation: 1
 affiliations:
   - name: School of Computer Science, University of St Andrews, Scotland UK
-	index: 1
+    index: 1
 date: 4 September 2021
 bibliography: paper.bib
 ---
