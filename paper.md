@@ -21,7 +21,7 @@ bibliography: paper.bib
 # Summary
 
 ``epyc`` is a Python module for designing, executing, storing, and
-analysing the results of large sets of possibly long-running
+analysing the results of large sets of (possibly long-running)g
 computational experiments, as are often found when writing simulations
 of complex networks and other domains. It allows the same experimental
 code to be run on single machines, multicore machines, and
