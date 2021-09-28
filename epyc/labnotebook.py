@@ -21,7 +21,7 @@ from epyc import Experiment, ResultSet, ResultsDict
 from pandas import DataFrame                               # type: ignore
 from contextlib import contextmanager
 import sys
-from typing import List, Set, Dict, Any, Optional, Union, cast
+from typing import List, Set, Dict, Any, Optional, Union, Callable, cast
 if sys.version_info >= (3, 8):
     from typing import Final
 else:
@@ -223,22 +223,6 @@ class LabNotebook:
         self._current = self._resultSets[tag]
         return self._current
 
-    def already(self, tag : str, description : str =None) -> bool:
-        '''Check whether a result set exists. If it does, select it
-        and return True; if it doesn't, add it and return False.
-        This is a single-call combination of :meth:`contains` and
-        :meth:`select` that's useful for avoiding repeated computation.
-
-        :param tag: the result set tag
-        :param description: (optional) description if a result set is created
-        :returns: True if the set existed'''
-        if tag in self:
-            self.select(tag)
-            return True
-        else:
-            self.addResultSet(tag, description=description)
-            return False
-
     def current(self) -> ResultSet:
         '''Return the current result set.
 
@@ -277,6 +261,85 @@ class LabNotebook:
         :param tag: the result set tag
         :returns: True if the result set exists'''
         return (tag in self.resultSets())
+
+
+    # ---------- Conditional creation ----------
+
+    def already(self, tag: str, description: str =None) -> bool:
+        '''Check whether a result set exists. If it does, select it
+        and return True; if it doesn't, add it and return False.
+        This is a single-call combination of :meth:`contains` and
+        :meth:`select` that's useful for avoiding repeated computation.
+
+        :param tag: the result set tag
+        :param description: (optional) description if a result set is created
+        :returns: True if the set existed'''
+        if tag in self:
+            self.select(tag)
+            return True
+        else:
+            self.addResultSet(tag, description=description)
+            return False
+
+    def createWith(self, tag: str, f: Callable[[], bool], description: str =None,
+                   propagate: bool =True, delete: bool =True, finish: bool =False):
+        '''Define a function to create a result set.
+
+        If the result set already exists, it is selected in the same waay
+        as :meth:`already`. If it doesn't exist, it is created,
+        and the creation function called.
+
+        By default any exception in the creation function will cause
+        the incomplete result set to be deleted and the previously
+        current result set to be re-selected: this can be inhibited by
+        setting ``delete = False``. Any raised exception is propagated by
+        default: this can be inhibited by setting ``propagate =
+        False``. The result set can be locked after creation by
+        setting ``finished = True``, as long as the creation was successful:
+        poorly-created result sets aren't locked.
+
+        :param tag: the result set tag
+        :param f: the construction function (taking no arguments)
+        :param description: (optional) description if a result set is created
+        :param propagate: (optional) propagate any excepton (defaults to True)
+        :param delete: (optional) delete on exception (default is True)
+        :param finish: (optional) lock the result set after creation (default to False)
+        :returns: True if the result set was properly created
+
+        '''
+
+        # grab the tag of the current result set
+        ctag = self.currentTag()
+
+        # select and return if the result set already exists
+        if self.already(tag, description):
+            return True
+
+        # if we get here, the result set will have been be created and selected
+        try:
+            # call the creation function with the notebook
+            f()
+
+            # lock the result set if requested
+            if finish:
+                self.current().finish()
+
+            # if we get here, we were successful
+            return True
+        except Exception as e:
+            # if we get here, creation failed
+            if delete:
+                # re-select the previous current result set
+                self.select(ctag)
+
+                # delete the partial set
+                self.deleteResultSet(tag)
+
+            if propagate:
+                # propagate the exception
+                raise e
+            else:
+                return False
 
 
     # ---------- Finishing ----------

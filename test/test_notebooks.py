@@ -24,6 +24,18 @@ from datetime import datetime
 
 class LabNotebookTests(unittest.TestCase):
 
+    def create(self):
+        '''Create some results into the current result set.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 1
+        rc1[Experiment.PARAMETERS]['b'] = 2
+        rc1[Experiment.RESULTS]['first'] = 3
+        self._nb.addResult(rc1)
+
+    def createFail(self):
+        '''Faail to create results.'''
+        raise Exception('Failed!')
+
     def setUp(self):
         '''Set up a notebook.'''
         self._nb = LabNotebook()
@@ -427,6 +439,46 @@ class LabNotebookTests(unittest.TestCase):
         p = self._nb.pendingResultParameters('1234')
         self.assertCountEqual(rc1[Experiment.PARAMETERS], p)
 
+    def testBasicCreateWith(self):
+        '''Test createWith works.'''
+        rc = self._nb.createWith('test1', self.create, description='A first set')
+        self.assertTrue(rc)
+        self.assertEqual(self._nb.current().description(), 'A first set')
+        self.assertIn('test1', self._nb.resultSets())
+        self.assertFalse(self._nb.current().isLocked())
+
+    def testCreateWithFinishes(self):
+        '''Test createWith finishes a result set when requested.'''
+        rc = self._nb.createWith('test1', self.create, finish=True)
+        self.assertTrue(rc)
+        self.assertTrue(self._nb.current().isLocked())
+
+    def testCreateWithFail(self):
+        '''Test createWith handles deletion on failure.'''
+        with self.assertRaises(Exception):
+            rc = self._nb.createWith('test1', self.createFail)
+        self.assertNotIn('test1', self._nb.resultSets())
+
+    def testCreateWithFailNoDelete(self):
+        '''Test createWith can be prevented from deleting on failure.'''
+        with self.assertRaises(Exception):
+            rc = self._nb.createWith('test1', self.createFail, delete=False)
+        self.assertIn('test1', self._nb.resultSets())
+        self.assertFalse(self._nb.current().isLocked())
+
+    def testCreateWithFailNoDeleteNotFinished(self):
+        '''Test createWith doesn't lock a partial result set.'''
+        with self.assertRaises(Exception):
+            rc = self._nb.createWith('test1', self.createFail,
+                                     delete=False, finish=True)
+        self.assertIn('test1', self._nb.resultSets())
+        self.assertFalse(self._nb.current().isLocked())
+
+    def testCreateWithNoPropagate(self):
+        '''Test createWith hides the exception on failure.'''
+        rc = self._nb.createWith('test1', self.createFail, propagate=False)
+        self.assertFalse(rc)
+        self.assertNotIn('test1', self._nb.resultSets())
 
 # TODO: Test we can add metadata
 

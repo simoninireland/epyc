@@ -48,11 +48,55 @@ Of course this is quite awkward, relies on the notebook user to decide
 which cells to execute -- and means that you can't simply run all the
 cells to get back to where you started.
 
-``epyc`` solves this problem with the :meth:`LabNotebook.already`
-method. This checks whether a given result set exists. If it does, it
-is selected and the method returns True; if it doesn't then it's added
-(and therefore implicitly selected) and the method returns False. We
-can then use a much more attractive coding pattern:
+``epyc`` has two solutions to this problem.
+
+Using ``createWith``
+--------------------
+
+The first solution uses the :meth:`LabNotebook.createWith` method,
+which takes a function used to create a result set. When called, the
+method checks if the result set already exists, and if it does,
+selects it for us; if it doesn't, then it is created, selected, and
+then the creation function is called to populate it.
+
+If an error occurs while creating the result set, then by default the
+result set is deleted to avoid holding partial results, and the
+exception that was raised is propagated. These behaviours can be
+changed using optional arguments.
+
+To use this method we first define a function to create the data we
+want:
+
+.. code-block:: python
+
+   def createResults():
+       e = LongComputation()
+       lab[LongComputation.INITIAL] = int(1e6)
+       lab.runExperiment(e)
+
+We then use this function to create a result set , if it hasn't bee
+created already:
+
+.. code-block:: python
+
+   nb = epyc.HDF5LabNotebook('lots-of-results.h5')
+   nb.createWith('first-results',
+		 createResults,
+		 description='My long-running first computation')
+
+Note that the creation function is simply a "thunk" that's called
+without arguments. It needs to have access to all the variables it
+needs, for example the lab and
+notebook. :meth:`LabNotebook.createWith` will return when the result
+set has been created, which will be when all experiments have been
+run.
+
+Using ``already``
+-----------------
+
+The second solution uses the :meth:`LabNotebook.already` method. This
+is appropriate if you want to avoid creating additional functions just
+for data creation, and instead have the code inline.
 
 .. code-block:: python
 
@@ -72,8 +116,10 @@ passed the :meth:`LabNotebook.already` is ignored). In either event,
 subsequent code can assume that the result set exists, is selected,
 and is populated with results.
 
-There are a couple of limitations to be aware of, of course:
+There are some limitations to be aware of, of course:
 
+- This approach doesn't work with :ref:`disconnected operation <jupyter-disconnected>`
+  when the results come back over a long period.
 - You need to be careful about your choice of result set tags, so that
   they're meaningful to you later. This also makes the description
   and metadata more important.
