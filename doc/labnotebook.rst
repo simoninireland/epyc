@@ -2,7 +2,7 @@
 ====================================================
 
 .. currentmodule:: epyc
-   
+
 .. autoclass:: LabNotebook
 
 
@@ -10,7 +10,7 @@ Metadata access
 ---------------
 
 .. automethod:: LabNotebook.name
-   
+
 .. automethod:: LabNotebook.description
 
 .. automethod:: LabNotebook.setDescription
@@ -23,9 +23,9 @@ Notebooks may be persistent, storing results and metadata to disc. The
 default implementation is simply in-memory and volatile. Committing a
 notebook ensures its data is written-through to persistent storage
 (where applicable).
-   
+
 .. automethod:: LabNotebook.isPersistent
-   
+
 .. automethod:: LabNotebook.commit
 
 
@@ -72,7 +72,7 @@ They can also be deleted altogether.
 .. automethod:: LabNotebook.__len__
 
 .. automethod:: LabNotebook.__contains__
-		
+
 .. automethod:: LabNotebook.resultSetTag
 
 .. automethod:: LabNotebook.current
@@ -81,8 +81,23 @@ They can also be deleted altogether.
 
 .. automethod:: LabNotebook.select
 
+
+Safe creation of result sets
+----------------------------
+
+Sometimes it's useful to create a result set in an "all or nothing"
+fashion: if it already exists then do nothing, otherwise provide code
+to create it.
+
+.. note::
+
+   These techniques work especially well with Jupyter notebooks, to
+   avoid re-computing some cells. See :ref:`jupyter-avoid-repeated`.
+
 .. automethod:: LabNotebook.already
-		
+
+.. automethod:: LabNotebook.createWith
+
 
 
 Result storage and access
@@ -135,7 +150,7 @@ on the currently-selected result set.
 
 Secondly, there are operations that work on any result set. You
 can resolve or cancel a pending result simply by knowing its job id and
-regardless of which is the currently selected result set. 
+regardless of which is the currently selected result set.
 
 .. automethod:: LabNotebook.resolvePendingResult
 
@@ -166,4 +181,3 @@ locked forever.
 .. automethod:: LabNotebook.finish
 
 .. automethod:: LabNotebook.isLocked
-

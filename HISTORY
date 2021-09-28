@@ -1,3 +1,8 @@
+Version 1.6.1
+
+   - Added LabNotebook.createWith() to handle failed result set creation
+   - Added notes on createWith() to cookbook
+
 Version 1.5.1 2021-09-06
 
    - Added the ability to delete parameters from labs, to reset
