@@ -17,7 +17,7 @@ re-execute the notebook, you'd re-compute all those results when
 instead you could simply load them and get straight on with your new
 
 Or perhaps you share your notebook "live" using
-[Binder](https://mybinder.org). The notebook is included in the
+`Binder <https://mybinder.org>`_. The notebook is included in the
 binder, and people can see the code you used to get them (as with all
 good notebooks). But again they may want to use and re-analyse your
 results but not re-compute them.
