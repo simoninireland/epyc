@@ -8,9 +8,10 @@ epyc: Python computational experiment management
     :target: https://epyc.readthedocs.io/en/latest/index.html
 
 .. image:: https://github.com/simoninireland/epyc/actions/workflows/ci.yaml/badge.svg
+    :target: https://github.com/simoninireland/epyc/actions
 
 .. image:: https://www.gnu.org/graphics/gplv3-88x31.png
-
+    :target: https://www.gnu.org/licenses/gpl-3.0.en.html
 
 Overview
 --------
