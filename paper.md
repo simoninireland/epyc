@@ -21,7 +21,7 @@ bibliography: paper.bib
 # Summary
 
 ``epyc`` is a Python module for designing, executing, storing, and
-analysing the results of large sets of (possibly long-running)g
+analysing the results of large sets of (possibly long-running)
 computational experiments, as are often found when writing simulations
 of complex networks and other domains. It allows the same experimental
 code to be run on single machines, multicore machines, and
@@ -135,7 +135,7 @@ simulation framework for complex networks, from which it has
 contributed to a series of papers exploring networks and their
 processes (for example [@TB, @ClusteredTwoPathogen,
 @SymbioticAntagonisticClustered], and a book on network-based disease
-modelling [@em]. While originally closely integrated into this system
+modelling [@em]. While originally closely integrated into this system,
 ``epyc`` is now a stand-alone domain-independent experimental
 management framework.
 
