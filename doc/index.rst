@@ -75,3 +75,4 @@ Current features
    reference
    cookbook
    glossary
+   contributing
