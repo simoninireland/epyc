@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.5.1
+VERSION = 1.6.1
 
 
 # ----- Sources -----
@@ -68,6 +68,7 @@ SOURCES_DOCUMENTATION = \
 	doc/install.rst \
 	doc/lifecycle.rst \
 	doc/glossary.rst \
+	doc/contributing.rst \
 	doc/tutorial.rst \
 	doc/tutorial/concepts.rst \
 	doc/tutorial/first.rst \
