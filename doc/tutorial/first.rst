@@ -8,6 +8,8 @@ run experiments on a single machine.
 
 .. include:: concepts.rst
 
+.. include:: environment.rst
+
 .. include:: simple-experiment.rst
 
 .. include:: defining.rst
