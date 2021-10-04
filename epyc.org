@@ -4,7 +4,57 @@
 
 ** Release planning
 
-*** Release 1.5.2
+*** Release 1.6.1
+
+**** Coding [0/5]
+
+     - [ ] Block designs
+
+       Allow multiple parameter runs for one configuration. This means
+       that configure() can set up an expensive situation (like a
+       random network) that is then used as a basis for several
+       different parameter points. This will require a change in the
+       lifecycle of experiments (I think), or maybe just a different
+       trigger for re-configuring than set().
+
+     - [ ] Notes for result sets
+
+       Add notes alongside results, as well as the description field.
+
+     - [ ] A context manager to complement LabNotebook.already()
+
+       Should be able to protect a block of code that populates (and
+       finalises?) a result set such that it's a no-op if an exception
+       occurs.
+
+     - [ ] Tidier handling of HDF5 (and other) files
+
+       Not creating files without good reason; handling missing file by
+       failing rather than creating.
+
+     - [ ] Allow functions in lab parameters
+
+       As well as constants and lists, allow a function that gets
+       called for a value.
+
+**** Bugs [0/1]
+
+     - [ ] Empty array typing
+
+       In HDF5, adding an empty array first into a field means that the
+       result set doesn't get typed properly, as there's no element type
+       known.
+
+**** Documentation [2/3]
+
+     - [X] Initial JOSS paper
+
+     - [X] Add CONTRIBUTORS.md file
+
+     - [ ] Deal with opened issues
+
+
+*** Release 1.5.1                                                   :ARCHIVE:
 
 **** Coding
 
@@ -25,35 +75,15 @@
       guard for either loading or executing a block of code, to let
       experiments only run when needed.
 
-***** TODO Notes for result sets
-
-      Add notes alongside results, as well as the description field.
-
-***** TODO Tidier handling of HDF5 (and other) files
-
-      Not creating files without good reason; handling missing file by
-      failing rather than creating.
-
-***** TODO Allow functions in lab parameters
-
-      As well as constants and lists, allow a function that gets
-      called for a value.
-
 ***** DONE Alternative experimental designs
 
       Cross-product of parameter space (as now); adding explicit
       combinations of parameters; maybe others?
 
-***** TODO Rename SingletonDesign to PointwiseDesign
+***** DONE Rename SingletonDesign to PointwiseDesign
 
 
 **** Bugs
-
-***** TODO Empty array typing
-
-      In HDF5, adding an empty array first into a field means that the
-      result set doesn't get typed properly, as there's no element type
-      known.
 
 **** Documentation
 
@@ -70,20 +100,8 @@
       results out in results dicts, which then get copied about
       correctly.
 
-***** TODO JOSS paper
-      DEADLINE: <2021-09-10 Fri>
 
-
-** Sub-projects
-
-*** Experimental designs
-
-    Add a method for describing experimental designs. These would
-    essentially structure the parameter space of an experiment in a
-    Lab to (for example) only execute a select number of
-    possibilities, rather than doing the whole cross product blindly.
-
-    Might help with load balancing too.
+** DOING Sub-projects
 
 *** Container-based engines
 
