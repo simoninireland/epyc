@@ -8,12 +8,12 @@ tags:
   - automation
 authors:
   - name: Simon Dobson
-	email: simoninireland@gmail.com
-	orcid: 0000-0001-9633-2103
-	affiliation: 1
+    email: simoninireland@gmail.com
+    orcid: 0000-0001-9633-2103
+    affiliation: 1
 affiliations:
   - name: School of Computer Science, University of St Andrews, Scotland UK
-	index: 1
+    index: 1
 date: 4 September 2021
 bibliography: paper.bib
 ---
@@ -21,7 +21,7 @@ bibliography: paper.bib
 # Summary
 
 ``epyc`` is a Python module for designing, executing, storing, and
-analysing the results of large sets of (possibly long-running)g
+analysing the results of large sets of (possibly long-running)
 computational experiments, as are often found when writing simulations
 of complex networks and other domains. It allows the same experimental
 code to be run on single machines, multicore machines, and
@@ -135,7 +135,7 @@ simulation framework for complex networks, from which it has
 contributed to a series of papers exploring networks and their
 processes (for example [@TB, @ClusteredTwoPathogen,
 @SymbioticAntagonisticClustered], and a book on network-based disease
-modelling [@em]. While originally closely integrated into this system
+modelling [@em]. While originally closely integrated into this system,
 ``epyc`` is now a stand-alone domain-independent experimental
 management framework.
 
