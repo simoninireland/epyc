@@ -69,9 +69,11 @@ SOURCES_DOCUMENTATION = \
 	doc/lifecycle.rst \
 	doc/glossary.rst \
 	doc/contributing.rst \
+	doc/command-line.rst \
 	doc/tutorial.rst \
 	doc/tutorial/concepts.rst \
 	doc/tutorial/first.rst \
+	doc/tutorial/environment.rst \
 	doc/tutorial/simple-experiment.rst \
 	doc/tutorial/defining.rst \
 	doc/tutorial/testing.rst \
@@ -104,6 +106,7 @@ SOURCES_DOCUMENTATION = \
 	doc/cookbook/disconnected-usage.rst \
 	doc/cookbook/metadata.rst \
 	doc/cookbook/advanced-designs.rst \
+	doc/examples/first-tutorial/first.py \
 	doc/reference.rst \
 	doc/experiment.rst \
 	doc/resultset.rst \
