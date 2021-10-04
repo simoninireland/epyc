@@ -9,6 +9,8 @@ epyc: Python computational experiment management
 
 .. image:: https://github.com/simoninireland/epyc/actions/workflows/ci.yaml/badge.svg
 
+.. image:: https://www.gnu.org/graphics/gplv3-88x31.png
+
 
 Overview
 --------
