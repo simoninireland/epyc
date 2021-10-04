@@ -73,6 +73,7 @@ Current features
    install
    tutorial
    reference
+   command-line
    cookbook
    glossary
    contributing
