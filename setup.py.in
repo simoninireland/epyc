@@ -41,7 +41,9 @@ setup(name='epyc',
                    'Programming Language :: Python :: 3.9',
                    'Topic :: Scientific/Engineering'],
       python_requires='>=3.5',
-      packages=['epyc'],
+      packages=['epyc',
+                'epyc.scripts',
+                ],
       include_package_data=True,
       package_data={'epyc': ['py.typed']},
       entry_points='''
@@ -51,4 +53,3 @@ setup(name='epyc',
       zip_safe=False,
       install_requires=[REQUIREMENTS],
       extra_requires={':python_version < 3.8': ['typing_extensions']})
-
