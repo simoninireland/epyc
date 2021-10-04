@@ -68,14 +68,14 @@ copy, just clone the repo:
 Documentation
 -------------
 
-API documentation for ``epyc`` can be found on `ReadTheDocs <https://epyc.readthedocs.io/en/latest/>`.
+API documentation for ``epyc`` can be found on `ReadTheDocs <https://epyc.readthedocs.io/en/latest/>`_.
 You can also read a Jupyter notebook describing several ``epyc`` use
-cases online at <https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb>.
+cases online `here <https://github.com/simoninireland/epyc/blob/master/doc/epyc.ipynb>`_.
 
 
 Author and license
 ------------------
 
-Copyright (c) 2016-2020, Simon Dobson <simon.dobson@computer.org>
+Copyright (c) 2016-2021, Simon Dobson <simon.dobson@computer.org>
 
-Licensed under the `GNU General Public Licence v.2.0 <https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html>`.
+Licensed under the `GNU General Public Licence v3 <https://www.gnu.org/licenses/gpl-3.0.en.html>`_.
