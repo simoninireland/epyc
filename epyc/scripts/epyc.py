@@ -243,8 +243,8 @@ def remove(rss, verbose, pretend):
 @click.argument('spec')
 @click.option('-v', '--verbose', count=True, help='Generate verbose output (repeat for extra verbosity)')
 @click.option('-n', '--pretend', is_flag=True, help="Check validity but don't change anything")
-def current(spec, verbose, pretend):
-    '''Mark a result set as current.
+def select(spec, verbose, pretend):
+    '''Select a result set as current.
 
     The result set is specified as a pair NOTEBOOK[:TAG] where
     NOTEBOOK is the name of a notebook and TAG is a result set tag
