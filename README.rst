@@ -64,6 +64,11 @@ copy, just clone the repo:
     python setup.py install
 
 
+Examples
+--------
+
+See `the ``doc/examples/`` directory <https://github.com/simoninireland/epyc/tree/main/doc/examples>`_ for code examples.
+
 
 Documentation
 -------------
