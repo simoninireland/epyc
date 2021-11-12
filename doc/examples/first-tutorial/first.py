@@ -68,7 +68,7 @@ df = lab.dataframe()
 
 # Plot the function
 fig = plt.figure(figsize = (8, 8))
-ax = fig.gca(projection = '3d')
+ax = fig.add_subplot(projection = '3d')
 
 ax.scatter(df['x'], df['y'], df['result'],
            c=df['result'], depthshade=False, cmap=cm.coolwarm)
