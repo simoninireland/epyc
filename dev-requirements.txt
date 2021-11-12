@@ -7,9 +7,11 @@ coverage
 wheel
 sphinx
 sphinx_rtd_theme
+sphinx-autodoc-typehints
+doc8
 twine
 black
-jedi
 pylint
 flake8
 rope
+mypy
