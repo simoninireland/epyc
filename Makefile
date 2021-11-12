@@ -214,7 +214,7 @@ coverage: env Makefile setup.py
 # Run a small local compute cluster (in the foreground) for testing
 cluster: env
 	$(ACTIVATE) && $(RUN_CREATE_PROFILE)
-	$(RM) $(CLUSTER_TOKEN_FILE)
+	$(ACTIVATE) && $(RM) $(CLUSTER_TOKEN_FILE)
 	$(ACTIVATE) && $(RUN_CLUSTER)
 
 # Just run the ClusterLab tests
