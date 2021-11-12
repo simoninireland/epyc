@@ -119,7 +119,7 @@ libraries such as [``numpy``](https://numpy.org/) or
 (although it can run experiments using these tools). It also adopts a
 control- rather than data-driven approach (also unlike Dask, and
 unlike more traditional workflow engines such as
-[Taverna](https://incubator.apache.org/projects/taverna.html) which
+[Taverna](https://incubator.apache.org/projects/taverna.html)) which
 leads to more predictable computational requirements and fits better
 with the approaches of certain disciplines.
 
