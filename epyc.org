@@ -6,7 +6,7 @@
 
 *** Release 1.6.1
 
-**** Coding [0/5]
+**** Coding [1/5]
 
      - [ ] Block designs
 
@@ -21,7 +21,7 @@
 
        Add notes alongside results, as well as the description field.
 
-     - [ ] A context manager to complement LabNotebook.already()
+     - [X] A context manager to complement LabNotebook.already()
 
        Should be able to protect a block of code that populates (and
        finalises?) a result set such that it's a no-op if an exception
@@ -101,7 +101,7 @@
       correctly.
 
 
-** DOING Sub-projects
+** Sub-projects
 
 *** Container-based engines
 
