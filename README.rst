@@ -61,7 +61,7 @@ copy, just clone the repo:
 
     git clone git@github.com:simoninireland/epyc.git
     cd epyc
-    python setup.py install
+    pip install .
 
 
 Examples
