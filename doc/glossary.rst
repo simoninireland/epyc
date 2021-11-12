@@ -49,6 +49,12 @@ Glossary
       The set of :term:`experimental parameters` at which experiments
       will be run. The parameter space is defined by a :class:`Design`,
 
+   result set
+      A collection of results within a :term:`notebook`, inheriting
+      from :class:`ResultSet`. Result sets can be created, deleted,
+      and added to by running new experiments -- but can't have their
+      contents changed.
+
    results dict
       A dict structured according to a particular convention. The dict
       uses three top-level keys, defined by the Experiment class, for
