@@ -69,6 +69,7 @@ class NotebookVersionException(Exception):
         :returns: the actual version'''
         return self._expected
 
+
 class LabNotebookLockedException(Exception):
     '''An exception raised if an attempt is made to write to a notebook
     that's been locked by a call to :meth:`LabNotebook.finish`. This includes
@@ -179,7 +180,8 @@ class LabNotebook:
         return self._current
 
     def deleteResultSet(self, rs : Union[str, ResultSet]):
-        '''Delete a result set.
+        '''Delete a result set. The default result set can't be deleted: this ensures
+        that a notebook always has at least one result set.
 
         :param rs: the result set or its tag'''
         self.assertUnlocked()
@@ -190,7 +192,9 @@ class LabNotebook:
             tag = rs
             rss = self._resultSets[tag]
         if rss == self._current:
-            raise Exception("Can't delete current result set ({tag})".format(tag=tag))
+            raise Exception(f"Can't delete current result set ({tag})")
+        if tag == self.DEFAULT_RESULTSET:
+            raise Exception("Can't delete the default result set")
         del self._resultSets[tag]
         del self._resultSetTags[rss]
 
@@ -263,7 +267,7 @@ class LabNotebook:
         return (tag in self.resultSets())
 
 
-    # ---------- Conditional creation ----------
+    # ---------- Conditional result set creation ----------
 
     def already(self, tag: str, description: str =None) -> bool:
         '''Check whether a result set exists. If it does, select it
@@ -280,66 +284,6 @@ class LabNotebook:
         else:
             self.addResultSet(tag, description=description)
             return False
-
-    def createWith(self, tag: str, f: Callable[[], bool], description: str =None,
-                   propagate: bool =True, delete: bool =True, finish: bool =False):
-        '''Define a function to create a result set.
-
-        If the result set already exists, it is selected in the same waay
-        as :meth:`already`. If it doesn't exist, it is created,
-        and the creation function called.
-
-        By default any exception in the creation function will cause
-        the incomplete result set to be deleted and the previously
-        current result set to be re-selected: this can be inhibited by
-        setting ``delete = False``. Any raised exception is propagated by
-        default: this can be inhibited by setting ``propagate =
-        False``. The result set can be locked after creation by
-        setting ``finished = True``, as long as the creation was successful:
-        poorly-created result sets aren't locked.
-
-        :param tag: the result set tag
-        :param f: the construction function (taking no arguments)
-        :param description: (optional) description if a result set is created
-        :param propagate: (optional) propagate any excepton (defaults to True)
-        :param delete: (optional) delete on exception (default is True)
-        :param finish: (optional) lock the result set after creation (default to False)
-        :returns: True if the result set was properly created
-
-        '''
-
-        # grab the tag of the current result set
-        ctag = self.currentTag()
-
-        # select and return if the result set already exists
-        if self.already(tag, description):
-            return True
-
-        # if we get here, the result set will have been be created and selected
-        try:
-            # call the creation function with the notebook
-            f()
-
-            # lock the result set if requested
-            if finish:
-                self.current().finish()
-
-            # if we get here, we were successful
-            return True
-        except Exception as e:
-            # if we get here, creation failed
-            if delete:
-                # re-select the previous current result set
-                self.select(ctag)
-
-                # delete the partial set
-                self.deleteResultSet(tag)
-
-            if propagate:
-                # propagate the exception
-                raise e
-            else:
-                return False
 
 
     # ---------- Finishing ----------

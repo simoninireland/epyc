@@ -81,6 +81,22 @@ the design.
 .. automethod:: Lab.readyFraction
 
 
+Conditional experiments
+-----------------------
+
+Sometimes it is useful to run experiments conditionally, for example
+to create a :term:`result set` only if it doesn't already
+exist. :class:`Lab` can do this by providing a function to execute in
+order to populate a result set.
+
+.. note::
+
+   This technique work especially well with Jupyter notebooks, to
+   avoid re-computing some cells. See :ref:`jupyter-avoid-repeated`.
+
+.. automethod:: Lab.createWith
+
+
 Accessing results
 -----------------
 

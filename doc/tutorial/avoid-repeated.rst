@@ -50,46 +50,47 @@ cells to get back to where you started.
 
 ``epyc`` has two solutions to this problem.
 
+
 Using ``createWith``
 --------------------
 
-The first solution uses the :meth:`LabNotebook.createWith` method,
-which takes a function used to create a result set. When called, the
-method checks if the result set already exists, and if it does,
-selects it for us; if it doesn't, then it is created, selected, and
-then the creation function is called to populate it.
-
-If an error occurs while creating the result set, then by default the
-result set is deleted to avoid holding partial results, and the
-exception that was raised is propagated. These behaviours can be
-changed using optional arguments.
+The first (and preferred)_solution uses the :meth:`Lab.createWith`
+method, which takes a function used to create a result set. When
+called, the method checks if the result set already exists in the
+lab's notebook and, if it does, selects it for use; if it doesn't,
+then it is created, selected, and the creation function is called to
+populate it.
 
 To use this method we first define a function to create the data we
 want:
 
 .. code-block:: python
 
-   def createResults():
+   def createResults(lab):
        e = LongComputation()
        lab[LongComputation.INITIAL] = int(1e6)
        lab.runExperiment(e)
 
-We then use this function to create a result set , if it hasn't bee
+We then use this function to create a result set, if it hasn't been
 created already:
 
 .. code-block:: python
 
-   nb = epyc.HDF5LabNotebook('lots-of-results.h5')
-   nb.createWith('first-results',
-		 createResults,
-		 description='My long-running first computation')
+   lab.createWith('first-results',
+		  createResults,
+		  description='My long-running first computation')
 
-Note that the creation function is simply a "thunk" that's called
-without arguments. It needs to have access to all the variables it
-needs, for example the lab and
-notebook. :meth:`LabNotebook.createWith` will return when the result
-set has been created, which will be when all experiments have been
-run.
+Note that the creation function is called with the lab it should use
+as argument. :meth:`Lab.createWith` will return when the result set
+has been created, which will be when all experiments have been run.
+
+By default the lab's parameter space is reset before the creation
+function is called, and any exception raised in the creation function
+causes the result set to be deleted (to avoid partial results) and
+propagates the exception to the caller. There are several ways to
+customise this behaviour, described in the :meth:`Lab.createWith`
+reference.
+
 
 Using ``already``
 -----------------
@@ -116,9 +117,23 @@ passed the :meth:`LabNotebook.already` is ignored). In either event,
 subsequent code can assume that the result set exists, is selected,
 and is populated with results.
 
+.. note::
+
+   Note that :meth:`Lab.createWith` is called against a lab while
+   :meth:`LabNotebook.already` is called against a notebook. (The
+   former uses the latter internally.)
+
+In general :meth:`Lab.createWith` is easier to use than
+:meth:`LabNotebook.already`, as the former handles exceptions,
+parameter space initialisation, result set locking and the like.
+
+
+Limitations
+-----------
+
 There are some limitations to be aware of, of course:
 
-- This approach doesn't work with :ref:`disconnected operation <jupyter-disconnected>`
+- Neither approach works with :ref:`disconnected operation <jupyter-disconnected>`
   when the results come back over a long period.
 - You need to be careful about your choice of result set tags, so that
   they're meaningful to you later. This also makes the description
@@ -129,4 +144,4 @@ There are some limitations to be aware of, of course:
 
 The latter can be addressed by locking the result set after the
 computation has happened (by calling :meth:`ResultSet.finish`) to fix
-the results.
+the results. :meth:`Lab.createWith` can do this automatically.

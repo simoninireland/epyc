@@ -19,7 +19,7 @@
 
 from epyc import LabNotebook, Experiment, Design, FactorialDesign, ResultsDict, ExperimentalConfiguration
 from pandas import DataFrame                                   # type: ignore
-from typing import Dict, List, Tuple, Any
+from typing import Dict, List, Tuple, Any, Callable
 
 
 class Lab(object):
@@ -206,6 +206,88 @@ class Lab(object):
 
         # commit the results
         nb.commit()
+
+
+    # ---------- Conditional result set creation ----------
+
+    def createWith(self, tag: str, f: Callable[['Lab'], bool],
+                   description: str = None,
+                   propagate: bool = True, delete: bool = True,
+                   finish: bool = False,
+                   deleteAllParameters: bool = True):
+        '''Use a function to create a result set.
+
+        If the result set already exists in the lab's notebook, it is
+        selected; if it doesn't, it is created, selected, and the
+        creation function is called. The creation function is passed
+        a referednce to the lab it is populating.
+
+        By default any exception in the creation function will cause
+        the incomplete result set to be deleted and the previously
+        current result set to be re-selected: this can be inhibited by
+        setting ``delete=False``. Any raised exception is propagated by
+        default: this can be inhibited by setting ``propagate =
+        False``. The result set can be locked after creation by
+        setting ``finished=True``, as long as the creation was successful:
+        poorly-created result sets aren't locked.
+
+        By default the lab has its parameters cleared before calling the
+        creation function, so that it occurd "clean". Set
+        ``deleteAllParameters=False`` to inhibit this.
+
+        :param tag: the result set tag
+        :param f: the creation function (taking Lab as argument)
+        :param description: (optional) description if a result set is created
+        :param propagate: (optional) propagate any excepton (defaults to True)
+        :param delete: (optional) delete on exception (default is True)
+        :param finish: (optional) lock the result set after creation (defaults to False)
+        :param deleteAllParameters: (optional) delete all lab parameters before creation (defaults to True)
+        :returns: True if the result set exists alrewady or was properly created
+
+        '''
+        nb = self.notebook()
+
+        # grab the tag of the current result set
+        ctag = nb.currentTag()
+
+        # select and return if the result set already exists
+        if nb.already(tag, description):
+            return True
+
+        # if we get here, the result set will have been be created and selected
+        try:
+            if deleteAllParameters:
+                # clear the lab's parameter space ahead of creation
+                self.deleteAllParameters()
+
+            # call the creation function
+            f(self)
+
+            # lock the result set if requested
+            if finish:
+                nb.current().finish()
+
+            # if we get here, we were successful
+            return True
+        except Exception as e:
+            # if we get here, creation failed
+            if delete:
+                # re-select the previous current result set
+                try:
+                    nb.select(ctag)
+                except Exception:
+                    # the creation function messed with the results sets,
+                    # so revert to the default (which is always present)
+                    nb.select(LabNotebook.DEFAULT_RESULTSET)
+
+                # delete the partial set
+                nb.deleteResultSet(tag)
+
+            if propagate:
+                # propagate the exception
+                raise e
+            else:
+                return False
 
 
     # ---------- Accessing results ----------

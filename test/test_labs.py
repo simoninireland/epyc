@@ -17,9 +17,10 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import *
 import unittest
+from datetime import datetime
 import numpy
+from epyc import *
 
 
 class SampleExperiment(Experiment):
@@ -188,6 +189,118 @@ class LabTests(unittest.TestCase):
         self._lab['a'] = range(10)
         self._lab['b'] = range(10)
         self.assertEqual(len(self._lab), len(self._lab['a']))
+
+
+    # ---------- createWith ----------
+
+    def _resultsdict(self):
+        '''Set up a results dict populated with plausible metadata.'''
+        _rc = Experiment.resultsdict()
+        _rc[Experiment.METADATA][Experiment.EXPERIMENT] = str(self.__class__)
+        _rc[Experiment.METADATA][Experiment.START_TIME] = datetime.now()
+        _rc[Experiment.METADATA][Experiment.END_TIME] = datetime.now()
+        _rc[Experiment.METADATA][Experiment.SETUP_TIME] = 10
+        _rc[Experiment.METADATA][Experiment.EXPERIMENT_TIME] = 20
+        _rc[Experiment.METADATA][Experiment.TEARDOWN_TIME] = 10
+        _rc[Experiment.METADATA][Experiment.ELAPSED_TIME] = 40
+        _rc[Experiment.METADATA][Experiment.STATUS] = True
+        return _rc
+
+    def create(self, lab):
+        '''Create some results into the current result set.'''
+        rc1 = self._resultsdict()
+        rc1[Experiment.PARAMETERS]['a'] = 1
+        rc1[Experiment.PARAMETERS]['b'] = 2
+        rc1[Experiment.RESULTS]['first'] = 3
+        self._lab.notebook().addResult(rc1)
+
+    def createFail(self, lab):
+        '''Fail to create results.'''
+        raise Exception('Failed!')
+
+    def createEmpty(self, lab):
+        '''Test we have no parameters in the lab.'''
+        self.assertEqual(len(lab.parameters()), 0)
+
+    def createMess(self, lab):
+        '''Delete the result set we were expecting to revert to.'''
+        lab.notebook().deleteResultSet('one')
+        raise Exception('Failed (after creating mess)!')
+
+    def testBasicCreateWith(self):
+        '''Test createWith works.'''
+        rc = self._lab.createWith('test1', self.create, description='A first set')
+        self.assertTrue(rc)
+        self.assertEqual(self._lab.notebook().current().description(), 'A first set')
+        self.assertIn('test1', self._lab.notebook().resultSets())
+        self.assertFalse(self._lab.notebook().current().isLocked())
+
+    def testCreateWithFinishes(self):
+        '''Test createWith finishes a result set when requested.'''
+        rc = self._lab.createWith('test1', self.create, finish=True)
+        self.assertTrue(rc)
+        self.assertTrue(self._lab.notebook().current().isLocked())
+
+    def testCreateWithFail(self):
+        '''Test createWith handles deletion on failure.'''
+        with self.assertRaises(Exception):
+            rc = self._lab.createWith('test1', self.createFail)
+        self.assertNotIn('test1', self._lab.notebook().resultSets())
+
+    def testCreateWithFailNoDelete(self):
+        '''Test createWith can be prevented from deleting on failure.'''
+        with self.assertRaises(Exception):
+            rc = self._lab.createWith('test1', self.createFail, delete=False)
+        self.assertIn('test1', self._lab.notebook().resultSets())
+        self.assertFalse(self._lab.notebook().current().isLocked())
+
+    def testCreateWithFailNoDeleteNotFinished(self):
+        '''Test createWith doesn't lock a partial result set.'''
+        with self.assertRaises(Exception):
+            rc = self._lab.createWith('test1', self.createFail,
+                                      delete=False, finish=True)
+        self.assertIn('test1', self._lab.notebook().resultSets())
+        self.assertFalse(self._lab.notebook().current().isLocked())
+
+    def testCreateWithNoPropagate(self):
+        '''Test createWith hides the exception on failure.'''
+        rc = self._lab.createWith('test1', self.createFail, propagate=False)
+        self.assertFalse(rc)
+        self.assertNotIn('test1', self._lab.notebook().resultSets())
+
+    def testClearParameterSpace(self):
+        '''Test the parameter space is blanked before calling the creation function.'''
+        self._lab['a'] = 10
+        rc = self._lab.createWith('test1', self.createEmpty)
+
+    def testDontClearParameterSpace(self):
+        '''Test the parameter space blanking can be inhibited.'''
+        self._lab['a'] = 10
+        with self.assertRaises(Exception):
+            rc = self._lab.createWith('test1', self.createEmpty,
+                                      deleteAllParameters=False)
+
+    def testRevertResultSetOnFailure(self):
+        '''Test we revert to the correct result set on failure.'''
+        self._lab.notebook().addResultSet('one')
+        self._lab.notebook().addResultSet('two')
+        self._lab.notebook().select('one')
+        with self.assertRaises(Exception):
+            rc = self._lab.createWith('test1', self.createFail)
+        self.assertEqual(self._lab.notebook().currentTag(), 'one')
+        self.assertCountEqual(self._lab.notebook().resultSets(),
+                              ['one', 'two', LabNotebook.DEFAULT_RESULTSET])
+
+    def testMess(self):
+        '''Test we deal with reversion problems.'''
+        self._lab.notebook().addResultSet('one')
+        self.assertCountEqual(self._lab.notebook().resultSets(),
+                              ['one', LabNotebook.DEFAULT_RESULTSET])
+        with self.assertRaises(Exception):
+            rc = self._lab.createWith('test1', self.createMess)
+        self.assertEqual(self._lab.notebook().currentTag(), LabNotebook.DEFAULT_RESULTSET)
+        self.assertCountEqual(self._lab.notebook().resultSets(),
+                              [LabNotebook.DEFAULT_RESULTSET])
 
 
 if __name__ == '__main__':

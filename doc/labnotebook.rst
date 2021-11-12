@@ -82,22 +82,18 @@ They can also be deleted altogether.
 .. automethod:: LabNotebook.select
 
 
-Safe creation of result sets
-----------------------------
+Conditional creation of result sets
+-----------------------------------
 
 Sometimes it's useful to create a result set in an "all or nothing"
-fashion: if it already exists then do nothing, otherwise provide code
-to create it.
-
-.. note::
-
-   These techniques work especially well with Jupyter notebooks, to
-   avoid re-computing some cells. See :ref:`jupyter-avoid-repeated`.
+fashion: if it already exists then do nothing.
 
 .. automethod:: LabNotebook.already
 
-.. automethod:: LabNotebook.createWith
+.. note::
 
+   See the :meth:`Lab.createWith` method for a more conmvenient way to
+   use this function.
 
 
 Result storage and access
