@@ -220,7 +220,7 @@ class Lab(object):
         If the result set already exists in the lab's notebook, it is
         selected; if it doesn't, it is created, selected, and the
         creation function is called. The creation function is passed
-        a referednce to the lab it is populating.
+        a reference to the lab it is populating.
 
         By default any exception in the creation function will cause
         the incomplete result set to be deleted and the previously
@@ -242,7 +242,7 @@ class Lab(object):
         :param delete: (optional) delete on exception (default is True)
         :param finish: (optional) lock the result set after creation (defaults to False)
         :param deleteAllParameters: (optional) delete all lab parameters before creation (defaults to True)
-        :returns: True if the result set exists alrewady or was properly created
+        :returns: True if the result set exists already or was properly created
 
         '''
         nb = self.notebook()
