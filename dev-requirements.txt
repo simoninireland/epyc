@@ -14,4 +14,3 @@ black
 pylint
 flake8
 rope
-mypy
