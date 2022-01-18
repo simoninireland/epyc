@@ -17,3 +17,4 @@ This section is a work-in-progress cookbook of using ``epyc`` in practice.
     cookbook/advanced-designs.rst
     cookbook/disconnected-usage.rst
     cookbook/metadata.rst
+    cookbook/logging.rst

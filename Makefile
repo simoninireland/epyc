@@ -106,6 +106,7 @@ SOURCES_DOCUMENTATION = \
 	doc/cookbook/disconnected-usage.rst \
 	doc/cookbook/metadata.rst \
 	doc/cookbook/advanced-designs.rst \
+	doc/cookbook/logging.rst \
 	doc/examples/first-tutorial/first.py \
 	doc/reference.rst \
 	doc/experiment.rst \

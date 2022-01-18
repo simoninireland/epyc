@@ -45,13 +45,13 @@
        result set doesn't get typed properly, as there's no element type
        known.
 
-**** Documentation [2/3]
+**** Documentation [3/3]
 
      - [X] Initial JOSS paper
 
      - [X] Add CONTRIBUTORS.md file
 
-     - [ ] Deal with opened issues
+     - [X] Deal with opened issues
 
 
 *** Release 1.5.1                                                   :ARCHIVE:
