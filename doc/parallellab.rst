@@ -1,3 +1,5 @@
+.. _parallellab-class:
+
 :class:`ParallelLab`: Running experiments locally in parallel
 =============================================================
 
