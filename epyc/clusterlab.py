@@ -93,7 +93,7 @@ class ClusterLab(Lab):
         self.open()
 
         # use the more sophisticated pickler
-        rc = self._client[:].use_cloudpickle()
+        self._client[:].use_cloudpickle()
 
 
     # ---------- Protocol ----------
@@ -131,9 +131,10 @@ class ClusterLab(Lab):
         except Exception as exc:
             # if we get here, we're definitely disconnected, so try
             # to re-connect the requisite number of times
-            for i in range(self.Reconnections):
+            recon = self.Reconnections
+            for i in range(recon):
                 logger.warning('Connection to cluster failed, reconnecting ({i}/{n})'.format(i=i + 1,
-                                                                                             n=self.Reconnections))
+                                                                                             n=recon))
                 try:
                     # try to connect
                     self.connect()
@@ -146,10 +147,10 @@ class ClusterLab(Lab):
                     exc = e
 
             # OK, we've failed enough, stop punching the brick wall...
-            logger.error(f'Too many connection failures ({n})')
+            logger.error(f'Too many connection failures ({recon})')
             raise exc
 
-    def close( self ):
+    def close(self):
         """Close down the connection to the cluster."""
         if self._client is not None:
             self._client.close()
@@ -159,9 +160,9 @@ class ClusterLab(Lab):
         '''Save the arguments needed to re-connect to the cluster we use.
 
         :returns: a (classname, args) pair'''
-        (_, args) = super(ClusterLab, self).recreate()
-        n = '{modulename}.{classname}'.format(modulename = self.__class__.__module__,
-                                              classname = self.__class__.__name__)
+        (_, args) = super().recreate()
+        n = '{modulename}.{classname}'.format(modulename=self.__class__.__module__,
+                                              classname=self.__class__.__name__)
         nargs = args.copy()
         nargs.update(self._arguments)
         return (n, nargs)
@@ -182,7 +183,7 @@ class ClusterLab(Lab):
         self.open()
         return self._client[:]
 
-    def sync_imports(self, quiet : bool =False) -> AbstractContextManager:
+    def sync_imports(self, quiet: bool = False) -> AbstractContextManager:
         """Return a context manager to control imports onto all the engines
         in the underlying cluster. This method is used within a ``with`` statement.
 
@@ -200,7 +201,7 @@ class ClusterLab(Lab):
 
     # ---------- Running experiments ----------
 
-    def runExperiment(self, e : Experiment):
+    def runExperiment(self, e: Experiment):
         """Run the experiment across the parameter space in parallel using
         all the engines in the cluster. This method returns immediately.
 
