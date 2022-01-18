@@ -5,6 +5,10 @@ Version 1.6.1
    - Added doc/examples/ sub-directory with code examples
    - Added epyc.scripts to setup.py
    - Added documentation on command-line script
+   - Added logging instead of explicit stderr messages
+   - Added cookbook recipe on logging
+   - Added installing type stubs for Python 10
+   - Changed ClusterLab testing to skip properly
 
 Version 1.5.1 2021-09-06
 
