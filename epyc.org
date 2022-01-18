@@ -4,9 +4,9 @@
 
 ** Release planning
 
-*** Release 1.6.1
+*** Release 1.7.1
 
-**** Coding [1/5]
+**** Coding [0/4]
 
      - [ ] Block designs
 
@@ -20,12 +20,6 @@
      - [ ] Notes for result sets
 
        Add notes alongside results, as well as the description field.
-
-     - [X] A context manager to complement LabNotebook.already()
-
-       Should be able to protect a block of code that populates (and
-       finalises?) a result set such that it's a no-op if an exception
-       occurs.
 
      - [ ] Tidier handling of HDF5 (and other) files
 
@@ -44,6 +38,21 @@
        In HDF5, adding an empty array first into a field means that the
        result set doesn't get typed properly, as there's no element type
        known.
+
+**** Documentation [0/0]
+
+
+*** Release 1.6.1
+
+**** Coding [1/1]
+
+     - [X] A context manager to complement LabNotebook.already()
+
+       Should be able to protect a block of code that populates (and
+       finalises?) a result set such that it's a no-op if an exception
+       occurs.
+
+**** Bugs [0/0]
 
 **** Documentation [3/3]
 
