@@ -23,12 +23,6 @@ import numpy
 from epyc import *
 
 
-import logging
-logging.basicConfig(level=logging.DEBUG)
-logger = logging.getLogger(Logger)
-logger.setLevel(logging.DEBUG)
-
-
 class SampleExperiment(Experiment):
     '''A very simple experiment that adds up its parameters.'''
 
