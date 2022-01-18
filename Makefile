@@ -1,6 +1,6 @@
 # Makefile for epyc
 #
-# Copyright (C) 2016--2021 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -21,7 +21,7 @@
 PACKAGENAME = epyc
 
 # The version we're building
-VERSION = 1.6.1
+VERSION = 1.7.1
 
 
 # ----- Sources -----

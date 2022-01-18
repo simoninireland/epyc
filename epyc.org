@@ -42,7 +42,7 @@
 **** Documentation [0/0]
 
 
-*** Release 1.6.1
+*** Release 1.6.1                                                   :ARCHIVE:
 
 **** Coding [1/1]
 
