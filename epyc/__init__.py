@@ -49,6 +49,9 @@ and other structuring tasks.
 # String written into every persistent notebook file
 PackageContactInfo = 'Created by epyc, computational experiment management for Python <https://pypi.org/project/epyc/>'
 
+# Library-specific logger name
+Logger = 'epyc'
+
 # Experiments
 from .experiment import Experiment, ResultsDict, ExperimentalParameters
 from .experimentcombinator import ExperimentCombinator

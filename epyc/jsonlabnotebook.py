@@ -1,7 +1,7 @@
 # Simulation "lab notebook" for collecting results, JSON version
 #
-# Copyright (C) 2016--2020 Simon Dobson
-# 
+# Copyright (C) 2016--2022 Simon Dobson
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -17,15 +17,18 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import LabNotebook, Experiment, PackageContactInfo
 import os
-import sys
 import json
 import re
+import logging
 import numpy
 from datetime import datetime
 import dateutil.parser
+from epyc import Logger, LabNotebook, Experiment, PackageContactInfo
 from typing import Any, Dict
+
+
+logger = logging.getLogger(Logger)
 
 
 class MetadataEncoder(json.JSONEncoder):
@@ -33,7 +36,7 @@ class MetadataEncoder(json.JSONEncoder):
     JSON objects, using the standard ISO string representation.
     (Plus a few other minor tweaks to get things to work more smoothly.)"""
 
-    def default( self, o : Any) -> Any:
+    def default(self, o: Any) -> Any:
         """If o is a datetime object, convert it to an ISO string. If it is an
         exception, convert it to a string. If it is a numpy int, coerce it to
         a Python int.
@@ -74,8 +77,8 @@ class JSONLabNotebook(LabNotebook):
     # Structure of the file
     VERSION = 'version'                              #: Tag for version number (missing for v1).
 
-    def __init__(self, name : str, create : bool =False, description : str =None):
-        super(JSONLabNotebook, self).__init__(name, description)
+    def __init__(self, name: str, create: bool = False, description: str = None):
+        super().__init__(name, description)
 
         # check for the file already existing
         if os.path.isfile(name):
@@ -98,15 +101,15 @@ class JSONLabNotebook(LabNotebook):
     def commit(self):
         """Persist to disc."""
         self._save(self.name())
-        
-    def _create(self, fn : str):
+
+    def _create(self, fn: str):
         '''Create an empty JSON file for this notebook.
 
         :param fn: the file name'''
         with open(fn, 'w') as f:
             f.write('')
 
-    def _load(self, fn : str):
+    def _load(self, fn: str):
         """Retrieve the notebook from the given file.
 
         :param fn: the file name"""
@@ -119,17 +122,17 @@ class JSONLabNotebook(LabNotebook):
                 # check version
                 if self.VERSION in j:
                     # we have a version string, check it's ours
-                    v = j[self.VERSION] 
+                    v = j[self.VERSION]
                     if v == '2':
                         self._newload(j)
                     else:
                         raise Exception('Unhandled JSON file format {v}'.format(v=v))
                 else:
                     # no version string, do the old-style load
-                    print('Version 1 JSON format, notebook may have import errors', file=sys.stderr)
+                    logger.warning('Version 1 JSON format, notebook may have import errors')
                     self._oldload(j)
 
-    def _oldload(self, j : Dict[str, Any]):
+    def _oldload(self, j: Dict[str, Any]):
         '''Load an old-format file.
 
         In this format, all results were held in dicts keyed by a key synthesised from the
@@ -173,7 +176,7 @@ class JSONLabNotebook(LabNotebook):
                 params[n] = v
             self.addPendingResult(params, jobid)
 
-    def _newload(self, j : Dict[str, Any]):
+    def _newload(self, j: Dict[str, Any]):
         '''Load a new-format file.
 
         In this format we save everything as dicts, nested or otherwise.
@@ -209,10 +212,10 @@ class JSONLabNotebook(LabNotebook):
             for rc in rcs:
                 meta = rc[Experiment.METADATA]
                 for k in meta:
-                    if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
+                    if k in [Experiment.START_TIME, Experiment.END_TIME]:
                         try:
                             # patch ISO-format strings to datetime objects
-                            meta[k] = dateutil.parser.parse(meta[k]) 
+                            meta[k] = dateutil.parser.parse(meta[k])
                         except:
                             # leave unchanged
                             pass
@@ -235,23 +238,23 @@ class JSONLabNotebook(LabNotebook):
         if j['locked']:
             self.finish()
 
-    def _save( self, fn ):
+    def _save(self, fn: str):
         """Persist the notebook to the given file. Note that, while we can load
-        both old and new formats, we only save in the new format.  
+        both old and new formats, we only save in the new format.
 
         :param fn: the file name"""
 
         # result sets
-        rsrcs = dict()
+        rsrcs = {}
         for tag in self.resultSets():
             rs = self.resultSet(tag)
 
             # results (as nested results dicts)
-            rsres = dict()
+            rsres = {}
             rsres['results'] = list(rs.results())
 
             # pending results
-            pending = dict()
+            pending = {}
             for jobid in rs.pendingResults():
                 params = rs.pendingResultParameters(jobid)
                 pending[jobid] = params
@@ -271,16 +274,15 @@ class JSONLabNotebook(LabNotebook):
             rsrcs[tag] = rsres
 
         # create the JSON object
-        j = json.dumps({ 'creator': PackageContactInfo,
-                         'version': '2',
-                         'description': self.description(),
-                         'current' : self.currentTag(),
-                         'locked' : self.isLocked(),
-                         'resultsets': rsrcs },
-                       indent = 4,
-                       cls = MetadataEncoder)
+        j = json.dumps({'creator': PackageContactInfo,
+                        'version': '2',
+                        'description': self.description(),
+                        'current': self.currentTag(),
+                        'locked': self.isLocked(),
+                        'resultsets': rsrcs },
+                       indent=4,
+                       cls=MetadataEncoder)
 
         # write to file
         with open(fn, 'w') as f:
             f.write(j)
-            

@@ -1,6 +1,6 @@
 # Simulation "lab" experiment management, parallel cluster version
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,12 +17,16 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import Lab, LabNotebook, Experiment
-import numpy                                  # type: ignore
 import time
 import sys
+import logging
 from ipyparallel import Client, DirectView    # type: ignore
 from contextlib import AbstractContextManager
+from epyc import Logger, Lab, LabNotebook, Experiment
+
+
+logger = logging.getLogger(Logger)
+
 
 class ClusterLab(Lab):
     """A :class:`Lab` running on an ``pyparallel`` compute cluster.
@@ -40,11 +44,15 @@ class ClusterLab(Lab):
     """
 
     # Tuning parameters
-    WaitingTime : int = 30           #: Waiting time for checking for job completion. Lower values increase network traffic.
-    Reconnections : int = 5          #: Number of attempts when re-connecting to a cluster.
-    Retries : int = 3                #: Number of re-tries for failed jobs.
+    WaitingTime: int = 30           #: Waiting time for checking for job completion. Lower values increase network traffic.
+    Reconnections: int = 5          #: Number of attempts when re-connecting to a cluster.
+    Retries: int = 3                #: Number of re-tries for failed jobs.
 
-    def __init__( self, notebook : LabNotebook = None, url_file = None, profile = None, profile_dir = None, ipython_dir = None, context = None, debug = False, sshserver = None, sshkey = None, password = None, paramiko = None, timeout = 10, cluster_id = None, **extra_args ):
+    def __init__(self, notebook: LabNotebook = None,
+                 url_file = None, profile = None, profile_dir = None, ipython_dir = None,
+                 context = None, debug = False,
+                 sshserver = None, sshkey = None, password = None, paramiko = None,
+                 timeout = 10, cluster_id = None, **extra_args ):
         """Create an empty lab attached to the given cluster. Most of the arguments
         are as expected by the ``pyparallel.Client`` class, and are used to create the
         underlying connection to the cluster. The connection is opened immediately,
@@ -63,23 +71,23 @@ class ClusterLab(Lab):
         :param paramiko: True to use paramiko for ssh (defaults to False)
         :param timeout: timeout in seconds for ssh connection (defaults to 10s)
         :param cluster_id: string added to runtime files to prevent collisions"""
-        super(ClusterLab, self).__init__(notebook)
+        super().__init__(notebook)
 
         # record all the connection arguments for later
-        self._arguments = dict(url_file = url_file,
-                               profile = profile,
-                               profile_dir = profile_dir,
-                               ipython_dir = ipython_dir,
-                               context = context,
-                               debug = debug,
-                               sshserver = sshserver,
-                               sshkey = sshkey,
-                               password = password,
-                               paramiko = paramiko,
-                               timeout = timeout,
-                               cluster_id = cluster_id,
+        self._arguments = dict(url_file=url_file,
+                               profile=profile,
+                               profile_dir=profile_dir,
+                               ipython_dir=ipython_dir,
+                               context=context,
+                               debug=debug,
+                               sshserver=sshserver,
+                               sshkey=sshkey,
+                               password=password,
+                               paramiko=paramiko,
+                               timeout=timeout,
+                               cluster_id=cluster_id,
                                **extra_args)
-        self._client : Client = None
+        self._client: Client = None
 
         # connect to the cluster
         self.open()
@@ -124,7 +132,8 @@ class ClusterLab(Lab):
             # if we get here, we're definitely disconnected, so try
             # to re-connect the requisite number of times
             for i in range(self.Reconnections):
-                print('Connection to cluster failed, reconnecting ({i}/{n})'.format(i=i + 1, n=self.Reconnections), file=sys.stderr)
+                logger.warning('Connection to cluster failed, reconnecting ({i}/{n})'.format(i=i + 1,
+                                                                                             n=self.Reconnections))
                 try:
                     # try to connect
                     self.connect()
@@ -137,6 +146,7 @@ class ClusterLab(Lab):
                     exc = e
 
             # OK, we've failed enough, stop punching the brick wall...
+            logger.error(f'Too many connection failures ({n})')
             raise exc
 
     def close( self ):
@@ -222,20 +232,20 @@ class ClusterLab(Lab):
                     for (ep, p) in eps:
                         rc = view.apply_async(lambda ep: ep[0].set(ep[1]).run(), (ep, p))
                         ids = rc.msg_ids
-                        #print('Started {ids}'.format(ids=ids))
+                        logger.info(f'Started jobs {ids}')
                         nb.addPendingResult(p, ids[0])
 
                         # there seems to be a race condition in submitting jobs,
                         # whereby jobs get dropped if they're submitted too quickly
                         time.sleep(0.01)
                 except Exception as e:
-                    print(e, file=sys.stderr)
+                    logger.error(f'Exception when starting experiments: {e}')
             finally:
                 # commit our pending results in the notebook
                 nb.commit()
                 self.close()
 
-    def updateResults(self, purge : bool =False) -> int:
+    def updateResults(self, purge : bool = False) -> int:
         """Update our results within any pending results that have completed since we
         last retrieved results from the cluster. Optionally purges any jobs that
         have crashed, which can be due to engine failure within the
@@ -261,7 +271,7 @@ class ClusterLab(Lab):
                         # add all completed jobs to the notebook
                         if j in status['completed']:
                             r = status[j]
-                            #print('{j} completed'.format(j=j))
+                            logger.info(f'Job {j} completed')
 
                             # resolve the result in the appropriate result set
                             nb.resolvePendingResult(r, j)
@@ -291,7 +301,7 @@ class ClusterLab(Lab):
 
     # ---------- Accessing results ----------
 
-    def wait(self, timeout : int =-1) -> bool:
+    def wait(self, timeout: int =-1) -> bool:
         """Wait for all pending results in all result sets to be finished. If timeout is set,
         return after this many seconds regardless.
 

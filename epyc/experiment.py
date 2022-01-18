@@ -1,6 +1,6 @@
 # Base class for experiments
 #
-# Copyright (C) 2016--2021 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -20,12 +20,17 @@
 import sys
 from datetime import datetime
 import traceback
+import logging
+from epyc import Logger
 from typing import Set, Dict, Union, List, Any
 if sys.version_info >= (3, 8):
     from typing import Final
 else:
     # backwards compatibility with Python35, Python36, and Python37
     from typing_extensions import Final
+
+
+logger = logging.getLogger(Logger)
 
 
 # Type aliases
@@ -266,7 +271,7 @@ class Experiment(object):
                 except Exception as f:
                     # log, but otherwise ignore, any exceptions
                     # that happen in the teardown
-                    print("Caught exception in teardown (ignored): {f}".format(f=f), file=sys.stderr)
+                    logger.error(f'Caught exception in teardown (ignored): {f}')
             self._metadata[self.ELAPSED_TIME] = elapsedTime
             self._metadata[self.END_TIME] = datetime.now()
 
@@ -279,7 +284,7 @@ class Experiment(object):
             if fatal:
                 raise e
             else:
-                print("Caught exception in experiment: {e}".format(e=e), file=sys.stderr)
+                logger.error(f'Caught exception in experiment: {e}')
 
         # report the results
         self._results = res

@@ -1,6 +1,6 @@
 # A set of results for experiments in a given parameter space
 #
-# Copyright (C) 2016--2021 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -20,15 +20,19 @@
 import sys
 import traceback
 from datetime import datetime
+import logging
 import numpy                       # type: ignore
 from pandas import DataFrame       # type: ignore
-from epyc import Experiment, ResultsDict
+from epyc import Logger, Experiment, ResultsDict
 from typing import List, Dict, Set, Any, Type, Optional
 if sys.version_info >= (3, 8):
     from typing import Final
 else:
     # backwards compatibility with Python35, Python36 and Python37
     from typing_extensions import Final
+
+
+logger = logging.getLogger(Logger)
 
 
 class CancelledException(Exception):
@@ -67,7 +71,7 @@ class PendingResultException(Exception):
     '''
 
     def __init__(self, jobid: str):
-        super().__init__('Unrecognised pending result job identifier {j}'.format(j=jobid))
+        super().__init__(f'Unrecognised pending result job identifier {jobid}')
         self._jobid = jobid
 
     def jobid(self) -> str:
@@ -77,7 +81,7 @@ class PendingResultException(Exception):
         return self._jobid
 
 
-class ResultSet(object):
+class ResultSet:
     '''A "page" in a lab notebook for the results of a particular set of
     experiments. This will consist of metadata, notes, and a data
     table resulting from the execution of the experiment. Each
@@ -245,6 +249,7 @@ class ResultSet(object):
 
         '''
         if self.isLocked():
+            logger.error('Operation attempted against locked ResultSet')
             raise ResultSetLockedException()
 
 
@@ -494,13 +499,13 @@ d
 
             # extract all the names in canonical order
             names = []
-            for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+            for d in [Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS]:
                 ns = self._names[d]
                 if ns is not None:
                     names.extend(ns.copy())
 
             # infer the types associated with each element using the type mapping
-            types = dict()
+            types = {}
             for k in self._names[Experiment.METADATA]:
                 if k in oldnames:
                     # existing field, retain it
@@ -516,8 +521,8 @@ d
                         try:
                             types[k] = self.valueToDtype(v)
                         except Exception:
-                            raise Exception('No type mapping for metadata {k} ({v})'.format(k=k, v=v))
-            for d in [ Experiment.PARAMETERS, Experiment.RESULTS ]:
+                            raise Exception(f'No type mapping for metadata {k}={v}')
+            for d in [Experiment.PARAMETERS, Experiment.RESULTS]:
                 if self._names[d] is not None:
                     for k in self._names[d]:
                         if k in oldnames:
@@ -529,11 +534,11 @@ d
                             try:
                                 types[k] = self.valueToDtype(v)
                             except Exception:
-                                raise Exception('No type mapping for {k} ({v})'.format(k=k, v=v))
+                                raise Exception(f'No type mapping for {k}={v}')
 
             # form the dtype
             elements = []
-            for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+            for d in [Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS]:
                 if self._names[d] is not None:
                     for k in self._names[d]:
                         if k in types:
@@ -544,7 +549,7 @@ d
             nr = len(self._results)
             if nr > 0:
                 # add new columns to each element
-                for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
+                for d in [Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS]:
                     for k in self._names[d]:
                         if k not in self._results:
                             self._results[k] = [self.zero(types[k])] * nr
@@ -601,7 +606,7 @@ d
             if self._pendingdtype is None:
                 # no existing dtype, use a blank one
                 oldnames = set()
-                oldfields = dict()
+                oldfields = {}
             else:
                 # the old dtype, for extensions
                 olddtype = self._pendingdtype
@@ -609,7 +614,7 @@ d
                 oldfields = olddtype.fields
 
             # infer the types associated with each element using the type mapping
-            types = dict()
+            types = {}
             for k in parameterNames:
                 if k in oldnames:
                     # existing field, retain it
@@ -620,7 +625,7 @@ d
                     try:
                         types[k] = self.valueToDtype(v)
                     except Exception:
-                        raise Exception('No type mapping for pending result {k} ({v})'.format(k=k, v=v))
+                        raise Exception(f'No type mapping for pending result {k}={v}')
 
             # add the job id column
             types[self.JOBID] = self.typeToDtype(str)    # job ids are expected to be strings
@@ -665,7 +670,7 @@ d
         if dtype.kind in self.ZeroMapping:
             return self.ZeroMapping[dtype.kind]
         else:
-            print('No zero value for type {dt}, using 0.0'.format(dt=dtype), file=sys.stderr)
+            logger.warning(f'No zero value for type {dtype}, using 0.0')
             return 0.0     # and hope for the best
 
 
@@ -688,8 +693,8 @@ d
 
         # flatten the key/value pairs in the results dict
         # (in case of clashes, results take precedence)
-        row = dict()
-        for d in [ Experiment.METADATA, Experiment.PARAMETERS ]:
+        row = {}
+        for d in [Experiment.METADATA, Experiment.PARAMETERS]:
             for k in self._names[d]:
                 if k not in rc[d]:
                     row[k] = self.zero(dt[k])
@@ -728,12 +733,12 @@ d
         # check the validity of the parameters requested
         dps = set(self.parameterNames()).difference(set(params.keys()))
         if len(dps) > 0:
-            raise Exception('Missing experimental parameters: {dps}'.format(dps=dps))
+            raise Exception(f'Missing experimental parameters: {dps}')
 
         # make sure we're not duplicating
         df = self._pending
         if jobid in df[self.JOBID].values:
-            raise Exception('Duplicate pending result {j}'.format(j=jobid))
+            raise Exception(f'Duplicate pending result {jobid}')
 
         # add a line to the pending dataframe
         row = params.copy()
@@ -772,7 +777,7 @@ d
         # check the validity of the parameters requested
         dps = set(params.keys()).difference(set(self.parameterNames()))
         if len(dps) > 0:
-            raise Exception('Unexpected experimental parameters: {dps}'.format(dps=dps))
+            raise Exception(f'Unexpected experimental parameters: {dps}')
 
         # project-out the rows with these values
         df = self._pending
@@ -788,11 +793,6 @@ d
 
         # return the ids
         return list(df[self.JOBID])
-
-    def _dropPendingResult(self, jobid: str):
-        '''Drop a pending result from the pending table.
-
-        :param jobid: the job id'''
 
     def resolveSinglePendingResult(self, jobid: str):
         '''Resolve the given pending result. This drops the job from the
@@ -815,7 +815,8 @@ d
             raise PendingResultException(jobid)
         elif len(ids) != 1:
             # shouldn't be more than one either....
-            raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
+            logger.critical(f'Internal data structure failure (job {jobid})')
+            raise Exception(f'Internal data structure failure (job {jobid})')
         df.drop(index=ids, inplace=True)
         #print('Resolved {j}'.format(j=jobid), file=sys.stderr)
 
@@ -858,7 +859,8 @@ d
             raise PendingResultException(jobid)
         elif len(ids) != 1:
             # shouldn't be more than one either....
-            raise Exception('Internal data structure failure (job {j})'.format(j=jobid))
+            logger.critical(f'Internal data structure failure (job {jobid})')
+            raise Exception(f'Internal data structure failure (job {jobid})')
 
         # extract the parameters
         id = ids[0]
@@ -871,7 +873,7 @@ d
 
         # drop the line in the pending table
         df.drop(index=ids, inplace=True)
-        print('Cancelled {j}'.format(j=jobid), file=sys.stderr)
+        logger.info(f'Cancelled {jobid}')
 
         # mark us as dirty
         self.dirty()
@@ -896,11 +898,12 @@ d
         if len(df) < 1:
             raise Exception('No pending job {j}'.format(j=jobid))
         elif len(df) > 1:
-            raise Exception('Corrupted internal data structures for pending result {j}'.format(j=jobid))
+            logger.critical(f'Internal data structure failure (job {jobid})')
+            raise Exception(f'Corrupted internal data structures for pending result {jobid}')
 
         # unpack into a dict and return it
         js = df.iloc[0]
-        params = dict()
+        params = {}
         for k in self.parameterNames():
             params[k] = js[k]
         return params
@@ -961,7 +964,7 @@ d
         # check the validity of the parameters requested
         dps = set(params).difference(set(self.parameterNames()))
         if len(dps) > 0:
-            raise Exception('Unexpected experimental parameters: {dps}'.format(dps=dps))
+            raise Exception(f'Unexpected experimental parameters: {dps}')
 
         # project-out the rows with these values
         df = self._results.copy()
@@ -1059,7 +1062,7 @@ d
 
         # check the parameter is legal
         if param not in self.parameterNames():
-            raise Exception('No experimental paramater {p}'.format(p=param))
+            raise Exception(f'No experimental paramater {param}')
 
         # project out all the values
         df = self._results
@@ -1075,7 +1078,7 @@ d
         :returns: a dict mapping parameter names to their ranges
 
         '''
-        ps = dict()
+        ps = {}
         for k in self.parameterNames():
             ps[k] = self.parameterRange(k)
         return ps

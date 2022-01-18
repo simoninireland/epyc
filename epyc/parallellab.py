@@ -1,6 +1,6 @@
 # Simulation "lab" experiment management, local parallel version
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,9 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import Lab, LabNotebook, Experiment
+import logging
 from joblib import Parallel, delayed
 from multiprocessing import cpu_count
+from epyc import Logger, Lab, LabNotebook, Experiment
+
+
+logger = logging.getLogger(Logger)
 
 
 class ParallelLab(Lab):
@@ -72,6 +76,7 @@ class ParallelLab(Lab):
             # use the number of cores requested, up to the maximum available
             cores = min(cores, cpu_count())
         self._cores = cores
+        logger.info(f'ParallelLab created with {cores} cores')
 
     def numberOfCores(self) -> int:
         '''Return the number of cores we will use to run experiments.
