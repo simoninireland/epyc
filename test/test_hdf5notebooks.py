@@ -23,8 +23,10 @@ import numpy
 import os
 from tempfile import NamedTemporaryFile
 
+
 # Remote HDF5 file for testiong URL behaviour
 testFileURL = 'https://raw.githubusercontent.com/simoninireland/epyc/dev/test/test.h5'
+
 
 class SampleExperiment(Experiment):
     '''A very simple experiment that adds up its parameters.'''
@@ -32,11 +34,13 @@ class SampleExperiment(Experiment):
     def do( self, param ):
         return dict(total=param['k'] + 10)
 
+
 class SampleExperiment1(Experiment):
     '''An experiment that fails.'''
 
     def do( self, param ):
         raise Exception('A (deliberate) failure')
+
 
 class SampleExperiment2(Experiment):
     '''An experiment whose results contain a list.'''

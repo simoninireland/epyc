@@ -33,9 +33,10 @@ class SampleExperiment(Experiment):
             total = total + param[k]
         return dict(total = total)
 
+
 class SampleExperiment1(Experiment):
     '''An experiment that fails.'''
-    
+
     def do( self, param ):
         raise Exception('A (deliberate) failure')
 
@@ -56,7 +57,7 @@ class JSONLabNotebookTests(unittest.TestCase):
             #pass
         except OSError:
             pass
-        
+
     def testCreate( self ):
         '''Test creation of empty notebook (which won't create file)'''
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
@@ -70,17 +71,17 @@ class JSONLabNotebookTests(unittest.TestCase):
         rc1 = e.set(params1).run()
         params2 = dict( a = 1, b = 3 )
         rc2 = e.set(params2).run()
-        
+
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.addPendingResult(params2, '2')
         js.commit()
-        
+
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(jsr.description(), "A test notebook")
         self.assertCountEqual(jsr.pendingResults(), js.pendingResults())
         self.assertCountEqual(jsr.results(), js.results())
- 
+
     def testCreateAndUpdate( self ):
         '''Test creation and updating of notebook'''
         e = SampleExperiment()
@@ -88,105 +89,105 @@ class JSONLabNotebookTests(unittest.TestCase):
         rc1 = e.set(params1).run()
         params2 = dict( a = 1, b = 3 )
         rc2 = e.set(params2).run()
-        
+
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.addPendingResult(params2, '2')
         js.commit()
-        
+
         js.resolvePendingResult(rc2, '2')
         js.commit()
-        
+
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(jsr.description(), "A test notebook")
         self.assertEqual(len(jsr.pendingResults()), 0)
         self.assertCountEqual(jsr.results(), js.results())
-        
+
     def testCreateOverwrite( self ):
         '''Test the create flag'''
         e = SampleExperiment()
         params1 = dict( a = 1, b = 2 )
         rc1 = e.set(params1).run()
-        
+
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.commit()
-        
+
         jsr = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         self.assertEqual(jsr.description(), "A test notebook")
         self.assertEqual(len(jsr.results()), 0)
         self.assertEqual(len(jsr.pendingResults()), 0)
-        
+
     def testCreateNoOverwrite( self ):
         '''Test that the create flag being false doesn't overwrite'''
         e = SampleExperiment()
         params1 = dict( a = 1, b = 2 )
         rc1 = e.set(params1).run()
-        
+
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.commit()
-        
+
         # check we keep the results but change the description
         jsr = JSONLabNotebook(self._fn, description = "Nothing to see")
         self.assertEqual(jsr.description(), "Nothing to see")
         self.assertCountEqual(jsr.results(), js.results())
         self.assertEqual(len(jsr.pendingResults()), 0)
-        
+
     def testReadEmpty( self ):
-        '''Test we can correctly load an empty file, resulting in an empty notebook''' 
+        '''Test we can correctly load an empty file, resulting in an empty notebook'''
         e = SampleExperiment()
         params1 = dict( a = 1, b = 2 )
         rc1 = e.set(params1).run()
-        
+
         # notebook with a result
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.commit()
-        
+
         # ...which we then wipe out by re-creating it
         js2 = JSONLabNotebook(self._fn, create=True,
                               description="Another test notebook")
-        
+
         # ...and check we did
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(len(jsr.results()), 0)
         self.assertEqual(len(jsr.pendingResults()), 0)
 
-        # ...and that it commits and reloads properly        
+        # ...and that it commits and reloads properly
         js2.commit()
         jsr = JSONLabNotebook(self._fn)
         self.assertEqual(len(jsr.results()), 0)
-        self.assertEqual(len(jsr.pendingResults()), 0)            
+        self.assertEqual(len(jsr.pendingResults()), 0)
 
     def testTimePatching( self ):
         '''Check that the timing metadata is persisted correctly.'''
         e = SampleExperiment()
         params1 = dict( a = 1, b = 2 )
         rc1 = e.set(params1).run()
-        
+
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.commit()
-        
+
         js2 = JSONLabNotebook(self._fn)
         rc2 = (js2.results())[0]
         self.assertEqual(rc1[Experiment.METADATA][Experiment.START_TIME],
                          rc2[Experiment.METADATA][Experiment.START_TIME])
         self.assertEqual(rc1[Experiment.METADATA][Experiment.END_TIME],
                          rc2[Experiment.METADATA][Experiment.END_TIME])
-                
+
 
     def testPersistingException( self ):
         '''Test we persist exceptions as strings.'''
         e = SampleExperiment1()
         params1 = dict(a = 1)
         rc1 = e.set(params1).run()
-        
+
         js = JSONLabNotebook(self._fn, description="A test notebook", create=True)
         js.addResult(rc1)
         js.commit()
-        
+
         js2 = JSONLabNotebook(self._fn)
         rc2 = (js2.results())[0]
         self.assertFalse(rc2[Experiment.METADATA][Experiment.STATUS])

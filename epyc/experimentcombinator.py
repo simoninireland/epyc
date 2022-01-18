@@ -1,7 +1,7 @@
 # Base class for experiment combinators that co=ordinate other experiments
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ class ExperimentCombinator(Experiment):
         """Create a combinator based on the given experiment.
 
         ex: the underlying experiment"""
-        super(ExperimentCombinator, self).__init__()
+        super().__init__()
         self._experiment = ex
 
     def experiment(self) -> Experiment:
@@ -58,5 +58,3 @@ class ExperimentCombinator(Experiment):
 
         :returns: the parameters,"""
         return self.experiment().parameters()
-
-    

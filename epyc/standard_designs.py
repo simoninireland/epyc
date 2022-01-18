@@ -1,6 +1,6 @@
 # Standard experimental designs
 #
-# Copyright (C) 2016--2021 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -63,7 +63,7 @@ class FactorialDesign(Design):
                         eprime[p] = r
                         dsprime.append((e, eprime))
                 else:
-                    eprime = dict()
+                    eprime = {}
                     eprime[p] = r
                     dsprime.append((e, eprime))
             if len(dsprime) > 0:
@@ -112,7 +112,7 @@ class PointwiseDesign(Design):
         :returns: an experimental configuration'''
 
         # check parameter ranges are all equal or 1
-        ls = list(map(len, [vs for vs in ps.values()]))
+        ls = list(map(len, list(ps.values())))
         sls = set(ls)
         nls = len(sls)
         l = 0
@@ -126,7 +126,7 @@ class PointwiseDesign(Design):
                 raise DesignException('Parameter range lengths don\'t match')
             elif 1 not in sls:
                 # not extending
-                raise DesignException('Parameter range lengths don\'t match')
+                raise DesignException('Parameter range lengths don\'t match an not extending')
             else:
                 # some ranges are being extended, extract the other length
                 for j in sls:
@@ -138,7 +138,7 @@ class PointwiseDesign(Design):
 
         ds = []
         for i in range(l):
-            eprime = dict()
+            eprime = {}
             for p in ps.keys():
                 if p in ones:
                     eprime[p] = ps[p][0]
