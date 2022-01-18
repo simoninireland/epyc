@@ -145,7 +145,7 @@ DIST_WHEEL = dist/$(PACKAGENAME)-$(VERSION)-py3-none-any.whl
 # ipyparallel testing cluster
 CLUSTER_PROFILE = $(PACKAGENAME)test
 CLUSTER_PROFILE_DIR = `$(IPYTHON) locate profile $(CLUSTER_PROFILE)`
-CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/pid/ipcluster.pid
+CLUSTER_TOKEN_FILE = $(CLUSTER_PROFILE_DIR)/security/cluster-.json
 
 # ----- Tools -----
 
@@ -194,7 +194,8 @@ RUN_SETUP = $(PYTHON) setup.py
 RUN_SPHINX_HTML = PYTHONPATH=$(ROOT) make html
 RUN_TWINE = $(TWINE) upload dist/$(PACKAGENAME)-$(VERSION).tar.gz dist/$(PACKAGENAME)-$(VERSION).tar.gz.asc
 RUN_CREATE_PROFILE = $(IPYTHON) profile create --parallel $(CLUSTER_PROFILE)
-RUN_CLUSTER = PYTHONPATH=.:test PATH=bin:$$PATH $(IPCLUSTER) start --profile $(CLUSTER_PROFILE) --n 2
+RUN_CLUSTER = PYTHONPATH=.:test $(IPCLUSTER) start --profile $(CLUSTER_PROFILE) --n 2
+RUN_CLUSTER_STOP = $(IPCLUSTER) stop --profile $(CLUSTER_PROFILE)
 RUN_JOSS_PREVIEW = docker run --rm --volume $(ROOT):/data --user $(id -u):$(id -g) --env JOURNAL=joss openjournals/paperdraft
 
 
@@ -303,17 +304,18 @@ $(DIST_WHEEL): $(SOURCES_GENERATED) $(SOURCES_CODE) Makefile
 
 define HELP_MESSAGE
 Available targets:
-   make test         run the test suite for all Python versions we support
-   make coverage     run coverage checks of the test suite
-   make doc          build the API documentation using Sphinx
-   make cluster      run a small compute cluster for use by the tests
-   make env          create a known-good development virtual environment
-   make sdist        create a source distribution
-   make wheel	     create binary (wheel) distribution
-   make upload       upload distribution to PyPi
-   make commit       tag current version and push to master repo
-   make clean        clean-up the build
-   make reallyclean  clean up the virtualenv as well
+   make test            run the test suite for all Python versions we support
+   make coverage        run coverage checks of the test suite
+   make doc             build the API documentation using Sphinx
+   make cluster         run a small compute cluster for use by the tests
+   make testclusterlab  run only the ClusterLab tests against a running cluster
+   make env             create a known-good development virtual environment
+   make sdist           create a source distribution
+   make wheel		create binary (wheel) distribution
+   make upload          upload distribution to PyPi
+   make commit          tag current version and push to master repo
+   make clean           clean-up the build
+   make reallyclean     clean up the virtualenv as well
 
 endef
 export HELP_MESSAGE

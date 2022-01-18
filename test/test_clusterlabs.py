@@ -26,6 +26,13 @@ import os
 import subprocess
 from tempfile import NamedTemporaryFile
 
+
+# open-up logging for testing the cluster
+import logging
+logger = logging.getLogger(Logger)
+logger.setLevel(logging.DEBUG)
+
+
 # set limit low for testing purposes
 ClusterLab.WaitingTime = 10
 
@@ -50,19 +57,19 @@ class SampleExperiment2(Experiment):
         return dict(total = total)
 
 
-# use the existence of an ipcluster.pid file in the epyctest IPython
+# use the existence of a security/cluster-.json file in the epyctest IPython
 # profile directory as a proxy for there being a cluster running
 # that we can use for our tests
 # (cluster is created by running `make cluster` in the project Makefile)
 profile = 'epyctest'
 try:
-    profile_dir = subprocess.check_output('ipython locate profile {p}'.format(p=profile), shell=True).rstrip().decode()
-    pid_file = os.path.join(profile_dir, 'pid/ipcluster.pid')
+    profile_dir = subprocess.check_output(f'ipython locate profile {profile}', shell=True).rstrip().decode()
+    pid_file = os.path.join(profile_dir, 'security/cluster-.json')
     cluster_running = os.path.isfile(pid_file)
 except:
     cluster_running = False
 @unittest.skipUnless(cluster_running,
-                     "No {p} cluster running".format(p=profile))
+                     f'No {profile} cluster running')
 class ClusterLabTests(unittest.TestCase):
 
     def setUp( self ):
