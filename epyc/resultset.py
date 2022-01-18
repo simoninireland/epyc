@@ -112,14 +112,14 @@ class ResultSet:
     JOBID: Final[str] = 'epyc.resultset.pending-jobid'     #: Column name for pending result job identifier.
 
     # Typing
-    TypeMapping: Dict[Type, numpy.dtype] = dict()          #: Default type mapping from Python types to ``numpy`` ``dtypes``.
-    ZeroMapping: Dict[str, Any] = { 'i': 0,
-                                    'f': 0.0,
-                                    'c': 0 + 0j,
-                                    'b': False,
-                                    'U': '',
-                                    'S': '',
-                                  }                        #: Default ("zero") values for all the numpy type kinds we handle.
+    TypeMapping: Dict[Type, numpy.dtype] = {}              #: Default type mapping from Python types to ``numpy`` ``dtypes``.
+    ZeroMapping: Dict[str, Any] = {'i': 0,
+                                   'f': 0.0,
+                                   'c': 0 + 0j,
+                                   'b': False,
+                                   'U': '',
+                                   'S': '',
+                                   }                       #: Default ("zero") values for all the numpy type kinds we handle.
 
     @classmethod
     def _init_statics(cls):
@@ -138,8 +138,8 @@ class ResultSet:
             description = "Results collected on {d}".format(d=datetime.now())
 
         self._description: str = description                   # free text description
-        self._attributes: Dict[str, Any] = dict()              # attributes
-        self._names: Dict[str, Optional[List[str]]] = dict()   # dict of names from the results dicts
+        self._attributes: Dict[str, Any] = {}                  # attributes
+        self._names: Dict[str, Optional[List[str]]] = {}       # dict of names from the results dicts
         self._names[Experiment.METADATA] = None
         self._names[Experiment.PARAMETERS] = None
         self._names[Experiment.RESULTS] = None
@@ -148,8 +148,8 @@ class ResultSet:
         self._pending: DataFrame = DataFrame()                 # pending results
         self._pendingdtype: Optional[numpy.dtype] = None       # pending results dtype
         self._dirty: bool = False                              # (pending) results need persisting
-        self._typedirty: bool  = False                         # structure of results has changed
-        self._locked : bool = False                            # locked to further results
+        self._typedirty: bool = False                          # structure of results has changed
+        self._locked: bool = False                             # locked to further results
 
 
     # ---------- Metadata access ----------
