@@ -1,6 +1,6 @@
 # Simulation "lab" experiment management, sequential version
 #
-# Copyright (C) 2016--2020 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -17,9 +17,13 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import LabNotebook, Experiment, Design, FactorialDesign, ResultsDict, ExperimentalConfiguration
+import logging
+from epyc import Logger, LabNotebook, Experiment, Design, FactorialDesign, ResultsDict, ExperimentalConfiguration
 from pandas import DataFrame                                   # type: ignore
 from typing import Dict, List, Tuple, Any, Callable
+
+
+logger = logging.getLogger(Logger)
 
 
 class Lab(object):
@@ -200,7 +204,6 @@ class Lab(object):
         # run the experiment at each point
         nb = self.notebook()
         for (ep, p) in eps:
-            #print(f"Running {p}")
             res = ep.set(p).run()
             nb.addResult(res)
 
@@ -275,18 +278,23 @@ class Lab(object):
                 # re-select the previous current result set
                 try:
                     nb.select(ctag)
+                    logger.info(f'Reverted to ResultSet {ctag} in error')
                 except Exception:
                     # the creation function messed with the results sets,
                     # so revert to the default (which is always present)
                     nb.select(LabNotebook.DEFAULT_RESULTSET)
+                    logger.warning('Reverted to ResultSet {dtag} ({ctag} was deleted)'.format(ctag=ctag,
+                                                                                              dtag=LabNotebook.DEFAULT_RESULTSET))
 
                 # delete the partial set
                 nb.deleteResultSet(tag)
+                logger.info(f'Deleted partly-created result set {tag}')
 
             if propagate:
                 # propagate the exception
                 raise e
             else:
+                logger.error(f'Exception ignored in createWith(): {e}')
                 return False
 
 

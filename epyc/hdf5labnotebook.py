@@ -17,22 +17,26 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import ResultSet, Experiment, LabNotebook, NotebookVersionException, PackageContactInfo
+import logging
 import os
 import h5py                    # type: ignore
+from tempfile import NamedTemporaryFile
 import numpy                   # type: ignore
 from datetime import datetime
-from pandas import DataFrame   # type: ignore
 from dateutil.parser import parse
 from requests import get
 from requests.exceptions import MissingSchema
-from tempfile import NamedTemporaryFile
+from epyc import Logger, ResultSet, Experiment, LabNotebook, NotebookVersionException, PackageContactInfo
 import sys
 from typing import Any
 if sys.version_info >= (3, 8):
     from typing import Final
 else:
     from typing_extensions import Final
+
+
+logger = logging.getLogger(Logger)
+
 
 class HDF5LabNotebook(LabNotebook):
     '''A lab notebook that persists itself to an HDF5 file.  `HDF5
@@ -173,6 +177,7 @@ class HDF5LabNotebook(LabNotebook):
         self._file = h5py.File(name, 'w')
         self._file.attrs[self.VERSION] = self.Version
         #self._current = self.resultSet(self.DEFAULT_RESULTSET)
+        logger.info(f'Created notebook {name}')
 
     def _open(self):
         '''Open the HDF5 file that backs this notebook.'''
@@ -211,6 +216,7 @@ class HDF5LabNotebook(LabNotebook):
             if tag not in tags:
                 # result set with this tag has been deleted, remove the corresponding dataset
                 del g[tag]
+                logger.info(f'Purged ResultSet {tag}')
 
     def _write(self, tag : str):
         '''Write the given result set to the file.
@@ -489,7 +495,7 @@ class HDF5LabNotebook(LabNotebook):
 
         # read the current result set and select it
         c = meta[self.CURRENT]
-        super(HDF5LabNotebook, self).select(c)
+        super().select(c)
 
         # read other attributes
         self._description = meta[self.DESCRIPTION]
