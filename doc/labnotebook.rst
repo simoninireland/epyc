@@ -1,3 +1,5 @@
+.. _labnotebook-class:
+
 :class:`LabNotebook`: A persistent store for results
 ====================================================
 
