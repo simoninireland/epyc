@@ -234,6 +234,7 @@ $(VENV):
 	$(VIRTUALENV) $(VENV)
 	$(CAT) $(REQUIREMENTS) $(DEV_REQUIREMENTS) >$(VENV)/requirements.txt
 	$(ACTIVATE) && $(PIP) install -U pip wheel && $(CHDIR) $(VENV) && $(PIP) install -r requirements.txt
+	$(ACTIVATE) && mypy --install-types --non-interactive
 
 # Build a source distribution
 sdist: $(DIST_SDIST)
