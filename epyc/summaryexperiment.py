@@ -1,6 +1,7 @@
+# SUmmary experiment combinator
 #
-# Copyright (C) 2016--2020 Simon Dobson
-# 
+# Copyright (C) 2016--2022 Simon Dobson
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -16,14 +17,14 @@
 # You should have received a copy of the GNU General Public License
 # along with epyc. If not, see <http://www.gnu.org/licenses/gpl.html>.
 
-from epyc import ExperimentCombinator, Experiment, ResultsDict
 import numpy                     # type: ignore
+from epyc import ExperimentCombinator, Experiment, ResultsDict
 import sys
+from typing import List, Dict, Any
 if sys.version_info >= (3, 8):
-    from typing import List, Dict, Any, Final
+    from typing import Final
 else:
-    # backwards compatibility with Python 35, Python36, and Python37 
-    from typing import List, Dict, Any
+    # backwards compatibility with Python 35, Python36, and Python37
     from typing_extensions import Final
 
 
@@ -50,18 +51,18 @@ class SummaryExperiment(ExperimentCombinator):
     that is that have their status set to True. Failed runs are ignored."""
 
     # Additional metadata
-    UNDERLYING_RESULTS : Final[str] = 'epyc.summaryexperiment.repetitions'                          #: Metadata element for the number of results that were obtained.
-    UNDERLYING_SUCCESSFUL_RESULTS : Final[str] = 'epyc.summaryexperiment.successful_repetitions'    #: Metadata elements for the number of results that were summarised.
+    UNDERLYING_RESULTS: Final[str] = 'epyc.summaryexperiment.repetitions'                          #: Metadata element for the number of results that were obtained.
+    UNDERLYING_SUCCESSFUL_RESULTS: Final[str] = 'epyc.summaryexperiment.successful_repetitions'    #: Metadata elements for the number of results that were summarised.
 
     # Prefix and suffix tags attached to summarised result and metadata values
-    MEAN_SUFFIX : Final[str] = '_mean'              #: Suffix for the mean of the underlying values.
-    MEDIAN_SUFFIX : Final[str] = '_median'          #: Suffix for the median of the underlying values.
-    VARIANCE_SUFFIX : Final[str] = '_variance'      #: Suffix for the variance of the underlying values.
-    MIN_SUFFIX : Final[str] = '_min'                #: Suffix for the minimum of the underlying values.
-    MAX_SUFFIX : Final[str] = '_max'                #: Suffix for the maximum of the underlying values.
-    
-    
-    def __init__(self, ex : Experiment, summarised_results : List[str] =None):
+    MEAN_SUFFIX: Final[str] = '_mean'              #: Suffix for the mean of the underlying values.
+    MEDIAN_SUFFIX: Final[str] = '_median'          #: Suffix for the median of the underlying values.
+    VARIANCE_SUFFIX: Final[str] = '_variance'      #: Suffix for the variance of the underlying values.
+    MIN_SUFFIX: Final[str] = '_min'                #: Suffix for the minimum of the underlying values.
+    MAX_SUFFIX: Final[str] = '_max'                #: Suffix for the maximum of the underlying values.
+
+
+    def __init__(self, ex: Experiment, summarised_results: List[str] = None):
         """Create a summarised version of the given experiment. The given
         fields in the experimental results will be summarised, defaulting to all.
         If there are fields that can't be summarised (because they're not
@@ -69,30 +70,30 @@ class SummaryExperiment(ExperimentCombinator):
 
         :param ex: the underlying experiment
         :param summarised_results: list of result values to summarise (defaults to all)"""
-        super(SummaryExperiment, self).__init__(ex)
+        super().__init__(ex)
         self._summarised_results = summarised_results
 
-    def _mean(self, k : str) -> str:
+    def _mean(self, k: str) -> str:
         """Return the tag associated with the mean of k."""
         return k + self.MEAN_SUFFIX
 
-    def _median(self, k : str) -> str:
+    def _median(self, k: str) -> str:
         """Return the tag associated with the median of k."""
         return k + self.MEDIAN_SUFFIX
 
-    def _variance(self, k : str) -> str:
+    def _variance(self, k: str) -> str:
         """Return the tag associated with the variance of k."""
         return k + self.VARIANCE_SUFFIX
-    
-    def _min(self, k : str) -> str:
+
+    def _min(self, k: str) -> str:
         """Return the tag associated with the minimum of k."""
         return k + self.MIN_SUFFIX
-    
-    def _max(self, k : str) -> str:
+
+    def _max(self, k: str) -> str:
         """Return the tag associated with the maximum of k."""
         return k + self.MAX_SUFFIX
-    
-    def summarise(self, results : List[ResultsDict]) -> ResultsDict:
+
+    def summarise(self, results: List[ResultsDict]) -> ResultsDict:
         """Generate a summary of results from a list of experimental results dicts
         returned by running the underlying experiment. By default we generate
         mean, median, variance, and extrema for each value recorded.
@@ -102,9 +103,9 @@ class SummaryExperiment(ExperimentCombinator):
         :param results: an array of experimental results dicts
         :returns: a dict of summary statistics"""
         if len(results) == 0:
-            return dict()
+            return {}
         else:
-            summary = dict()
+            summary = {}
 
             # work out the fields to summarise
             allKeys = results[0][Experiment.RESULTS].keys()
@@ -114,12 +115,12 @@ class SummaryExperiment(ExperimentCombinator):
                 ks = allKeys
             else:
                 # protect against a key that's not present
-                ks = [ k for k in ks if k in allKeys ]
-                
+                ks = [k for k in ks if k in allKeys]
+
             # add the summary statistics
             for k in ks:
                 # compute summaries for all fields we're interested in
-                vs = [ res[Experiment.RESULTS][k] for res in results ]
+                vs = [res[Experiment.RESULTS][k] for res in results]
                 try:
                     summary[self._mean(k)]     = numpy.mean(vs)
                     summary[self._median(k)]   = numpy.median(vs)
@@ -129,10 +130,10 @@ class SummaryExperiment(ExperimentCombinator):
                 except Exception as e:
                     # couldn't do the statistics
                     print('Failed to summarise {k}: {e}'.format(k=k, e=e), file=sys.stderr)
-                    
-            return summary   
 
-    def _flatten(self, rc : ResultsDict) -> List[ResultsDict]:
+            return summary
+
+    def _flatten(self, rc: ResultsDict) -> List[ResultsDict]:
         '''Flatten-out any nested results.
 
         :param rc: a results dict, poissibly containing others nested as its results
@@ -149,7 +150,7 @@ class SummaryExperiment(ExperimentCombinator):
         _doflat(rc)
         return rcs
 
-    def do(self, params : Dict[str, Any]) -> Dict[str, Any]:
+    def do(self, params: Dict[str, Any]) -> Dict[str, Any]:
         """Perform the underlying experiment and summarise its results.
         Our results are the summary statistics extracted from the results of
         the instances of the underlying experiment that we performed.
@@ -167,17 +168,16 @@ class SummaryExperiment(ExperimentCombinator):
 
         # perform the underlying experiment
         rc = self.experiment().run()
-        
+
         # extract all the results as a single list
         rcs = self._flatten(rc)
 
         # extract only the successful runs
-        sres = [ rc for rc in rcs if rc[Experiment.METADATA][Experiment.STATUS] ]
-      
+        sres = [rc for rc in rcs if rc[Experiment.METADATA][Experiment.STATUS]]
+
         # add extra values to our metadata record
         self._metadata[self.UNDERLYING_RESULTS]            = len(rcs)
         self._metadata[self.UNDERLYING_SUCCESSFUL_RESULTS] = len(sres)
-        
+
         # construct summary results
         return self.summarise(sres)
-

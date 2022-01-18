@@ -1,7 +1,7 @@
 # Tests of summarising experiments combinator
 #
 # Copyright (C) 2016--2020 Simon Dobson
-# 
+#
 # This file is part of epyc, experiment management in Python.
 #
 # epyc is free software: you can redistribute it and/or modify
@@ -27,10 +27,11 @@ from tempfile import NamedTemporaryFile
 
 
 class SampleExperiment1(Experiment):
-    
+
     def do( self, params ):
         return dict(result = params['x'],
                     dummy = 1)
+
 
 class SampleExperiment2(Experiment):
 
@@ -38,7 +39,7 @@ class SampleExperiment2(Experiment):
         super(SampleExperiment2, self).__init__()
         self._rng = numpy.random.default_rng()
         self._allvalues = []
-    
+
     def do( self, params ):
         v = self._rng.random()
         self._allvalues.append(v)
@@ -47,12 +48,13 @@ class SampleExperiment2(Experiment):
     def values( self ):
         return self._allvalues
 
+
 class SampleExperiment3(SampleExperiment2):
 
     def __init__( self ):
         super(SampleExperiment3, self).__init__()
         self._ran = 0
-    
+
     def do( self, params ):
         v = self._rng.random()
         if v < 0.5:
@@ -67,6 +69,7 @@ class SampleExperiment3(SampleExperiment2):
     def ran( self ):
         return self._ran
 
+
 class SampleExperiment4(Experiment):
     '''A more exercising experiment.'''
 
@@ -77,6 +80,7 @@ class SampleExperiment4(Experiment):
         return dict(total = total,
                     nestedArray = [ 1, 2, 3 ],
                     nestedDict = dict(a = 1, b = 'two'))
+
 
 class SampleExperiment5(Experiment):
 
@@ -89,35 +93,35 @@ class SampleExperiment5(Experiment):
         v = self._rng.random()
         self._values.append(v)
         return dict(result = v)
-    
-    
+
+
 class SummaryExperimentTests(unittest.TestCase):
 
     def setUp( self ):
         self._lab = Lab()
-        
+
     def testRepetitionsOnePoint( self ):
         '''Test we can repeat an experiment at a single point'''
         N = 10
-        
+
         self._lab['x'] = [ 5 ]
-        
+
         e = SampleExperiment1()
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
         self.assertTrue(es.success())
         res = (self._lab.results())[0]
-        
+
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], N)
-        
+
     def testRepetitionsMultiplePoint( self ):
         '''Test we can repeat an experiment across a parameter space'''
         N = 10
-        
+
         self._lab['x'] = [ 5, 10, 15 ]
-        
+
         e = SampleExperiment1()
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
@@ -137,9 +141,9 @@ class SummaryExperimentTests(unittest.TestCase):
     def testSummary( self ):
         '''Test that summary statistics are created properly'''
         N = 10
-        
+
         self._lab['x'] = [ 5 ]
-        
+
         e = SampleExperiment2()
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
@@ -152,13 +156,13 @@ class SummaryExperimentTests(unittest.TestCase):
                          numpy.mean(e.values()))
         self.assertEqual(res[Experiment.RESULTS]['result_variance'],
                          numpy.var(e.values()))
-       
+
     def testSelect( self ):
         '''Test we can select summary results'''
         N = 10
-        
+
         self._lab['x'] = [ 5 ]
-        
+
         e = SampleExperiment1()
         es = SummaryExperiment(RepeatedExperiment(e, N),
                                summarised_results = [ 'dummy' ])
@@ -182,16 +186,16 @@ class SummaryExperimentTests(unittest.TestCase):
     def testIgnoring( self ):
         '''Test that we ignore failed experiments'''
         N = 10
-        
+
         self._lab['x'] = [ 5 ]
-        
+
         e = SampleExperiment3()
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
         self._lab.runExperiment(es)
         self.assertTrue(es.success())
         res = (self._lab.results())[0]
-        
+
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], N)
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_SUCCESSFUL_RESULTS], e.ran())
@@ -199,12 +203,12 @@ class SummaryExperimentTests(unittest.TestCase):
                          numpy.mean(e.values()))
         self.assertEqual(res[Experiment.RESULTS]['result_variance'],
                          numpy.var(e.values()))
-         
+
     def testSingle( self ):
         '''Test against a non-list-returning underlying experiment.'''
 
         self._lab['x'] = [ 5 ]
-        
+
         e = SampleExperiment1()
         es = SummaryExperiment(e)
 
@@ -212,7 +216,7 @@ class SummaryExperimentTests(unittest.TestCase):
         self.assertTrue(es.success())
         self.assertEqual(len(self._lab.results()), 1)
         res = (self._lab.results())[0]
-        
+
         self.assertTrue(res[Experiment.METADATA][Experiment.STATUS])
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_RESULTS], 1)
         self.assertEqual(res[Experiment.METADATA][SummaryExperiment.UNDERLYING_SUCCESSFUL_RESULTS], 1)
@@ -224,7 +228,7 @@ class SummaryExperimentTests(unittest.TestCase):
         tf = NamedTemporaryFile()
         tf.close()
         self._lab = Lab(notebook = JSONLabNotebook(tf.name, create = True))
-        
+
         repetitions = 5
         self._lab['a'] = [ 1, 2, 3 ]
         try:
@@ -246,9 +250,9 @@ class SummaryExperimentTests(unittest.TestCase):
     def testSummaryExceptions( self ):
         '''Test we handle illegal summary keys.'''
         N = 10
-        
+
         self._lab['x'] = 'hello'
-        
+
         e = SampleExperiment1()
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
@@ -256,18 +260,18 @@ class SummaryExperimentTests(unittest.TestCase):
         self.assertEqual(len(self._lab.results()), 1)
         rc = (self._lab.results())[0]
         self.assertNotIn(es._mean('e'), rc[Experiment.RESULTS])
-                         
+
     def testNoPoint( self ):
         '''Test we do nothing if we have an empty parameter space.'''
         e = SampleExperiment5()
         self._lab.runExperiment(e)
         self.assertEqual(len(self._lab.results()), 0)
-        
+
     def testExtrema( self ):
         '''Test we capture the extrema correctly.'''
         N = 10
         self._lab['x'] = [ 5 ]    # dummy data point, we don't use it
-        
+
         e = SampleExperiment5()
         es = SummaryExperiment(RepeatedExperiment(e, N))
 
