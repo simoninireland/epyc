@@ -1,4 +1,4 @@
-Version 1.6.1
+Version 1.6.1 2022-01-18
 
    - Added LabNotebook.createWith() to handle failed result set creation
    - Added notes on createWith() to cookbook
