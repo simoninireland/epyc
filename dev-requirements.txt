@@ -12,5 +12,7 @@ doc8
 twine
 black
 pylint
+jedi
+jedi-language-server
 flake8
 rope
