@@ -1,3 +1,5 @@
+.. _lab-class:
+
 :class:`Lab`: An environment for running experiments
 ====================================================
 

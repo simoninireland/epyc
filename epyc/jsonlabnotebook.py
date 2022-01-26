@@ -53,6 +53,9 @@ class MetadataEncoder(json.JSONEncoder):
             # numpy ints inherit differently between Python 2 and 3
             # see https://bugs.python.org/issue24313
             return int(o)
+        elif isinstance(o, numpy.bool_):
+            # numpy's bool_ type, cast it
+            return bool(o)
         else:
             # everything else, pass through
             return super(MetadataEncoder, self).default(o)

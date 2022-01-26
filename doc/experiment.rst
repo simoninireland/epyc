@@ -1,3 +1,5 @@
+.. _experiment-class:
+
 :class:`Experiment`: A single computational experiment
 ======================================================
 
