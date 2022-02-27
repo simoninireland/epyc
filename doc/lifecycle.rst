@@ -33,7 +33,7 @@ and run-dependent (set up) data from steps 2 and 3.
 Each of these stages is encapsulated in methods within the :class:`Experiment`
 class:
 
-1. **Creation and intitialisation**. The constructopr of each :class:`Experiment`
+1. **Creation and intitialisation**. The constructor of each :class:`Experiment`
    sub-class. Be careful to always call the base constructor to perform initialisation properly.
 2. **Configuration**. When parameters are first set using :meth:`Experiment.set` the
    :meth:`Experiment.configure` method is called to perform whatever configuration is
