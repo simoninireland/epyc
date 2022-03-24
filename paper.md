@@ -119,9 +119,18 @@ libraries such as [``numpy``](https://numpy.org/) or
 (although it can run experiments using these tools). It also adopts a
 control- rather than data-driven approach (also unlike Dask, and
 unlike more traditional workflow engines such as
-[Taverna](https://incubator.apache.org/projects/taverna.html)) which
-leads to more predictable computational requirements and fits better
-with the approaches of certain disciplines.
+[Taverna](https://incubator.apache.org/projects/taverna.html) or
+[SnakeMake](https://snakemake.readthedocs.io/en/stable/)) which leads
+to more predictable computational requirements and fits better with
+the approaches of certain disciplines.
+
+``epyc`` is perhaps closest in spirit to
+[Sacred](https://sacred.readthedocs.io/en/stable/index.html), which
+also emphasises the management of experimental configurations for
+reproducibility. ``epyc`` provides more support for executing
+experiments uniformly across entire spaces of parameters, with
+integrated use of paralellism, and under different experimental
+designs where required.
 
 
 # Main applications
