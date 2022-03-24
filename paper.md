@@ -6,6 +6,7 @@ tags:
   - cluster computing
   - high-performance computing
   - automation
+  - experimental design
 authors:
   - name: Simon Dobson
     email: simoninireland@gmail.com
