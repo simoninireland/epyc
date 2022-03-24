@@ -129,7 +129,7 @@ the approaches of certain disciplines.
 also emphasises the management of experimental configurations for
 reproducibility. ``epyc`` provides more support for executing
 experiments uniformly across entire spaces of parameters, with
-integrated use of paralellism, and under different experimental
+integrated use of parallelism, and under different experimental
 designs where required.
 
 
