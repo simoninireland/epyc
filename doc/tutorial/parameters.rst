@@ -11,7 +11,7 @@ references in the experiment; the values can be single values (constants) or ran
 lab will then run the the experiment for all combinations of the values provided.
 
 For our purposes we want to run the experiment over a range :math:`[-2 \pi, 2 \pi]` in two axial directions.
-We can deifne this using ``numpy``:
+We can define this using ``numpy``:
 
 .. code-block :: python
 

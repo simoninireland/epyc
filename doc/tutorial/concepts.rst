@@ -7,8 +7,8 @@ Concepts
 
 An **experiment** is just an object inheriting from the :class:`Experiment` class. An experiment can contain
 pretty much any code you like, which is then called according to a strict protocol (described in detail
-in :ref:`lifecycle`). The most important thing about experiments is that they can be parameterisedwith a set
-oif parameters passed to your code as a dict.
+in :ref:`lifecycle`). The most important thing about experiments is that they can be parameterised with a set
+of parameters passed to your code as a dict.
 
 Parameters can come directly from calling code if the experiment is called directly, but it is more common for
 experiments to be invoked from a **lab**. A lab defines a parameter space, a collection of parameters whose values

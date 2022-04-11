@@ -7,7 +7,7 @@ A simple experiment
 
 Computational experiments that justify using infrastructure like ``epyc`` are by definition
 usually large and complicated -- and not suitable for a tutorial. So we'll start with a
-very simple example: admittedly you could do this more easily witn straight Python code,
+very simple example: admittedly you could do this more easily with straight Python code,
 but that's an advantage when describing how to use a more complicated set-up.
 
 So suppose we want to compute a set of values for some function so that we can plot
