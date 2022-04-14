@@ -67,7 +67,7 @@ copy, just clone the repo:
 Examples
 --------
 
-See `the examples directory <https://github.com/simoninireland/epyc/tree/main/doc/examples>`_ for code examples.
+See `the examples directory <https://github.com/simoninireland/epyc/tree/master/doc/examples>`_ for code examples.
 
 
 Documentation
