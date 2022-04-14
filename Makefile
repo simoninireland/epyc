@@ -69,6 +69,7 @@ SOURCES_DOCUMENTATION = \
 	doc/lifecycle.rst \
 	doc/glossary.rst \
 	doc/contributing.rst \
+	doc/citing.rst \
 	doc/command-line.rst \
 	doc/tutorial.rst \
 	doc/tutorial/concepts.rst \

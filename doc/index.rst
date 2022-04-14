@@ -77,3 +77,4 @@ Current features
    cookbook
    glossary
    contributing
+   citing
