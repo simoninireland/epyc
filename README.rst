@@ -10,6 +10,9 @@ epyc: Python computational experiment management
 .. image:: https://github.com/simoninireland/epyc/actions/workflows/ci.yaml/badge.svg
     :target: https://github.com/simoninireland/epyc/actions
 
+.. image:: https://zenodo.org/badge/63255319.svg
+   :target: https://zenodo.org/badge/latestdoi/63255319
+
 .. image:: https://www.gnu.org/graphics/gplv3-88x31.png
     :target: https://www.gnu.org/licenses/gpl-3.0.en.html
 

@@ -2,7 +2,7 @@
 
 # Setup for epyc
 #
-# Copyright (C) 2016--2021 Simon Dobson
+# Copyright (C) 2016--2022 Simon Dobson
 #
 # This file is part of epyc, experiment management in Python.
 #
@@ -25,7 +25,7 @@ with open('README.rst') as f:
     longDescription = f.read()
 
 setup(name='epyc',
-      version='1.6.1',
+      version='1.6.2',
       description='Python computational experiment management',
       long_description=longDescription,
       url='http://github.com/simoninireland/epyc',
