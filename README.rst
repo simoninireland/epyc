@@ -81,6 +81,6 @@ cases online `here <https://github.com/simoninireland/epyc/blob/master/doc/epyc.
 Author and license
 ------------------
 
-Copyright (c) 2016-2021, Simon Dobson <simoninireland@gmail.com>
+Copyright (c) 2016-2022, Simon Dobson <simoninireland@gmail.com>
 
 Licensed under the `GNU General Public Licence v3 <https://www.gnu.org/licenses/gpl-3.0.en.html>`_.
