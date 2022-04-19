@@ -13,6 +13,9 @@ epyc: Python computational experiment management
 .. image:: https://zenodo.org/badge/63255319.svg
    :target: https://zenodo.org/badge/latestdoi/63255319
 
+.. image:: https://joss.theoj.org/papers/10.21105/joss.03764/status.svg
+   :target: https://doi.org/10.21105/joss.03764
+
 .. image:: https://www.gnu.org/graphics/gplv3-88x31.png
     :target: https://www.gnu.org/licenses/gpl-3.0.en.html
 
