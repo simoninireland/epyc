@@ -124,13 +124,18 @@ class ResultSet:
     @classmethod
     def _init_statics(cls):
         '''Initialise the static members that need complex constructors.'''
+
+        # type mapping for element types
         cls.TypeMapping[int] = numpy.dtype(int)
         cls.TypeMapping[float] = numpy.dtype(float)
         cls.TypeMapping[complex] = numpy.dtype(complex)
         cls.TypeMapping[bool] = numpy.dtype(bool)
-        cls.TypeMapping[str] = numpy.dtype(str)
-        cls.TypeMapping[datetime] = numpy.dtype(str)
-        cls.TypeMapping[Exception] = numpy.dtype(str)
+        cls.TypeMapping[str] = '<U256'   # a concrete reasonable size, rather than numpy.dtype(str)
+
+        # the following are mapped to strings rather than their
+        # "real" types, for portability
+        cls.TypeMapping[datetime] = cls.TypeMapping[str]
+        cls.TypeMapping[Exception] = cls.TypeMapping[str]
 
     def __init__(self, description: str = None):
         # generate a description from today's date is none is provided
@@ -422,8 +427,7 @@ class ResultSet:
         If more elements are provided than have previously been seen, the underlying
         results dataframe will be extended with new columns.
 
-        This method will be called automatically if no explicit dtype has been provide
-d
+        This method will be called automatically if no explicit dtype has been provided
         for the result set by a call to :meth:`setDtype`.
 
         :returns: the dtype'''
