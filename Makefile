@@ -77,6 +77,7 @@ SOURCES_DOCUMENTATION = \
 	doc/tutorial/environment.rst \
 	doc/tutorial/simple-experiment.rst \
 	doc/tutorial/defining.rst \
+	doc/tutorial/types.rst \
 	doc/tutorial/testing.rst \
 	doc/tutorial/lab.rst \
 	doc/tutorial/parameters.rst \

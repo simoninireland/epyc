@@ -1,4 +1,8 @@
-Version 1.7.1
+Version 1.7.1 2022-07-20
+
+   - Documented the "safe" types explicitly
+   - Fixed some minor type issues in HDF5 handling
+   - Documented HDF5 typing more clearly
 
 Version 1.6.2 2022-04-14
 
