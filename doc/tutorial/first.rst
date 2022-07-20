@@ -19,6 +19,8 @@ run experiments on a single machine.
 
 .. include:: defining.rst
 
+.. include:: types.rst
+
 .. include:: testing.rst
 
 .. include:: lab.rst
