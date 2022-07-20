@@ -2,7 +2,7 @@
 =============================================================
 
 .. currentmodule:: epyc
-   
+
 .. autoclass:: HDF5LabNotebook
 
 
@@ -18,10 +18,10 @@ Persistence
 HDF5 notebooks are persistent, with the data being saved into a file
 identified by the notebook's name. Committing the notebook forces any
 changes to be saved.
-   
+
 .. automethod:: HDF5LabNotebook.isPersistent
-   
-.. automethod:: HDF5LabNotebook.commit 
+
+.. automethod:: HDF5LabNotebook.commit
 
 
 .. _hdf5-file-access:
@@ -37,10 +37,10 @@ be used in code such as:
 
 .. code-block :: python
 
-    nb = HDF5LabNotebook(name='test.h5') 
+    nb = HDF5LabNotebook(name='test.h5')
     with nb.open():
-        nb.addResult(rc1)
-        nb.addResult(rc2)
+	nb.addResult(rc1)
+	nb.addResult(rc2)
 
 After this the notebook's underlying file will be closed, with the new
 results having been saved.  Alternatively simply use
@@ -49,7 +49,7 @@ file, for example:
 
 .. code-block :: python
 
-    nb = HDF5LabNotebook(name='test.h5') 
+    nb = HDF5LabNotebook(name='test.h5')
     nb.addResult(rc1)
     nb.addResult(rc2)
     nb.commit()
@@ -65,7 +65,7 @@ filename to the notebook constructor:
 
 .. code-block :: python
 
-    nb = HDF5LabNotebook(name='http://example.com/test.h5') 
+    nb = HDF5LabNotebook(name='http://example.com/test.h5')
 
 Since remote updating doesn't usually work, any notebook loaded from a
 URL is treated as "finished" (as though you'd called
@@ -150,12 +150,14 @@ would expect, of course, since HDF5 is essentially an archive format
 whose files need to be readable by a range of tools over a long
 period.  Specifically this affects exceptions, tracebacks, and
 ``datetime`` values, all of which are mapped to HDF5 strings (in ISO
-standard date format for the latter). A little bit of patching happens
-for "known" metadata values (specifically
-:attr:`Experiment.START_TIME` and :attr:`Experiment.END_TIME`) which
-are automatically patched to ``datetime`` instances when loaded.
-List-valued results are supported, and can be "ragged" (not have the
-same length) across results.
+standard date format for the latter). Strings are in turn stored in
+ASCII, *not* Unicode.
+
+A little bit of patching happens for "known" metadata values
+(specifically :attr:`Experiment.START_TIME` and
+:attr:`Experiment.END_TIME`) which are automatically patched to
+``datetime`` instances when loaded. List-valued results are supported,
+and can be "ragged" (not have the same length) across results.
 
 .. warning ::
 
@@ -164,6 +166,8 @@ same length) across results.
     the one you saved.  Specifically, lists come back as ``numpy``
     arrays. The values and the behaviours are the same, though. If you
     need a specific type, be sure to cast the value before use.
+
+See :ref:`types-ecperimewnt` for a list of "safe" types.
 
 
 Tuning parameters
@@ -216,7 +220,3 @@ There are also two private methods that handle the conversion of
 .. automethod:: HDF5LabNotebook._HDF5simpledtype
 
 .. automethod:: HDF5LabNotebook._HDF5dtype
-
-
-
-

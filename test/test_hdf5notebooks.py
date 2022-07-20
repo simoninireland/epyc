@@ -629,11 +629,13 @@ class HDF5LabNotebookTests(unittest.TestCase):
         nb.addResultSet('first')
         nb.addResult(rc1)
         nb.addResult(rc2)
+        self.assertEqual(nb.numberOfResults(), 2)
 
         # second
         nb.addResultSet('second')
         nb.addResult(rc3)
         nb.addPendingResult(rc4[Experiment.PARAMETERS], '2345')
+        self.assertEqual(nb.numberOfResults(), 1)
 
         # lock the notebook
         nb.finish()
@@ -642,7 +644,7 @@ class HDF5LabNotebookTests(unittest.TestCase):
         with self.assertRaises(LabNotebookLockedException):
             nb.addResultSet('third')
 
-        # check the notebook in still  locked when reloaded
+        # check the notebook is still locked when reloaded
         nb.commit()
         with HDF5LabNotebook(self._fn).open() as nb1:
             self.assertTrue(nb1.isLocked())
@@ -754,6 +756,40 @@ class HDF5LabNotebookTests(unittest.TestCase):
         with HDF5LabNotebook(self._fn).open() as nb:
             rc = nb.resultsFor(params)[0]
             self.assertCountEqual(rc[Experiment.RESULTS]['list'], [100] * 100)
+
+    def testAllTypes(self):
+        '''Test we can store all the types we're likely to be interested in.'''
+        rc = Experiment.resultsdict()
+        rc[Experiment.METADATA][Experiment.STATUS] = True
+
+        # elementary types
+        rc[Experiment.RESULTS]['a_int'] = 10
+        rc[Experiment.RESULTS]['b_float'] = 4.5
+        rc[Experiment.RESULTS]['c_complex'] = 4.5 + 2j
+        rc[Experiment.RESULTS]['d_str'] = 'hello'
+        rc[Experiment.RESULTS]['e_bool'] = False
+        #rc[Experiment.RESULTS]['f_empty'] = None
+
+        # arrays
+        rc[Experiment.RESULTS]['a_int[]'] = [10, 20, 30]
+        rc[Experiment.RESULTS]['b_float[]'] = [4.5, 2.0]
+        rc[Experiment.RESULTS]['c_complex[]'] = [4.5 + 2j] # of one element
+        rc[Experiment.RESULTS]['d_str[]'] = ['hello', 'abandon']
+        rc[Experiment.RESULTS]['e_bool[]'] = [False, True, False]
+        rc[Experiment.RESULTS]['f_empty[]'] = []
+
+        with HDF5LabNotebook(self._fn, create=True).open() as nb:
+            nb.addResult(rc)
+
+        with HDF5LabNotebook(self._fn).open() as nb:
+            df = nb.dataframe()
+            for k in rc[Experiment.RESULTS].keys():
+                if k.find('[]') == -1:
+                    # simple type
+                    self.assertEqual(rc[Experiment.RESULTS][k], df[k][0])
+                else:
+                    # array
+                    self.assertCountEqual(rc[Experiment.RESULTS][k], df[k][0])
 
 
 if __name__ == '__main__':

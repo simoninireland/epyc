@@ -292,17 +292,24 @@ class HDF5LabNotebook(LabNotebook):
                         # patch known datestamps ISO-format strings in metadata
                         dt = res[k].isoformat()
                         entry.append(dt)
+                    elif k in [Experiment.EXCEPTION]:
+                        # patch exception to string
+                        entry.append(str(res[k]))
                     else:
-                        et = h5py.check_vlen_dtype(hdf5dtype[k])
-                        if et is None:
-                            # "normal" type, pass through
-                            entry.append(res[k])
+                        et = type(res[k])
+                        if et is list:
+                            # array of something
+                            if len(res[k]) > 0 and (type(res[k][0]) == str or type(res[k][0]) == bytes):
+                                # string array, convert
+                                entry.append(numpy.array(list(map(lambda s: self._asString(s), res[k]))))
+                            else:
+                                entry.append(numpy.array(res[k]))
                         elif et == str:
                             # string, convert
                             entry.append(self._asString(res[k]))
                         else:
-                            # array of something
-                            entry.append(numpy.array(res[k]))
+                            # "normal" type, pass through
+                            entry.append(res[k])
 
                 # write out the row
                 ds[i] = tuple(entry)
@@ -370,7 +377,8 @@ class HDF5LabNotebook(LabNotebook):
                 # locked flag
                 locked = g.attrs[self.LOCKED]
             else:
-                rs[k] = self._asString(g.attrs[k])
+                #rs[k] = self._asString(g.attrs[k])
+                rs[k] = str(g.attrs[k])
 
         if self.RESULTS_DATASET in g:
             # ---- PART 1: read structure ---
@@ -396,13 +404,18 @@ class HDF5LabNotebook(LabNotebook):
                 j = 0
                 for d in [ Experiment.METADATA, Experiment.PARAMETERS, Experiment.RESULTS ]:
                     for k in names[d]:
-                        et = h5py.check_vlen_dtype(hdf5dtype[k])
-                        if et == str:
-                            # string, convert
-                            entry[j] = self._asString(entry[j])
-                        elif et is not None:
+                        et = type(entry[j])
+                        if et == bytes:
+                            # bytes, convert to string
+                            entry[j] = entry[j].decode()
+                        elif et == numpy.bool_:
+                            # internal bool_, convert to ordinary bool
+                            entry[j] = bool(entry[j])
+                        elif et == numpy.ndarray:
                             # array of something
-                            entry[j] = numpy.array(entry[j])
+                            if len(entry[j]) > 0 and type(entry[j][0]) == bytes:
+                                # strings, convert
+                                entry[j] = list(map(lambda s: s.decode(), list(entry[j])))
                         if k in [ Experiment.START_TIME, Experiment.END_TIME ]:
                             try:
                                 # patch known datestamps to datetime objects
@@ -413,6 +426,7 @@ class HDF5LabNotebook(LabNotebook):
                                 pass
                         rc[d][k] = entry[j]
                         j += 1
+
                 self.addResult(rc, tag)
 
         if self.PENDINGRESULTS_DATASET in g:
@@ -551,8 +565,10 @@ class HDF5LabNotebook(LabNotebook):
         :param o: the object
         :returns: the string'''
         if isinstance(o, bytes):
-            return o.decode()
+            return o.decode(encoding='ascii')
         elif isinstance(o, str):
-            return o
+            #return o
+            return o.encode(encoding='ascii')
         else:
-            return str(o)
+            #return str(o)
+            return str(o).encode(encoding='ascii')

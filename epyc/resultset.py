@@ -130,7 +130,7 @@ class ResultSet:
         cls.TypeMapping[float] = numpy.dtype(float)
         cls.TypeMapping[complex] = numpy.dtype(complex)
         cls.TypeMapping[bool] = numpy.dtype(bool)
-        cls.TypeMapping[str] = '<U256'   # a concrete reasonable size, rather than numpy.dtype(str)
+        cls.TypeMapping[str] = '<U256'                  # a concrete size, rather than numpy.dtype(str)
 
         # the following are mapped to strings rather than their
         # "real" types, for portability
@@ -413,7 +413,12 @@ class ResultSet:
         :param v: the value
         :returns: the dtype'''
         if isinstance(v, list):
-            et = self.valueToDtype(v[0])
+            if len(v) == 0:
+                # no elements, use an innocuous type
+                et = self.valueToDtype(0)
+            else:
+                # use type of element, and assume homogeneity
+                et = self.valueToDtype(v[0])
             #print(str(len(v)) + '[] ' + str(v[0]) + ' -> ' + str(et))
             return numpy.dtype((et, (len(v),)))
         else:
