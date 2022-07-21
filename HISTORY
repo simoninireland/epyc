@@ -1,3 +1,7 @@
+Version 1.7.2 2022-07-21
+
+   - Maintenance release fixing problem with string dtype
+
 Version 1.7.1 2022-07-20
 
    - Documented the "safe" types explicitly
