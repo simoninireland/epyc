@@ -130,7 +130,7 @@ class ResultSet:
         cls.TypeMapping[float] = numpy.dtype(float)
         cls.TypeMapping[complex] = numpy.dtype(complex)
         cls.TypeMapping[bool] = numpy.dtype(bool)
-        cls.TypeMapping[str] = '<U256'                  # a concrete size, rather than numpy.dtype(str)
+        cls.TypeMapping[str] = numpy.dtype('<U256')          # a concrete size, rather than numpy.dtype(str)
 
         # the following are mapped to strings rather than their
         # "real" types, for portability
